@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
+import { RAID_COLORS } from '../types'
 import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate, getPastDays } from '../lib/weekUtils'
 
 interface RaidResult {
@@ -601,6 +602,11 @@ export default function ScheduleResult() {
     } else {
       unscheduled.push(r)
     }
+  })
+  unscheduled.sort((a, b) => {
+    const ai = RAID_COLORS.indexOf(a.raid.color ?? '#6b7280')
+    const bi = RAID_COLORS.indexOf(b.raid.color ?? '#6b7280')
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
   })
 
   return (
