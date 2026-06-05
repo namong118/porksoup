@@ -42,6 +42,7 @@ export interface Raid {
   sort_order: number
   color: string
   completed: boolean
+  difficulty: number
   created_at: string
 }
 

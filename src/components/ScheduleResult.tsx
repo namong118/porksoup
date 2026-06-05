@@ -389,12 +389,18 @@ export default function ScheduleResult() {
       })
 
     const dayCount: Record<string, number> = {}
+    const dayHardCount: Record<string, number> = {} // 고난이도(4~5성) 레이드 카운트
+    const MAX_HARD = 3 // 고난이도 하루 최대
+
     // 완료된 레이드가 이미 차지한 자리를 미리 반영
     results
       .filter(r => r.raid.completed && r.raid.day_of_week)
       .forEach(r => {
         const d = r.raid.day_of_week!
         dayCount[d] = (dayCount[d] ?? 0) + 1
+        if ((r.raid.difficulty ?? 1) >= 4) {
+          dayHardCount[d] = (dayHardCount[d] ?? 0) + 1
+        }
       })
     // 멤버별로 어느 날 가는지 추적
     const memberDays: Record<string, Set<string>> = {}
@@ -402,7 +408,12 @@ export default function ScheduleResult() {
 
     for (const { raid, commonDays, characters } of toSchedule) {
       const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
-      const available = commonDays.filter(d => validDays.has(d) && (dayCount[d] ?? 0) < MAX)
+      const isHard = (raid.difficulty ?? 1) >= 4
+      const available = commonDays.filter(d =>
+        validDays.has(d) &&
+        (dayCount[d] ?? 0) < MAX &&
+        (!isHard || (dayHardCount[d] ?? 0) < MAX_HARD)
+      )
       if (available.length === 0) continue
 
       // 각 후보 요일 점수 계산:
@@ -419,6 +430,7 @@ export default function ScheduleResult() {
 
       const bestDay = scored[0].day
       dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
+      if (isHard) dayHardCount[bestDay] = (dayHardCount[bestDay] ?? 0) + 1
 
       // 해당 날에 가는 멤버 기록
       raidMemberIds.forEach(mid => {
@@ -435,10 +447,10 @@ export default function ScheduleResult() {
     const midUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
 
     // MAX 초과 안전장치: 날짜별로 MAX개까지만 허용
-    const dayHardCount: Record<string, number> = {}
+    const dayMaxCount: Record<string, number> = {}
     const finalUpdates = midUpdates.filter(u => {
-      dayHardCount[u.day] = (dayHardCount[u.day] ?? 0) + 1
-      return dayHardCount[u.day] <= MAX
+      dayMaxCount[u.day] = (dayMaxCount[u.day] ?? 0) + 1
+      return dayMaxCount[u.day] <= MAX
     })
     // 1단계: 완료되지 않은 모든 레이드의 요일 초기화
     await Promise.all(

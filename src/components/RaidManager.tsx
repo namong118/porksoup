@@ -63,6 +63,11 @@ export default function RaidManager({ member }: Props) {
     setRaids(prev => prev.map(r => r.id === id ? { ...r, completed: !current } : r))
   }
 
+  async function updateDifficulty(id: string, difficulty: number) {
+    await supabase.from('raids').update({ difficulty }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, difficulty } : r))
+  }
+
   async function deleteRaid(id: string) {
     if (!confirm('레이드를 삭제할까요?')) return
     await supabase.from('raids').delete().eq('id', id)
@@ -196,6 +201,18 @@ export default function RaidManager({ member }: Props) {
                   />
                   <span className={`font-medium ${raid.completed ? 'line-through text-gray-500' : ''}`}>{raid.name}</span>
                   <span className="text-xs bg-gray-600 px-2 py-0.5 rounded">{raid.size}인</span>
+                  {/* 별점 */}
+                  <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        onClick={() => updateDifficulty(raid.id, star)}
+                        className="text-sm leading-none transition-transform hover:scale-125"
+                      >
+                        <span className={star <= (raid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+                      </button>
+                    ))}
+                  </div>
                   {raid.completed && (
                     <span className="text-xs bg-gray-600 text-gray-400 px-2 py-0.5 rounded-full">완료</span>
                   )}

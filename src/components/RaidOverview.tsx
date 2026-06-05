@@ -82,6 +82,7 @@ export default function RaidOverview() {
                 style={{ backgroundColor: `${color}33`, borderBottom: `2px solid ${color}` }}
               >
                 <span className="text-xs font-bold text-white truncate">{raid.name}</span>
+                  <span className="text-xs text-yellow-400 shrink-0">{'★'.repeat(raid.difficulty ?? 1)}</span>
                 <div className="flex items-center gap-1 shrink-0 ml-1">
                   <span className={`text-xs ${supportOk ? 'text-green-400' : 'text-red-400'}`}>
                     {filled}/{total}
