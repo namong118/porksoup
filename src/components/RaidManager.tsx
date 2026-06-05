@@ -5,9 +5,11 @@ import type { Raid, Character, Member, RaidCharacter } from '../types'
 export default function RaidManager() {
   const [raids, setRaids] = useState<Raid[]>([])
   const [allCharacters, setAllCharacters] = useState<(Character & { member: Member })[]>([])
+  const [allMembers, setAllMembers] = useState<Member[]>([])
   const [raidCharacters, setRaidCharacters] = useState<Record<string, string[]>>({})
   const [adding, setAdding] = useState(false)
   const [expandedRaid, setExpandedRaid] = useState<string | null>(null)
+  const [selectedMember, setSelectedMember] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', size: 4 as 4 | 8 })
 
   useEffect(() => {
@@ -15,9 +17,11 @@ export default function RaidManager() {
       supabase.from('raids').select('*').order('name'),
       supabase.from('characters').select('*, member:members(*)').order('name'),
       supabase.from('raid_characters').select('*'),
-    ]).then(([r, c, rc]) => {
+      supabase.from('members').select('*').order('nickname'),
+    ]).then(([r, c, rc, m]) => {
       if (r.data) setRaids(r.data)
       if (c.data) setAllCharacters(c.data as (Character & { member: Member })[])
+      if (m.data) setAllMembers(m.data)
       if (rc.data) {
         const map: Record<string, string[]> = {}
         rc.data.forEach((item: RaidCharacter) => {
@@ -131,32 +135,70 @@ export default function RaidManager() {
 
               {isExpanded && (
                 <div className="border-t border-gray-600 p-4">
-                  <p className="text-xs text-gray-400 mb-3">캐릭터를 클릭해서 파티에 추가/제거</p>
-                  <div className="flex flex-col gap-1">
-                    {allCharacters.map(char => {
-                      const isAssigned = chars.includes(char.id)
-                      return (
-                        <button
-                          key={char.id}
-                          onClick={() => toggleCharacter(raid.id, char.id)}
-                          className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                            ${isAssigned ? 'bg-blue-900 text-blue-200' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>{char.name}</span>
-                            <span className="text-xs text-gray-400">{char.class}</span>
-                            <span className={`text-xs px-1.5 py-0.5 rounded ${char.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
-                              {char.role === 'support' ? '서폿' : '딜러'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">{char.member?.nickname}</span>
-                            {isAssigned && <span className="text-blue-400 text-xs">✓</span>}
-                          </div>
-                        </button>
-                      )
-                    })}
+                  {/* 배정된 캐릭터 요약 */}
+                  {chars.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {chars.map(charId => {
+                        const char = allCharacters.find(c => c.id === charId)
+                        if (!char) return null
+                        return (
+                          <span key={charId} className="flex items-center gap-1 bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded-lg">
+                            {char.name}
+                            <span className="text-blue-400 opacity-70">{char.class}</span>
+                            <button
+                              onClick={() => toggleCharacter(raid.id, charId)}
+                              className="ml-1 text-blue-400 hover:text-red-400 transition-colors"
+                            >✕</button>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* 멤버 선택 */}
+                  <p className="text-xs text-gray-400 mb-2">멤버 선택 후 캐릭터를 추가하세요</p>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {allMembers.map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => setSelectedMember(selectedMember === m.id ? null : m.id)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors
+                          ${selectedMember === m.id ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
+                      >
+                        {m.nickname}
+                      </button>
+                    ))}
                   </div>
+
+                  {/* 선택된 멤버의 캐릭터 목록 */}
+                  {selectedMember && (
+                    <div className="flex flex-col gap-1">
+                      {allCharacters.filter(c => c.member_id === selectedMember).length === 0 ? (
+                        <p className="text-xs text-gray-500 text-center py-2">등록된 캐릭터 없음</p>
+                      ) : (
+                        allCharacters.filter(c => c.member_id === selectedMember).map(char => {
+                          const isAssigned = chars.includes(char.id)
+                          return (
+                            <button
+                              key={char.id}
+                              onClick={() => toggleCharacter(raid.id, char.id)}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
+                                ${isAssigned ? 'bg-blue-900 text-blue-200' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span>{char.name}</span>
+                                <span className="text-xs text-gray-400">{char.class}</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded ${char.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
+                                  {char.role === 'support' ? '서폿' : '딜러'}
+                                </span>
+                              </div>
+                              {isAssigned && <span className="text-blue-400 text-xs">✓ 배정됨</span>}
+                            </button>
+                          )
+                        })
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
