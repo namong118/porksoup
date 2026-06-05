@@ -266,6 +266,17 @@ export default function ScheduleResult() {
     const MIN = minPerDay
     const MAX = maxPerDay
 
+    // 지난 날 직접 계산 (클로저 의존 없이)
+    const now = new Date()
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const currentPastDays = new Set(
+      WEEK_DAYS.filter((_, i) => {
+        const d = parseLocalDate(weekStart)
+        d.setDate(d.getDate() + i)
+        return d < todayMidnight
+      })
+    )
+
     // 완료된 레이드 제외
     const activeResults = results.filter(r => !r.raid.completed)
 
@@ -276,7 +287,7 @@ export default function ScheduleResult() {
     })
 
     // MIN 이상 채울 수 있는 요일만 유효 (지난 날 제외)
-    const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN && !pastDays.has(d)))
+    const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN && !currentPastDays.has(d)))
 
     // 제약 많은 레이드(가능 요일 적은 것) 먼저 배정
     const toSchedule = activeResults
