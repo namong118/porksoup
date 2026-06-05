@@ -138,8 +138,15 @@ export default function RaidManager() {
                   {/* 배정된 캐릭터 요약 */}
                   {chars.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
-                      {chars.map(charId => {
-                        const char = allCharacters.find(c => c.id === charId)
+                      {[...chars]
+                        .map(charId => allCharacters.find(c => c.id === charId))
+                        .filter(Boolean)
+                        .sort((a, b) => {
+                          if (a!.role === b!.role) return 0
+                          return a!.role === 'support' ? 1 : -1
+                        })
+                        .map(char => {
+                        const charId = char!.id
                         if (!char) return null
                         return (
                           <span key={charId} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${char.role === 'support' ? 'bg-green-800 text-green-200' : 'bg-blue-900 text-blue-200'}`}>
@@ -176,7 +183,12 @@ export default function RaidManager() {
                       {allCharacters.filter(c => c.member_id === selectedMember).length === 0 ? (
                         <p className="text-xs text-gray-500 text-center py-2">등록된 캐릭터 없음</p>
                       ) : (
-                        allCharacters.filter(c => c.member_id === selectedMember).map(char => {
+                        allCharacters.filter(c => c.member_id === selectedMember)
+                          .sort((a, b) => {
+                            if (a.role === b.role) return 0
+                            return a.role === 'support' ? 1 : -1
+                          })
+                          .map(char => {
                           const isAssigned = chars.includes(char.id)
                           return (
                             <button
