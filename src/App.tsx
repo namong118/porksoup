@@ -20,11 +20,11 @@ export default function App() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'schedule', label: '📅 내 스케줄' },
-    { id: 'characters', label: '⚔️ 내 캐릭터' },
-    { id: 'raids', label: '🛡️ 레이드' },
     { id: 'allschedules', label: '👥 전체 스케줄' },
+    { id: 'raids', label: '🛡️ 레이드' },
     { id: 'result', label: '📊 이번 주 편성' },
     { id: 'settings', label: '⚙️ 설정' },
+    { id: 'characters', label: '⚔️ 내 캐릭터' },
   ]
 
   return (
