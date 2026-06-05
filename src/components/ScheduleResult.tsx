@@ -12,6 +12,50 @@ interface RaidResult {
 }
 
 
+function TimeSlotHeader({ time, count, onSave }: {
+  time: string
+  count: number
+  onSave: (newTime: string) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(time)
+
+  async function save() {
+    await onSave(value)
+    setEditing(false)
+  }
+
+  return (
+    <div className="px-4 py-2 bg-gray-900 flex items-center gap-3">
+      {editing ? (
+        <div className="flex items-center gap-2">
+          <input
+            autoFocus
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+            placeholder="20:10"
+            className="bg-gray-700 rounded px-2 py-0.5 text-sm font-bold outline-none focus:ring-1 ring-blue-500 w-20"
+          />
+          <button onClick={save} className="text-blue-400 text-xs hover:text-blue-300">저장</button>
+          <button onClick={() => setEditing(false)} className="text-gray-500 text-xs">취소</button>
+        </div>
+      ) : (
+        <button
+          onClick={() => { setValue(time); setEditing(true) }}
+          className="flex items-center gap-2 group"
+        >
+          <span className="text-base font-bold text-blue-300">
+            {time ? `⏰ ${time}` : '⏰ 시간 미정'}
+          </span>
+          <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors">✏️</span>
+        </button>
+      )}
+      <span className="text-xs text-gray-500 ml-auto">{count}개 레이드</span>
+    </div>
+  )
+}
+
 function RaidCard({
   raidResult,
   currentDay,
@@ -35,8 +79,6 @@ function RaidCard({
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers } = raidResult
   const [editing, setEditing] = useState(false)
-  const [editingTime, setEditingTime] = useState(false)
-  const [timeValue, setTimeValue] = useState(raid.time ?? '')
   const submittedCount = totalMembers - missingCount
   const isConfirmed = currentDay ? commonDays.includes(currentDay) : false
 
@@ -44,12 +86,6 @@ function RaidCard({
     await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setEditing(false)
-  }
-
-  async function saveTime() {
-    await supabase.from('raids').update({ time: timeValue || null }).eq('id', raid.id)
-    onDayChange(raid.id, currentDay)
-    setEditingTime(false)
   }
 
   return (
@@ -85,27 +121,6 @@ function RaidCard({
 
           <span className="font-medium text-sm">{raid.name}</span>
           <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded">{raid.size}인</span>
-          {editingTime ? (
-            <div className="flex items-center gap-1">
-              <input
-                autoFocus
-                value={timeValue}
-                onChange={e => setTimeValue(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') saveTime(); if (e.key === 'Escape') setEditingTime(false) }}
-                placeholder="20:10"
-                className="bg-gray-600 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500 w-16"
-              />
-              <button onClick={saveTime} className="text-blue-400 text-xs hover:text-blue-300">저장</button>
-              <button onClick={() => setEditingTime(false)} className="text-gray-500 text-xs hover:text-gray-300">취소</button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setEditingTime(true)}
-              className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
-            >
-              {raid.time ?? '시간 미정'}
-            </button>
-          )}
           {currentDay && (
             isConfirmed
               ? <span className="text-xs bg-green-900 text-green-300 px-1.5 py-0.5 rounded-full">✓ 확정</span>
@@ -507,13 +522,20 @@ export default function ScheduleResult() {
                   <div className="divide-y divide-gray-600">
                     {sortedTimes.map(time => {
                       const groupRaids = timeGroups[time]
+                      const raidIds = groupRaids.map(r => r.raid.id)
                       return (
                         <div key={time}>
-                          {/* 타임슬롯 헤더 */}
-                          <div className="px-4 py-1.5 bg-gray-750 bg-gray-900 flex items-center gap-2">
-                            <span className="text-xs font-bold text-blue-400">⏰ {time}</span>
-                            <span className="text-xs text-gray-500">{groupRaids.length}개</span>
-                          </div>
+                          {/* 타임슬롯 헤더 - 편집 가능 */}
+                          <TimeSlotHeader
+                            time={time === '시간 미정' ? '' : time}
+                            count={groupRaids.length}
+                            onSave={async (newTime) => {
+                              await Promise.all(raidIds.map(id =>
+                                supabase.from('raids').update({ time: newTime || null }).eq('id', id)
+                              ))
+                              load()
+                            }}
+                          />
                           {/* 해당 타임슬롯 레이드들 */}
                           <div className="divide-y divide-gray-700">
                             {groupRaids.map((r, i) => (
