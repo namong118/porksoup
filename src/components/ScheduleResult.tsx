@@ -287,7 +287,7 @@ export default function ScheduleResult() {
   const load = useCallback(async () => {
     setLoading(true)
     const [raidsRes, rcRes, schedRes] = await Promise.all([
-      supabase.from('raids').select('*').order('sort_order').order('name'),
+      supabase.from('raids').select('*').eq('is_draft', false).order('sort_order').order('name'),
       supabase.from('raid_characters').select('*, character:characters(*, member:members(*))'),
       supabase.from('weekly_schedules').select('*').eq('week_start', weekStart),
     ])

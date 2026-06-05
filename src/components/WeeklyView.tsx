@@ -17,7 +17,7 @@ export default function WeeklyView() {
 
   const load = useCallback(async () => {
     const [raidsRes, rcRes] = await Promise.all([
-      supabase.from('raids').select('*').order('sort_order').order('name'),
+      supabase.from('raids').select('*').eq('is_draft', false).order('sort_order').order('name'),
       supabase.from('raid_characters').select('*, character:characters(*, member:members(*))'),
     ])
 

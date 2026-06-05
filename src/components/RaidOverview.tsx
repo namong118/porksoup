@@ -13,7 +13,7 @@ export default function RaidOverview() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('raids').select('*').order('name'),
+      supabase.from('raids').select('*').eq('is_draft', false).order('name'),
       supabase.from('raid_characters').select('*, character:characters(*, member:members(*))'),
     ]).then(([raidsRes, rcRes]) => {
       const raids: Raid[] = raidsRes.data ?? []
