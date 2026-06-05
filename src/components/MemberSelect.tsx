@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Member } from '../types'
+import { MEMBER_COLORS } from '../types'
 
 interface Props {
   currentMember: Member | null
@@ -13,6 +14,7 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [colorPickerId, setColorPickerId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.from('members').select('*').order('nickname').then(({ data }) => {
@@ -47,6 +49,12 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
     setEditingId(null)
   }
 
+  async function updateColor(id: string, color: string) {
+    await supabase.from('members').update({ color }).eq('id', id)
+    setMembers(prev => prev.map(m => m.id === id ? { ...m, color } : m))
+    setColorPickerId(null)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-md shadow-2xl">
@@ -55,7 +63,7 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
 
         <div className="flex flex-col gap-2">
           {members.map(m => (
-            <div key={m.id} className="flex items-center gap-2">
+            <div key={m.id} className="flex flex-col gap-1">
               {editingId === m.id ? (
                 <div className="flex gap-2 flex-1">
                   <input
@@ -69,23 +77,46 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
                   <button onClick={() => setEditingId(null)} className="bg-gray-600 hover:bg-gray-500 px-3 py-2 rounded-lg text-sm">취소</button>
                 </div>
               ) : (
-                <>
+                <div className="flex items-center gap-2">
+                  {/* 색상 버튼 */}
+                  <button
+                    onClick={() => setColorPickerId(colorPickerId === m.id ? null : m.id)}
+                    style={{ backgroundColor: m.color ?? '#94a3b8' }}
+                    className="w-6 h-6 rounded-full shrink-0 hover:ring-2 ring-white transition-all"
+                  />
                   <button
                     onClick={() => onSelect(m)}
-                    className={`flex-1 py-3 px-4 rounded-xl text-left font-medium transition-colors
+                    style={currentMember?.id === m.id ? { borderColor: m.color ?? '#94a3b8' } : {}}
+                    className={`flex-1 py-2.5 px-4 rounded-xl text-left font-medium transition-colors border-2
                       ${currentMember?.id === m.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
+                        ? 'text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-transparent'}`}
+                    {...(currentMember?.id === m.id ? { style: { backgroundColor: `${m.color ?? '#94a3b8'}33`, borderColor: m.color ?? '#94a3b8' } } : {})}
                   >
                     {m.nickname}
                   </button>
                   <button
                     onClick={() => { setEditingId(m.id); setEditValue(m.nickname) }}
-                    className="p-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-gray-200 transition-colors text-xs shrink-0"
+                    className="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-gray-200 transition-colors text-xs shrink-0"
                   >
                     수정
                   </button>
-                </>
+                </div>
+              )}
+
+              {/* 색상 팔레트 */}
+              {colorPickerId === m.id && (
+                <div className="flex flex-wrap gap-2 px-8 py-2 bg-gray-700 rounded-xl">
+                  {MEMBER_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => updateColor(m.id, c)}
+                      style={{ backgroundColor: c }}
+                      className={`w-7 h-7 rounded-full transition-transform hover:scale-110
+                        ${(m.color ?? '#94a3b8') === c ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'}`}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           ))}

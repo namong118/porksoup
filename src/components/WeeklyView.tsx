@@ -126,13 +126,27 @@ export default function WeeklyView() {
                               </div>
                               <div className="flex flex-wrap gap-1.5">
                                 {dps.map(c => (
-                                  <div key={c.id} className="flex items-center gap-1 bg-gray-700 rounded-lg px-2 py-1">
+                                  <div
+                                    key={c.id}
+                                    className="flex items-center gap-1 rounded-lg px-2 py-1"
+                                    style={{
+                                      backgroundColor: `${c.member?.color ?? '#94a3b8'}22`,
+                                      borderLeft: `3px solid ${c.member?.color ?? '#94a3b8'}`
+                                    }}
+                                  >
                                     <span className="text-xs font-medium text-gray-200">{c.name}</span>
                                     <span className="text-xs text-gray-500">{c.class}</span>
                                   </div>
                                 ))}
                                 {supports.map(c => (
-                                  <div key={c.id} className="flex items-center gap-1 bg-green-900/50 border border-green-800/50 rounded-lg px-2 py-1">
+                                  <div
+                                    key={c.id}
+                                    className="flex items-center gap-1 rounded-lg px-2 py-1 border border-green-800/50"
+                                    style={{
+                                      backgroundColor: `${c.member?.color ?? '#94a3b8'}22`,
+                                      borderLeft: `3px solid ${c.member?.color ?? '#94a3b8'}`
+                                    }}
+                                  >
                                     <span className="text-xs font-medium text-green-200">{c.name}</span>
                                     <span className="text-xs text-green-600">{c.class}</span>
                                   </div>

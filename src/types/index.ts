@@ -5,8 +5,24 @@ export type DayOfWeek = '월' | '화' | '수' | '목' | '금' | '토' | '일'
 export interface Member {
   id: string
   nickname: string
+  color: string
   created_at: string
 }
+
+export const MEMBER_COLORS = [
+  '#94a3b8', // 회색 (기본)
+  '#f87171', // 빨강
+  '#fb923c', // 주황
+  '#fbbf24', // 노랑
+  '#4ade80', // 초록
+  '#34d399', // 민트
+  '#38bdf8', // 하늘
+  '#60a5fa', // 파랑
+  '#a78bfa', // 보라
+  '#f472b6', // 핑크
+  '#e879f9', // 자주
+  '#f9a8d4', // 연핑크
+]
 
 export interface Character {
   id: string
