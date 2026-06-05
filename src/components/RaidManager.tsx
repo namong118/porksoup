@@ -81,8 +81,11 @@ export default function RaidManager({ member, isDraft = false }: Props) {
   async function importRaids(fromDraft: boolean) {
     const fromLabel = fromDraft ? '낙서장' : '레이드 관리'
     const toLabel = fromDraft ? '레이드 관리' : '낙서장'
-    if (!confirm(`${fromLabel}의 모든 레이드를 ${toLabel}으로 복사할까요? 기존 내용은 유지됩니다.`)) return
+    if (!confirm(`${fromLabel}의 모든 레이드를 ${toLabel}으로 가져올까요?\n기존 ${toLabel} 레이드는 전부 삭제됩니다.`)) return
     setImporting(true)
+
+    // 대상 목록의 기존 레이드 전부 삭제 (raid_characters는 cascade로 같이 삭제됨)
+    await supabase.from('raids').delete().eq('is_draft', !fromDraft)
 
     const [raidsRes, rcRes] = await Promise.all([
       supabase.from('raids').select('*').eq('is_draft', fromDraft),
