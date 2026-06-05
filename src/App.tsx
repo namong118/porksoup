@@ -71,13 +71,14 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header
-        className="border-b px-4 py-3 flex items-center justify-between"
+        className="border-b px-4 py-3 grid grid-cols-3 items-center"
         style={{
           background: `linear-gradient(to right, #1f2937, ${member.color ?? '#94a3b8'}22)`,
           borderBottomColor: `${member.color ?? '#94a3b8'}55`,
         }}
       >
-        <div>
+        <div />
+        <div className="flex flex-col items-center">
           <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
           {editingMsg ? (
             <div className="flex items-center gap-1 mt-0.5">
@@ -99,21 +100,23 @@ export default function App() {
             >{headerMsg}</p>
           )}
         </div>
-        <button
-          onClick={() => setMember(null)}
-          className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-        >
-          <span>{COLOR_EMOJI[member.color ?? '#94a3b8'] ?? '🌫️'}</span>
-          <span style={{ color: member.color ?? '#94a3b8' }} className="font-medium">{member.nickname}</span>
-          <span className="text-gray-400">▼</span>
-        </button>
+        <div className="flex justify-end">
+          <button
+            onClick={() => setMember(null)}
+            className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <span>{COLOR_EMOJI[member.color ?? '#94a3b8'] ?? '🌫️'}</span>
+            <span style={{ color: member.color ?? '#94a3b8' }} className="font-medium">{member.nickname}</span>
+            <span className="text-gray-400">▼</span>
+          </button>
+        </div>
       </header>
 
       <nav
-        className="bg-gray-800 border-b overflow-x-auto"
+        className="bg-gray-800 border-b overflow-x-auto flex justify-center"
         style={{ borderBottomColor: `${member.color ?? '#94a3b8'}40` }}
       >
-        <div className="flex items-stretch min-w-max">
+        <div className="flex items-stretch min-w-max mx-auto">
           {/* 읽기 전용 그룹 */}
           <div className="flex items-stretch px-2">
             <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">보기</span>
