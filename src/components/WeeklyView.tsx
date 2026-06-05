@@ -122,7 +122,6 @@ export default function WeeklyView() {
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-xs font-bold text-gray-300">{i + 1}</span>
                                 <span className="font-bold text-sm text-white">{raid.name}</span>
-                                <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded text-gray-400">{raid.size}인</span>
                               </div>
                               <div className="flex flex-wrap gap-1.5">
                                 {dps.map(c => (
