@@ -12,6 +12,7 @@ const COLOR_EMOJI: Record<string, string> = {
   '#22c55e': '🌲',
   '#06b6d4': '🌊',
   '#60a5fa': '💧',
+  '#7dd3fc': '💧',
   '#3b82f6': '🌌',
   '#8b5cf6': '☂️',
   '#ec4899': '🌺',
