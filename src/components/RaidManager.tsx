@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, RaidCharacter } from '../types'
+import { RAID_COLORS } from '../types'
 
 export default function RaidManager() {
   const [raids, setRaids] = useState<Raid[]>([])
@@ -10,7 +11,8 @@ export default function RaidManager() {
   const [adding, setAdding] = useState(false)
   const [expandedRaid, setExpandedRaid] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', size: 4 as 4 | 8 })
+  const [colorPickerId, setColorPickerId] = useState<string | null>(null)
+  const [form, setForm] = useState({ name: '', size: 4 as 4 | 8, color: RAID_COLORS[0] })
 
   useEffect(() => {
     Promise.all([
@@ -37,13 +39,19 @@ export default function RaidManager() {
     if (!form.name.trim()) return
     const { data, error } = await supabase
       .from('raids')
-      .insert({ name: form.name.trim(), size: form.size })
+      .insert({ name: form.name.trim(), size: form.size, color: form.color })
       .select()
       .single()
     if (error) { alert(error.message); return }
     setRaids(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-    setForm({ name: '', size: 4 })
+    setForm({ name: '', size: 4, color: RAID_COLORS[0] })
     setAdding(false)
+  }
+
+  async function updateColor(id: string, color: string) {
+    await supabase.from('raids').update({ color }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, color } : r))
+    setColorPickerId(null)
   }
 
   async function deleteRaid(id: string) {
@@ -89,17 +97,32 @@ export default function RaidManager() {
             placeholder="레이드 이름 (예: 하제버스1)"
             className="bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
           />
-          <label className="text-sm text-gray-400 flex items-center gap-2">
-            인원
-            <select
-              value={form.size}
-              onChange={e => setForm(p => ({ ...p, size: Number(e.target.value) as 4 | 8 }))}
-              className="bg-gray-600 rounded-lg px-2 py-1 outline-none"
-            >
-              <option value={4}>4인</option>
-              <option value={8}>8인</option>
-            </select>
-          </label>
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="text-sm text-gray-400 flex items-center gap-2">
+              인원
+              <select
+                value={form.size}
+                onChange={e => setForm(p => ({ ...p, size: Number(e.target.value) as 4 | 8 }))}
+                className="bg-gray-600 rounded-lg px-2 py-1 outline-none"
+              >
+                <option value={4}>4인</option>
+                <option value={8}>8인</option>
+              </select>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">색상</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {RAID_COLORS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setForm(p => ({ ...p, color: c }))}
+                    style={{ backgroundColor: c }}
+                    className={`w-5 h-5 rounded-full transition-transform ${form.color === c ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="flex gap-2">
             <button onClick={addRaid} className="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded-lg text-sm font-medium">추가</button>
             <button onClick={() => setAdding(false)} className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg text-sm">취소</button>
@@ -112,12 +135,18 @@ export default function RaidManager() {
           const chars = raidCharacters[raid.id] ?? []
           const isExpanded = expandedRaid === raid.id
           return (
-            <div key={raid.id} className="bg-gray-700 rounded-xl overflow-hidden">
+            <div key={raid.id} className="bg-gray-700 rounded-xl overflow-hidden" style={{ borderLeft: `4px solid ${raid.color ?? '#6b7280'}` }}>
               <div
                 className="px-4 py-3 flex items-center justify-between cursor-pointer"
                 onClick={() => setExpandedRaid(isExpanded ? null : raid.id)}
               >
                 <div className="flex items-center gap-2">
+                  {/* 색상 변경 버튼 */}
+                  <button
+                    onClick={e => { e.stopPropagation(); setColorPickerId(colorPickerId === raid.id ? null : raid.id) }}
+                    style={{ backgroundColor: raid.color ?? '#6b7280' }}
+                    className="w-4 h-4 rounded-full shrink-0 hover:ring-2 ring-white transition-all"
+                  />
                   <span className="font-medium">{raid.name}</span>
                   <span className="text-xs bg-gray-600 px-2 py-0.5 rounded">{raid.size}인</span>
                 </div>
@@ -132,6 +161,20 @@ export default function RaidManager() {
                   <span className="text-gray-500 text-xs">{isExpanded ? '▲' : '▼'}</span>
                 </div>
               </div>
+
+              {colorPickerId === raid.id && (
+                <div className="px-4 py-3 bg-gray-600 flex items-center gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+                  <span className="text-xs text-gray-300">색상 선택</span>
+                  {RAID_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => updateColor(raid.id, c)}
+                      style={{ backgroundColor: c }}
+                      className={`w-6 h-6 rounded-full transition-transform ${(raid.color ?? '#6b7280') === c ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                    />
+                  ))}
+                </div>
+              )}
 
               {isExpanded && (
                 <div className="border-t border-gray-600 p-4">

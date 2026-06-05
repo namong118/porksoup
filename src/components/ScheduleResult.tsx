@@ -58,7 +58,7 @@ function RaidCard({
   }
 
   return (
-    <div className="px-4 py-3 bg-gray-800">
+    <div className="px-4 py-3 bg-gray-800" style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 flex-wrap">
           {/* 순서 번호 */}

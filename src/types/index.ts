@@ -24,8 +24,24 @@ export interface Raid {
   day_of_week: DayOfWeek | null
   time: string | null
   sort_order: number
+  color: string
   created_at: string
 }
+
+export const RAID_COLORS = [
+  '#6b7280', // 회색 (기본)
+  '#ef4444', // 빨강
+  '#f97316', // 주황
+  '#eab308', // 노랑
+  '#22c55e', // 초록
+  '#14b8a6', // 청록
+  '#3b82f6', // 파랑
+  '#8b5cf6', // 보라
+  '#ec4899', // 핑크
+  '#f43f5e', // 로즈
+  '#06b6d4', // 하늘
+  '#a855f7', // 라벤더
+]
 
 export interface RaidCharacter {
   id: string
