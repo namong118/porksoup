@@ -295,16 +295,18 @@ export default function RaidManager({ member, isDraft = false }: Props) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-gray-400">{chars.length}/{raid.size}명</span>
-                  <button
-                    onClick={e => { e.stopPropagation(); toggleCompleted(raid.id, raid.completed) }}
-                    className={`text-xs px-2 py-0.5 rounded transition-colors ${
-                      raid.completed
-                        ? 'bg-gray-600 text-gray-300 hover:bg-blue-700 hover:text-blue-200'
-                        : 'bg-green-800 text-green-300 hover:bg-green-700'
-                    }`}
-                  >
-                    {raid.completed ? '↩ 되돌리기' : '✓ 완료'}
-                  </button>
+                  {!isDraft && (
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleCompleted(raid.id, raid.completed) }}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                        raid.completed
+                          ? 'bg-gray-600 text-gray-300 hover:bg-blue-700 hover:text-blue-200'
+                          : 'bg-green-800 text-green-300 hover:bg-green-700'
+                      }`}
+                    >
+                      {raid.completed ? '↩ 되돌리기' : '✓ 완료'}
+                    </button>
+                  )}
                   <button
                     onClick={e => { e.stopPropagation(); deleteRaid(raid.id) }}
                     className="text-gray-500 hover:text-red-400 text-xs transition-colors"
