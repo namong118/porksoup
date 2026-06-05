@@ -135,22 +135,22 @@ export default function RaidManager({ member, isDraft = false }: Props) {
     } else {
       if (current.length >= 8) { alert('최대 8명입니다.'); return }
 
-      // 같은 멤버의 다른 캐릭터가 이미 배정됐는지 확인
+      // 같은 멤버의 다른 캐릭터가 이미 배정됐으면 교체
       const char = allCharacters.find(c => c.id === charId)
+      let newList = [...current]
       if (char) {
-        const sameMemChar = current.find(id => {
+        const sameMemCharId = current.find(id => {
           const c = allCharacters.find(ac => ac.id === id)
           return c?.member_id === char.member_id
         })
-        if (sameMemChar) {
-          const existing = allCharacters.find(c => c.id === sameMemChar)
-          alert(`${char.member?.nickname}님의 "${existing?.name}"이 이미 배정되어 있습니다.\n한 사람당 한 캐릭터만 등록할 수 있습니다.`)
-          return
+        if (sameMemCharId) {
+          await supabase.from('raid_characters').delete().eq('raid_id', raidId).eq('character_id', sameMemCharId)
+          newList = newList.filter(id => id !== sameMemCharId)
         }
       }
 
       await supabase.from('raid_characters').insert({ raid_id: raidId, character_id: charId })
-      setRaidCharacters(prev => ({ ...prev, [raidId]: [...(prev[raidId] ?? []), charId] }))
+      setRaidCharacters(prev => ({ ...prev, [raidId]: [...newList, charId] }))
     }
   }
 
@@ -411,14 +411,15 @@ export default function RaidManager({ member, isDraft = false }: Props) {
                             <button
                               key={char.id}
                               onClick={() => toggleCharacter(raid.id, char.id)}
-                              disabled={otherCharAssigned}
                               style={isAssigned ? {
                                 backgroundColor: `${char.member?.color ?? '#94a3b8'}25`,
                                 borderColor: `${char.member?.color ?? '#94a3b8'}88`,
+                              } : otherCharAssigned ? {
+                                backgroundColor: `${char.member?.color ?? '#94a3b8'}10`,
                               } : {}}
                               className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors border
                                 ${isAssigned ? 'border-opacity-100' :
-                                  otherCharAssigned ? 'bg-gray-700 text-gray-600 cursor-not-allowed border-transparent' :
+                                  otherCharAssigned ? 'text-gray-500 border-dashed border-gray-600 hover:bg-gray-600 hover:text-gray-300' :
                                   'bg-gray-600 hover:bg-gray-500 text-gray-300 border-transparent'}`}
                             >
                               <div className="flex items-center gap-2">
@@ -431,7 +432,7 @@ export default function RaidManager({ member, isDraft = false }: Props) {
                                 </span>
                               </div>
                               {isAssigned && <span className="text-xs opacity-70" style={{ color: char.member?.color ?? '#94a3b8' }}>✓ 배정됨</span>}
-                              {otherCharAssigned && <span className="text-xs text-gray-600">다른 캐릭 배정됨</span>}
+                              {otherCharAssigned && <span className="text-xs text-gray-500">↔ 교체</span>}
                             </button>
                           )
                         })
