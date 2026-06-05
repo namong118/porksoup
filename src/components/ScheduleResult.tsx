@@ -321,10 +321,11 @@ export default function ScheduleResult() {
   async function resetAll() {
     if (!confirm('이번 주 레이드 배정을 전부 초기화할까요?')) return
     setResetting(true)
-    const toReset = results.filter(r => !r.raid.completed && r.raid.day_of_week)
-    await Promise.all(
-      toReset.map(r => supabase.from('raids').update({ day_of_week: null, time: null }).eq('id', r.raid.id))
-    )
+    // 상태(results)에 의존하지 않고 DB에서 직접 비완료 레이드 전체 초기화
+    await supabase
+      .from('raids')
+      .update({ day_of_week: null, time: null })
+      .eq('completed', false)
     setResetting(false)
     setApplied(false)
     load()
