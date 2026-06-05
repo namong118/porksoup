@@ -6,6 +6,7 @@ import { getWeekStart, WEEK_DAYS, parseLocalDate } from '../lib/weekUtils'
 interface MemberSchedule {
   member: Member
   available_days: DayOfWeek[]
+  available_times: Record<string, string[]>
   note: string | null
   submitted: boolean
 }
@@ -25,14 +26,19 @@ export default function AllSchedules() {
       const members: Member[] = membersRes.data ?? []
       const schedData = schedRes.data ?? []
 
-      const schedMap: Record<string, { available_days: DayOfWeek[]; note: string | null }> = {}
-      schedData.forEach((s: { member_id: string; available_days: DayOfWeek[]; note: string | null }) => {
-        schedMap[s.member_id] = { available_days: s.available_days, note: s.note }
+      const schedMap: Record<string, { available_days: DayOfWeek[]; available_times: Record<string, string[]>; note: string | null }> = {}
+      schedData.forEach((s: any) => {
+        schedMap[s.member_id] = {
+          available_days: s.available_days ?? [],
+          available_times: s.available_times ?? {},
+          note: s.note,
+        }
       })
 
       setSchedules(members.map(m => ({
         member: m,
         available_days: schedMap[m.id]?.available_days ?? [],
+        available_times: schedMap[m.id]?.available_times ?? {},
         note: schedMap[m.id]?.note ?? null,
         submitted: !!schedMap[m.id],
       })))
@@ -50,7 +56,6 @@ export default function AllSchedules() {
 
   const submittedCount = schedules.filter(s => s.submitted).length
 
-  // 요일별 가능 인원 수
   const dayCount = WEEK_DAYS.reduce((acc, day) => {
     acc[day] = schedules.filter(s => s.submitted && s.available_days.includes(day)).length
     return acc
@@ -84,8 +89,7 @@ export default function AllSchedules() {
             const count = dayCount[day]
             const isBest = count === maxCount && count > 0
             return (
-              <div key={day} className={`flex flex-col items-center py-2 rounded-lg
-                ${isBest ? 'bg-blue-800' : 'bg-gray-600'}`}>
+              <div key={day} className={`flex flex-col items-center py-2 rounded-lg ${isBest ? 'bg-blue-800' : 'bg-gray-600'}`}>
                 <span className={`text-xs font-bold ${isBest ? 'text-blue-200' : 'text-gray-400'}`}>{day}</span>
                 <span className={`text-lg font-bold mt-0.5 ${isBest ? 'text-white' : 'text-gray-300'}`}>{count}</span>
               </div>
@@ -96,7 +100,6 @@ export default function AllSchedules() {
 
       {/* 멤버별 스케줄 */}
       <div className="bg-gray-700 rounded-xl overflow-hidden">
-        {/* 헤더 */}
         <div className="grid grid-cols-[auto_1fr] border-b border-gray-600">
           <div className="px-4 py-2 text-xs text-gray-400 w-24">멤버</div>
           <div className="grid grid-cols-7">
@@ -113,19 +116,27 @@ export default function AllSchedules() {
           >
             <div className={`px-4 py-3 w-24 flex items-center ${!s.submitted ? 'opacity-50' : ''}`}>
               <div>
-                <p className="text-xs font-medium text-gray-200 truncate">{s.member.nickname}</p>
+                <p className="text-xs font-medium truncate" style={{ color: s.member.color ?? '#e2e8f0' }}>
+                  {s.member.nickname}
+                </p>
                 {!s.submitted && <p className="text-xs text-yellow-600">미제출</p>}
               </div>
             </div>
             <div className="grid grid-cols-7">
               {WEEK_DAYS.map(day => {
                 const available = s.submitted && s.available_days.includes(day)
+                const times = s.available_times[day] ?? ['16', '20']
+                const has16 = times.includes('16')
+                const has20 = times.includes('20')
                 return (
-                  <div key={day} className="flex items-center justify-center py-3">
+                  <div key={day} className="flex flex-col items-center justify-center py-2 gap-0.5">
                     {!s.submitted ? (
                       <span className="text-gray-700 text-xs">-</span>
                     ) : available ? (
-                      <span className="w-6 h-6 flex items-center justify-center bg-blue-700 rounded-full text-xs text-white font-bold">✓</span>
+                      <>
+                        <span className={`text-xs px-1 rounded ${has16 ? 'text-blue-300' : 'text-gray-700 line-through'}`}>16</span>
+                        <span className={`text-xs px-1 rounded ${has20 ? 'text-blue-300' : 'text-gray-700 line-through'}`}>20</span>
+                      </>
                     ) : (
                       <span className="text-gray-600 text-sm">✕</span>
                     )}
@@ -133,7 +144,6 @@ export default function AllSchedules() {
                 )
               })}
             </div>
-            {/* 특이사항 메모 */}
             {s.note && (
               <div className="col-span-2 px-4 pb-2">
                 <p className="text-xs text-yellow-400 bg-yellow-900/30 rounded px-2 py-1">💬 {s.note}</p>

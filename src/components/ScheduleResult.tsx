@@ -257,9 +257,18 @@ export default function ScheduleResult() {
     const schedules = schedRes.data ?? []
 
     const scheduleMap: Record<string, DayOfWeek[]> = {}
-    schedules.forEach((s: { member_id: string; available_days: DayOfWeek[] }) => {
-      scheduleMap[s.member_id] = s.available_days
+    const timesMap: Record<string, Record<string, string[]>> = {}
+    schedules.forEach((s: any) => {
+      scheduleMap[s.member_id] = s.available_days ?? []
+      timesMap[s.member_id] = s.available_times ?? {}
     })
+
+    // 레이드 시간이 어떤 시간대인지 판별 (16시대: '16', 20시대: '20')
+    function getTimeSlot(time: string | null): string | null {
+      if (!time) return null
+      const hour = parseInt(time.split(':')[0])
+      return hour < 18 ? '16' : '20'
+    }
 
     const results: RaidResult[] = raids.map(raid => {
       const assigned = rcData
@@ -271,9 +280,21 @@ export default function ScheduleResult() {
       const submittedIds = memberIds.filter(mid => scheduleMap[mid] !== undefined)
       const missingCount = memberIds.length - submittedIds.length
 
+      const raidTimeSlot = getTimeSlot(raid.time)
+
       const commonDays = submittedIds.length === 0
         ? []
-        : WEEK_DAYS.filter(day => submittedIds.every(mid => scheduleMap[mid].includes(day)))
+        : WEEK_DAYS.filter(day =>
+            submittedIds.every(mid => {
+              if (!scheduleMap[mid].includes(day)) return false
+              // 레이드 시간대가 정해진 경우, 해당 시간대도 가능한지 체크
+              if (raidTimeSlot) {
+                const memberTimes = timesMap[mid]?.[day] ?? ['16', '20']
+                if (!memberTimes.includes(raidTimeSlot)) return false
+              }
+              return true
+            })
+          )
 
       return { raid, characters: assigned, commonDays, missingCount, totalMembers: memberIds.length }
     })
