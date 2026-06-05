@@ -174,7 +174,7 @@ export default function RaidManager() {
                             <span>{char.name}</span>
                             <span className="text-xs text-gray-400">{char.class}</span>
                             <span className={`text-xs px-1.5 py-0.5 rounded ${char.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
-                              {char.role === 'support' ? '서포' : '딜러'}
+                              {char.role === 'support' ? '서폿' : '딜러'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
