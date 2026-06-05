@@ -13,7 +13,6 @@ export default function WeeklyView() {
     '수': [], '목': [], '금': [], '토': [], '일': [], '월': [], '화': []
   })
   const [loading, setLoading] = useState(true)
-  const [resetting, setResetting] = useState(false)
   const weekStart = getWeekStart()
 
   const load = useCallback(async () => {
@@ -48,17 +47,6 @@ export default function WeeklyView() {
 
   useEffect(() => { load() }, [load])
 
-  async function resetAll() {
-    if (!confirm('이번 주 레이드 배정을 전부 초기화할까요?')) return
-    setResetting(true)
-    const allRaids = Object.values(raidsByDay).flat().map(r => r.raid)
-    await Promise.all(
-      allRaids.map(r => supabase.from('raids').update({ day_of_week: null, time: null }).eq('id', r.id))
-    )
-    setResetting(false)
-    load()
-  }
-
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
   const weekStartDate = parseLocalDate(weekStart)
@@ -71,17 +59,10 @@ export default function WeeklyView() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-bold">이번 주 일정</h2>
-          <span className="text-xs text-gray-500">{formatDate(weekStartDate)} ~ {formatDate(weekEndDate)} · {totalRaids}개 레이드</span>
-        </div>
-        <button
-          onClick={resetAll}
-          disabled={resetting || totalRaids === 0}
-          className="text-xs px-3 py-1.5 rounded-lg bg-red-900 hover:bg-red-800 text-red-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {resetting ? '초기화 중...' : '🗑 전체 초기화'}
-        </button>
+        <h2 className="text-lg font-bold">이번 주 일정</h2>
+        <span className="text-sm text-gray-400">
+          {formatDate(weekStartDate)} ~ {formatDate(weekEndDate)} · {totalRaids}개 레이드
+        </span>
       </div>
 
       <div className="flex flex-col gap-3">

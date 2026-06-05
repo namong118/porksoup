@@ -238,6 +238,7 @@ export default function ScheduleResult() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [maxPerDay, setMaxPerDay] = useState(6)
   const [minPerDay, setMinPerDay] = useState(4)
   const weekStart = getWeekStart()
@@ -315,6 +316,18 @@ export default function ScheduleResult() {
       // sort_order 기준 재정렬
       return [...updated].sort((a, b) => a.raid.sort_order - b.raid.sort_order)
     })
+  }
+
+  async function resetAll() {
+    if (!confirm('이번 주 레이드 배정을 전부 초기화할까요?')) return
+    setResetting(true)
+    const toReset = results.filter(r => !r.raid.completed && r.raid.day_of_week)
+    await Promise.all(
+      toReset.map(r => supabase.from('raids').update({ day_of_week: null, time: null }).eq('id', r.raid.id))
+    )
+    setResetting(false)
+    setApplied(false)
+    load()
   }
 
   async function autoSchedule() {
@@ -478,6 +491,13 @@ export default function ScheduleResult() {
             편성 가능 <span className="text-green-400 font-medium">{autoSchedulable}개</span>
             {unscheduled.length > 0 && <> · 미배정 <span className="text-yellow-400 font-medium">{unscheduled.length}개</span></>}
           </p>
+          <button
+            onClick={resetAll}
+            disabled={resetting}
+            className="text-xs px-2 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-red-300 disabled:opacity-40 transition-colors"
+          >
+            {resetting ? '초기화 중...' : '🗑 전체 초기화'}
+          </button>
           <div className="flex items-center gap-2">
             <label className="text-xs text-gray-400 flex items-center gap-1.5">
               최소
