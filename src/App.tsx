@@ -26,7 +26,7 @@ export default function App() {
     { id: 'raidoverview', label: '📋 레이드 현황' },
     { id: 'raids', label: '🛡️ 레이드 관리' },
     { id: 'weeklyview', label: '📅 이번 주 일정' },
-    { id: 'result', label: '⚙️ 편성 관리' },
+    { id: 'result', label: '🗓️ 일정 관리' },
     { id: 'settings', label: '⚙️ 설정' },
     { id: 'characters', label: '⚔️ 내 캐릭터' },
   ]
