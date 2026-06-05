@@ -47,8 +47,23 @@ export default function RaidOverview() {
         <span className="text-xs text-gray-400">{data.length}개 레이드</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {data.map(({ raid, characters }) => {
+      {/* 색상별 그룹핑 */}
+      {(() => {
+        const colorGroups: Record<string, RaidWithMembers[]> = {}
+        data.forEach(r => {
+          const c = r.raid.color ?? '#6b7280'
+          if (!colorGroups[c]) colorGroups[c] = []
+          colorGroups[c].push(r)
+        })
+
+        return Object.entries(colorGroups).map(([color, group]) => (
+          <div key={color} className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
+              <span className="text-xs text-gray-400">{group.length}개</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {group.map(({ raid, characters }) => {
           const filled = characters.length
           const total = raid.size
           const supports = characters.filter(c => c.role === 'support')
@@ -108,9 +123,12 @@ export default function RaidOverview() {
                 ))}
               </div>
             </div>
-          )
-        })}
-      </div>
+              )
+            })}
+            </div>
+          </div>
+        ))
+      })()}
     </div>
   )
 }
