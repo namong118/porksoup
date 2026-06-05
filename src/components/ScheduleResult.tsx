@@ -84,7 +84,6 @@ function RaidCard({
   const [splitTime, setSplitTime] = useState('')
   const [splitting, setSplitting] = useState(false)
   const submittedCount = totalMembers - missingCount
-  const isConfirmed = currentDay ? commonDays.includes(currentDay) : false
 
   async function changeDay(day: DayOfWeek | null) {
     await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
@@ -99,63 +98,39 @@ function RaidCard({
   }
 
   return (
-    <div className="px-4 py-3 bg-gray-800" style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* 순서 번호 */}
-          {order !== undefined && (
-            <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-600 text-xs font-bold text-gray-300 shrink-0">
-              {order}
-            </span>
-          )}
+    <div className="px-3 py-2.5 bg-gray-800" style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}>
+      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto">
+        {/* 순서 번호 */}
+        {order !== undefined && (
+          <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-600 text-xs font-bold text-gray-300 shrink-0">
+            {order}
+          </span>
+        )}
 
-          {/* 순서 버튼 */}
-          <div className="flex flex-col gap-0.5 mr-1">
-            <button
-              onClick={onMoveUp}
-              disabled={!canMoveUp}
-              className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
-                ${canMoveUp ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}
-            >
-              ▲
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={!canMoveDown}
-              className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
-                ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}
-            >
-              ▼
-            </button>
-          </div>
-
-          <span className="font-medium text-sm">{raid.name}</span>
-          <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded">{raid.size}인</span>
-          {currentDay && (
-            isConfirmed
-              ? <span className="text-xs bg-green-900 text-green-300 px-1.5 py-0.5 rounded-full">✓ 확정</span>
-              : <span className="text-xs bg-yellow-900 text-yellow-400 px-1.5 py-0.5 rounded-full">⚠ 불가자 있음</span>
-          )}
+        {/* 순서 버튼 */}
+        <div className="flex flex-col gap-0.5 shrink-0">
+          <button onClick={onMoveUp} disabled={!canMoveUp}
+            className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
+              ${canMoveUp ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▲</button>
+          <button onClick={onMoveDown} disabled={!canMoveDown}
+            className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
+              ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▼</button>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">{submittedCount}/{totalMembers}명</span>
-          <button
-            onClick={() => changeDay(null)}
-            className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
-            title="미배정으로 이동"
-          >
-            ↩ 미배정
-          </button>
-          <button
-            onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
-            className="text-xs text-gray-400 hover:text-yellow-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
-            title="이 레이드만 다른 시간대로 분리"
-          >
-            ✂ 분리
-          </button>
+
+        <span className="font-medium text-sm shrink-0">{raid.name}</span>
+        <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded shrink-0">{raid.size}인</span>
+        <span className="text-xs text-gray-500 shrink-0">{submittedCount}/{totalMembers}명</span>
+
+        <div className="flex items-center gap-1 ml-auto shrink-0">
+          <button onClick={() => changeDay(null)}
+            className="text-xs text-gray-500 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700"
+            title="미배정">↩</button>
+          <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
+            className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700"
+            title="시간대 분리">✂</button>
           <button
             onClick={() => setEditing(v => !v)}
-            className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
+            className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600 shrink-0"
           >
             요일 변경
           </button>
