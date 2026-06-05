@@ -111,13 +111,13 @@ export default function WeeklyView() {
                         return (
                           <div
                             key={raid.id}
-                            className="rounded-xl overflow-hidden"
+                            className="rounded-xl overflow-hidden bg-gray-800"
                             style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
                           >
-                            <div className="px-3 py-2 bg-gray-750" style={{ backgroundColor: `${raid.color ?? '#6b7280'}18` }}>
+                            <div className="px-3 py-2">
                               <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-bold text-gray-300">{i + 1}</span>
-                                <span className="font-bold text-sm text-white">{raid.name}</span>
+                                <span className="text-xs font-bold text-gray-500">{i + 1}</span>
+                                <span className="font-bold text-sm" style={{ color: raid.color ?? '#6b7280' }}>{raid.name}</span>
                               </div>
                               <div className="flex flex-wrap gap-1.5">
                                 {dps.map(c => (
