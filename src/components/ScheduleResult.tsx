@@ -299,6 +299,13 @@ export default function ScheduleResult() {
       })
 
     const dayCount: Record<string, number> = {}
+    // 완료된 레이드가 이미 차지한 자리를 미리 반영
+    results
+      .filter(r => r.raid.completed && r.raid.day_of_week)
+      .forEach(r => {
+        const d = r.raid.day_of_week!
+        dayCount[d] = (dayCount[d] ?? 0) + 1
+      })
     // 멤버별로 어느 날 가는지 추적
     const memberDays: Record<string, Set<string>> = {}
     const updates: { id: string; day: string }[] = []
