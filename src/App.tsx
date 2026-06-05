@@ -70,7 +70,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+      <header
+        className="border-b px-4 py-3 flex items-center justify-between"
+        style={{
+          background: `linear-gradient(to right, #1f2937, ${member.color ?? '#94a3b8'}22)`,
+          borderBottomColor: `${member.color ?? '#94a3b8'}55`,
+        }}
+      >
         <div>
           <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
           {editingMsg ? (
@@ -103,7 +109,10 @@ export default function App() {
         </button>
       </header>
 
-      <nav className="bg-gray-800 border-b border-gray-700 overflow-x-auto">
+      <nav
+        className="bg-gray-800 border-b overflow-x-auto"
+        style={{ borderBottomColor: `${member.color ?? '#94a3b8'}40` }}
+      >
         <div className="flex items-stretch min-w-max">
           {/* 읽기 전용 그룹 */}
           <div className="flex items-stretch px-2">
@@ -113,9 +122,8 @@ export default function App() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
-                  ${tab === t.id
-                    ? 'border-blue-500 text-blue-400'
-                    : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                  ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
               >
                 {t.label}
               </button>
@@ -133,9 +141,8 @@ export default function App() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
-                  ${tab === t.id
-                    ? 'border-orange-500 text-orange-400'
-                    : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                  ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
               >
                 {t.label}
               </button>
