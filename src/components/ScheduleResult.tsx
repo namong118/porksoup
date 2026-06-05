@@ -469,6 +469,7 @@ export default function ScheduleResult() {
   const unscheduled: RaidResult[] = []
 
   results.forEach(r => {
+    if (r.raid.completed) return  // 완료된 레이드는 캘린더에서 제외
     if (r.raid.day_of_week) {
       raidsByDay[r.raid.day_of_week as DayOfWeek].push(r)
     } else {
