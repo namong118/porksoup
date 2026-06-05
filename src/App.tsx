@@ -9,9 +9,10 @@ import ClassManager from './components/ClassManager'
 import AllSchedules from './components/AllSchedules'
 import RaidOverview from './components/RaidOverview'
 import WeeklyView from './components/WeeklyView'
+import FunTools from './components/FunTools'
 import type { Member } from './types'
 
-type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'settings' | 'draft'
+type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'settings' | 'draft' | 'fun'
 
 const READ_TABS: { id: Tab; label: string }[] = [
   { id: 'weeklyview', label: '📅 이번 주 일정' },
@@ -25,6 +26,7 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
   { id: 'raids', label: '🛡️ 레이드 관리' },
   { id: 'draft', label: '📝 낙서장' },
   { id: 'characters', label: '⚔️ 내 캐릭터' },
+  { id: 'fun', label: '🎮 게임' },
 ]
 
 export default function App() {
@@ -135,6 +137,7 @@ export default function App() {
         {tab === 'draft' && <RaidManager member={member} isDraft={true} />}
         {tab === 'settings' && <ClassManager />}
         {tab === 'characters' && <CharacterManager member={member} />}
+        {tab === 'fun' && <FunTools />}
       </main>
     </div>
   )
