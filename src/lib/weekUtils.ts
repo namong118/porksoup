@@ -3,21 +3,24 @@ import type { DayOfWeek } from '../types'
 // 로스트아크 주간 초기화: 수요일 오전 6시 기준
 export function getWeekStart(): string {
   const now = new Date()
-  // 수요일 = 3, 목=4, 금=5, 토=6, 일=0, 월=1, 화=2
-  const day = now.getDay()
-  const daysSinceWed = (day + 7 - 3) % 7
-  const wednesday = new Date(now)
-  wednesday.setDate(now.getDate() - daysSinceWed)
-  wednesday.setHours(6, 0, 0, 0)
+  const day = now.getDay() // 0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토
 
-  // 수요일이지만 오전 6시 이전이면 지난 주 수요일로
-  if (now < wednesday) {
-    wednesday.setDate(wednesday.getDate() - 7)
+  // 수요일(3) 기준으로 며칠 전인지 계산
+  // 수=0, 목=1, 금=2, 토=3, 일=4, 월=5, 화=6
+  const daysFromWed = ((day - 3) + 7) % 7
+
+  // 시간 영향 없이 오늘 자정(로컬) 기준으로 날짜 객체 생성
+  const wed = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  wed.setDate(wed.getDate() - daysFromWed)
+
+  // 수요일 당일 오전 6시 이전이면 지난 주로
+  if (daysFromWed === 0 && now.getHours() < 6) {
+    wed.setDate(wed.getDate() - 7)
   }
 
-  const y = wednesday.getFullYear()
-  const m = String(wednesday.getMonth() + 1).padStart(2, '0')
-  const d = String(wednesday.getDate()).padStart(2, '0')
+  const y = wed.getFullYear()
+  const m = String(wed.getMonth() + 1).padStart(2, '0')
+  const d = String(wed.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
 
