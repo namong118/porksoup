@@ -3,6 +3,21 @@ import { supabase } from '../lib/supabase'
 import type { Member } from '../types'
 import { MEMBER_COLORS } from '../types'
 
+const COLOR_EMOJI: Record<string, string> = {
+  '#94a3b8': '🩶',
+  '#f87171': '❤️',
+  '#fb923c': '🧡',
+  '#fbbf24': '💛',
+  '#84cc16': '🌿',
+  '#22c55e': '💚',
+  '#06b6d4': '🩵',
+  '#60a5fa': '🔷',
+  '#3b82f6': '💙',
+  '#8b5cf6': '💜',
+  '#ec4899': '🩷',
+  '#f43f5e': '🌹',
+}
+
 interface Props {
   currentMember: Member | null
   onSelect: (member: Member) => void
@@ -99,7 +114,7 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
                         : 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-transparent'}`}
                     {...(currentMember?.id === m.id ? { style: { backgroundColor: `${m.color ?? '#94a3b8'}33`, borderColor: m.color ?? '#94a3b8' } } : {})}
                   >
-                    {m.nickname}
+                    <span className="mr-1.5">{COLOR_EMOJI[m.color ?? '#94a3b8'] ?? '🩶'}</span>{m.nickname}
                   </button>
                   <button
                     onClick={() => { setEditingId(m.id); setEditValue(m.nickname) }}
