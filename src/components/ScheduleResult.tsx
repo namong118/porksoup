@@ -518,69 +518,55 @@ export default function ScheduleResult() {
         </span>
       </div>
 
-      <div className="bg-gray-700 rounded-xl px-4 py-3 mb-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">
-            편성 가능 <span className="text-green-400 font-medium">{autoSchedulable}개</span>
-            {unscheduled.length > 0 && <> · 미배정 <span className="text-yellow-400 font-medium">{unscheduled.length}개</span></>}
-          </p>
-          <button
-            onClick={resetAll}
-            disabled={resetting}
-            className="text-xs px-2 py-1 rounded-lg bg-red-900 hover:bg-red-800 text-red-300 disabled:opacity-40 transition-colors"
-          >
-            {resetting ? '초기화 중...' : '🗑 전체 초기화'}
-          </button>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-400 flex items-center gap-1.5">
-              최소
-              <input
-                type="number"
-                min={1}
-                max={maxPerDay}
-                value={minPerDay}
-                onChange={e => setMinPerDay(Math.max(1, Number(e.target.value)))}
-                className="w-10 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
-              />
-            </label>
-            <span className="text-gray-600 text-xs">~</span>
-            <label className="text-xs text-gray-400 flex items-center gap-1.5">
-              최대
-              <input
-                type="number"
-                min={minPerDay}
-                max={20}
-                value={maxPerDay}
-                onChange={e => setMaxPerDay(Math.max(minPerDay, Number(e.target.value)))}
-                className="w-10 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
-              />
-              개/일
-            </label>
-            <span className="text-gray-600 text-xs">·</span>
-            <label className="text-xs text-gray-400 flex items-center gap-1.5">
-              별 합계
-              <input
-                type="number"
-                min={1}
-                max={99}
-                value={maxStarsPerDay}
-                onChange={e => setMaxStarsPerDay(Math.max(1, Number(e.target.value)))}
-                className="w-12 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-yellow-500"
-              />
-              ★/일
-            </label>
-            <button
-              onClick={autoSchedule}
-              disabled={applying || autoSchedulable === 0}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors
-                ${applied ? 'bg-green-700 text-green-200' :
-                  autoSchedulable === 0 ? 'bg-gray-600 text-gray-500 cursor-not-allowed' :
-                  'bg-blue-600 hover:bg-blue-500 text-white'}`}
-            >
-              {applying ? '적용 중...' : applied ? '✓ 완료' : '자동 편성'}
-            </button>
-          </div>
-        </div>
+      <div className="bg-gray-700 rounded-xl px-3 py-2.5 mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
+        {/* 상태 */}
+        <span className="text-xs text-gray-400 shrink-0">
+          <span className="text-green-400 font-medium">{autoSchedulable}</span>편성
+          {unscheduled.length > 0 && <> · <span className="text-yellow-400">{unscheduled.length}</span>미배정</>}
+        </span>
+
+        <div className="w-px h-4 bg-gray-500 shrink-0" />
+
+        {/* 초기화 */}
+        <button
+          onClick={resetAll}
+          disabled={resetting}
+          className="text-xs px-2 py-1 rounded bg-red-900 hover:bg-red-800 text-red-300 disabled:opacity-40 transition-colors shrink-0"
+        >
+          🗑
+        </button>
+
+        <div className="w-px h-4 bg-gray-500 shrink-0" />
+
+        {/* 최소~최대 */}
+        <span className="text-xs text-gray-500 shrink-0">레이드</span>
+        <input type="number" min={1} max={maxPerDay} value={minPerDay}
+          onChange={e => setMinPerDay(Math.max(1, Number(e.target.value)))}
+          className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500 shrink-0" />
+        <span className="text-xs text-gray-500 shrink-0">~</span>
+        <input type="number" min={minPerDay} max={20} value={maxPerDay}
+          onChange={e => setMaxPerDay(Math.max(minPerDay, Number(e.target.value)))}
+          className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500 shrink-0" />
+
+        <div className="w-px h-4 bg-gray-500 shrink-0" />
+
+        {/* 별 합계 */}
+        <span className="text-xs text-yellow-500 shrink-0">★</span>
+        <input type="number" min={1} max={99} value={maxStarsPerDay}
+          onChange={e => setMaxStarsPerDay(Math.max(1, Number(e.target.value)))}
+          className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-yellow-500 shrink-0" />
+
+        {/* 자동 편성 버튼 */}
+        <button
+          onClick={autoSchedule}
+          disabled={applying || autoSchedulable === 0}
+          className={`ml-auto px-3 py-1.5 rounded-lg text-xs font-medium transition-colors shrink-0
+            ${applied ? 'bg-green-700 text-green-200' :
+              autoSchedulable === 0 ? 'bg-gray-600 text-gray-500 cursor-not-allowed' :
+              'bg-blue-600 hover:bg-blue-500 text-white'}`}
+        >
+          {applying ? '...' : applied ? '✓ 완료' : '자동 편성'}
+        </button>
       </div>
 
       {/* 메인 레이아웃: 캘린더 + 사이드바 */}
