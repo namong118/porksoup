@@ -153,9 +153,9 @@ function RaidCard({
   }
 
   return (
-    <div className="px-3 py-2 bg-gray-800" style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}>
-      {/* 1행: 순서 + 레이드 정보 */}
-      <div className="flex items-center gap-2 mb-1.5">
+    <div className="px-4 py-3 bg-gray-800" style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}>
+      {/* 1행: 순서 + 레이드명 + 인원 */}
+      <div className="flex items-center gap-2 mb-3">
         {order !== undefined && (
           <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-600 text-xs font-bold text-gray-300 shrink-0">
             {order}
@@ -169,24 +169,26 @@ function RaidCard({
             className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
               ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▼</button>
         </div>
-        <span className="font-medium text-sm">{raid.name}</span>
+        <span className="font-semibold text-sm">{raid.name}</span>
         <span className="text-xs text-gray-500 ml-auto">{submittedCount}/{totalMembers}명</span>
       </div>
 
-      {/* 2행: 액션 버튼 */}
-      <div className="flex items-center gap-1">
+      {/* 2행: 버튼 */}
+      <div className="flex items-center gap-1 mb-3">
         <button onClick={() => changeDay(null)}
-          className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-0.5 rounded hover:bg-gray-700"
-          title="미배정">↩ 미배정</button>
+          className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-700">
+          ↩ 미배정
+        </button>
         <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
-          className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-2 py-0.5 rounded hover:bg-gray-700"
-          title="시간대 분리">✂ 분리</button>
+          className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-2 py-1 rounded hover:bg-gray-700">
+          ✂ 분리
+        </button>
         <button onClick={() => setEditing(v => !v)}
-          className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600">
+          className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-1 rounded bg-gray-700 hover:bg-gray-600">
           요일 변경
         </button>
         <button onClick={complete}
-          className="text-xs text-green-500 hover:text-green-300 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-green-900 ml-auto">
+          className="text-xs text-green-400 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/50 hover:bg-green-800 ml-auto font-medium">
           ✓ 완료
         </button>
       </div>
@@ -241,28 +243,29 @@ function RaidCard({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-1">
+      <div className="grid grid-cols-4 gap-1.5">
         {[...characters]
           .sort((a, b) => {
             if (a.role === b.role) return 0
             return a.role === 'support' ? 1 : -1
           })
           .map(char => (
-          <span
+          <div
             key={char.id}
-            className="text-xs px-2 py-0.5 rounded-full"
+            className="flex flex-col px-2 py-1.5 rounded-lg"
             style={{
-              backgroundColor: `${char.member?.color ?? '#94a3b8'}22`,
-              color: char.member?.color ?? '#e2e8f0',
-              border: `1px solid ${char.member?.color ?? '#94a3b8'}55`,
+              backgroundColor: `${char.member?.color ?? '#94a3b8'}18`,
+              borderLeft: `3px solid ${char.member?.color ?? '#94a3b8'}`,
             }}
           >
-            {char.name}
-            <span className="opacity-60 ml-1">{char.class}</span>
-          </span>
+            <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>
+              {char.name}
+            </span>
+            <span className="text-xs text-gray-500 truncate">{char.class}</span>
+          </div>
         ))}
         {characters.length === 0 && (
-          <span className="text-xs text-gray-600">배정된 캐릭터 없음</span>
+          <span className="text-xs text-gray-600 col-span-4">배정된 캐릭터 없음</span>
         )}
       </div>
     </div>
