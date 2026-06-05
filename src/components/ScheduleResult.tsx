@@ -115,6 +115,12 @@ function RaidCard({
   order,
   pastDays,
   onTimeChange,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isDragOver,
+  isDragging,
 }: {
   raidResult: RaidResult
   currentDay: DayOfWeek | null
@@ -126,6 +132,12 @@ function RaidCard({
   order?: number
   pastDays: Set<DayOfWeek>
   onTimeChange: () => void
+  onDragStart: () => void
+  onDragOver: () => void
+  onDrop: () => void
+  onDragEnd: () => void
+  isDragOver: boolean
+  isDragging: boolean
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers } = raidResult
   const [editing, setEditing] = useState(false)
@@ -152,7 +164,15 @@ function RaidCard({
   }
 
   return (
-    <div className="px-4 py-3 bg-gray-800" style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}>
+    <div
+      draggable
+      onDragStart={e => { e.stopPropagation(); onDragStart() }}
+      onDragOver={e => { e.preventDefault(); e.stopPropagation(); onDragOver() }}
+      onDrop={e => { e.preventDefault(); e.stopPropagation(); onDrop() }}
+      onDragEnd={onDragEnd}
+      className={`px-4 py-3 bg-gray-800 cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-inset ring-blue-400' : ''}`}
+      style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
+    >
       {/* 1행: 순서 + 레이드명 + 인원 */}
       <div className="flex items-center gap-2 mb-3">
         {order !== undefined && (
@@ -280,6 +300,8 @@ export default function ScheduleResult() {
   const [maxPerDay, setMaxPerDay] = useState(6)
   const [minPerDay, setMinPerDay] = useState(4)
   const [maxStarsPerDay, setMaxStarsPerDay] = useState(15)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   const weekStart = getWeekStart()
   const pastDays = getPastDays(weekStart)
 
@@ -348,6 +370,40 @@ export default function ScheduleResult() {
       r.raid.id === raidId ? { ...r, raid: { ...r.raid, day_of_week: day } } : r
     ))
     setApplied(false)
+  }
+
+  async function handleDropOnRaid(targetResult: RaidResult) {
+    if (!dragId || dragId === targetResult.raid.id) {
+      setDragId(null); setOverId(null); return
+    }
+    const draggedResult = results.find(r => r.raid.id === dragId)
+    if (!draggedResult || draggedResult.raid.day_of_week !== targetResult.raid.day_of_week) {
+      setDragId(null); setOverId(null); return
+    }
+    const day = draggedResult.raid.day_of_week as DayOfWeek
+    const targetTime = targetResult.raid.time ?? null
+
+    // 해당 요일 레이드 순서대로 정렬
+    const dayRaids = results
+      .filter(r => r.raid.day_of_week === day)
+      .sort((a, b) => (a.raid.sort_order ?? 0) - (b.raid.sort_order ?? 0))
+
+    // 드래그 대상 빼고 타겟 위치에 삽입
+    const withoutDragged = dayRaids.filter(r => r.raid.id !== dragId)
+    const targetIdx = withoutDragged.findIndex(r => r.raid.id === targetResult.raid.id)
+    withoutDragged.splice(targetIdx, 0, draggedResult)
+
+    // sort_order 업데이트 + 드래그한 레이드 시간 변경
+    await Promise.all(withoutDragged.map((r, i) =>
+      supabase.from('raids').update({
+        sort_order: i,
+        ...(r.raid.id === dragId ? { time: targetTime } : {}),
+      }).eq('id', r.raid.id)
+    ))
+
+    setDragId(null)
+    setOverId(null)
+    load()
   }
 
   async function handleMove(dayRaids: RaidResult[], index: number, direction: 'up' | 'down') {
@@ -692,6 +748,12 @@ export default function ScheduleResult() {
                                 order={i + 1}
                                 pastDays={pastDays}
                                 onTimeChange={load}
+                                onDragStart={() => setDragId(r.raid.id)}
+                                onDragOver={() => setOverId(r.raid.id)}
+                                onDrop={() => handleDropOnRaid(r)}
+                                onDragEnd={() => { setDragId(null); setOverId(null) }}
+                                isDragOver={overId === r.raid.id && dragId !== r.raid.id}
+                                isDragging={dragId === r.raid.id}
                               />
                             ))}
                           </div>
