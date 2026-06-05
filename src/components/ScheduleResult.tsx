@@ -66,6 +66,7 @@ function RaidCard({
   canMoveDown,
   order,
   pastDays,
+  onTimeChange,
 }: {
   raidResult: RaidResult
   currentDay: DayOfWeek | null
@@ -76,9 +77,12 @@ function RaidCard({
   canMoveDown: boolean
   order?: number
   pastDays: Set<DayOfWeek>
+  onTimeChange: () => void
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers } = raidResult
   const [editing, setEditing] = useState(false)
+  const [splitTime, setSplitTime] = useState('')
+  const [splitting, setSplitting] = useState(false)
   const submittedCount = totalMembers - missingCount
   const isConfirmed = currentDay ? commonDays.includes(currentDay) : false
 
@@ -86,6 +90,12 @@ function RaidCard({
     await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setEditing(false)
+  }
+
+  async function saveSplitTime() {
+    await supabase.from('raids').update({ time: splitTime || null }).eq('id', raid.id)
+    setSplitting(false)
+    onTimeChange()
   }
 
   return (
@@ -130,6 +140,13 @@ function RaidCard({
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500">{submittedCount}/{totalMembers}명</span>
           <button
+            onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
+            className="text-xs text-gray-400 hover:text-yellow-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
+            title="이 레이드만 다른 시간대로 분리"
+          >
+            ✂ 분리
+          </button>
+          <button
             onClick={() => setEditing(v => !v)}
             className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
           >
@@ -137,6 +154,23 @@ function RaidCard({
           </button>
         </div>
       </div>
+
+      {splitting && (
+        <div className="mb-2 p-3 bg-gray-700 rounded-xl flex items-center gap-2">
+          <span className="text-xs text-gray-300">이 레이드 시간:</span>
+          <input
+            autoFocus
+            value={splitTime}
+            onChange={e => setSplitTime(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') saveSplitTime(); if (e.key === 'Escape') setSplitting(false) }}
+            placeholder="16:10"
+            className="bg-gray-600 rounded px-2 py-1 text-sm font-bold outline-none focus:ring-1 ring-yellow-500 w-20"
+          />
+          <button onClick={saveSplitTime} className="text-yellow-400 text-xs hover:text-yellow-300 font-medium">적용</button>
+          <button onClick={() => setSplitting(false)} className="text-gray-500 text-xs">취소</button>
+          <span className="text-xs text-gray-500 ml-auto">다른 시간 입력 시 새 타임슬롯으로 분리됨</span>
+        </div>
+      )}
 
       {editing && (
         <div className="mb-3 p-3 bg-gray-700 rounded-xl">
@@ -550,6 +584,7 @@ export default function ScheduleResult() {
                                 canMoveDown={i < groupRaids.length - 1}
                                 order={i + 1}
                                 pastDays={pastDays}
+                                onTimeChange={load}
                               />
                             ))}
                           </div>
@@ -580,6 +615,7 @@ export default function ScheduleResult() {
                   canMoveUp={i > 0}
                   canMoveDown={i < unscheduled.length - 1}
                   pastDays={pastDays}
+                  onTimeChange={load}
                 />
               </div>
             ))}
