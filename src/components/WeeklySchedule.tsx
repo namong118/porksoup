@@ -134,10 +134,31 @@ export default function WeeklySchedule({ member }: Props) {
           <tbody>
             {WEEK_DAYS.map((day, i) => {
               const isAnySelected = HOURS.some(h => selected.has(cellKey(day, h)))
+              const isAllSelected = HOURS.every(h => selected.has(cellKey(day, h)))
+
+              function toggleAllDay() {
+                setSaved(false)
+                setSelected(prev => {
+                  const next = new Set(prev)
+                  if (isAllSelected) {
+                    HOURS.forEach(h => next.delete(cellKey(day, h)))
+                  } else {
+                    HOURS.forEach(h => next.add(cellKey(day, h)))
+                  }
+                  return next
+                })
+              }
+
               return (
                 <tr key={day} className={i < WEEK_DAYS.length - 1 ? 'border-b border-gray-600' : ''}>
-                  <td className={`py-2 px-2 text-center text-xs font-bold transition-colors
-                    ${isAnySelected ? 'text-white bg-gray-700' : 'text-gray-600 bg-gray-800'}`}>
+                  <td
+                    onClick={toggleAllDay}
+                    title="클릭: 하루 전체 선택/해제"
+                    className={`py-2 px-2 text-center text-xs font-bold cursor-pointer transition-colors
+                      ${isAllSelected ? 'text-blue-300 bg-blue-900/40' :
+                        isAnySelected ? 'text-white bg-gray-700' :
+                        'text-gray-600 bg-gray-800 hover:bg-gray-700 hover:text-gray-400'}`}
+                  >
                     {day}
                   </td>
                   {HOURS.map(hour => {
