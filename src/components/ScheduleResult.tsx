@@ -157,7 +157,12 @@ function RaidCard({
       )}
 
       <div className="flex flex-wrap gap-1">
-        {characters.map(char => (
+        {[...characters]
+          .sort((a, b) => {
+            if (a.role === b.role) return 0
+            return a.role === 'support' ? 1 : -1
+          })
+          .map(char => (
           <span key={char.id} className={`text-xs px-2 py-0.5 rounded-full
             ${char.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-300'}`}>
             {char.name}
