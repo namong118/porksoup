@@ -176,6 +176,7 @@ export default function ScheduleResult() {
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [maxPerDay, setMaxPerDay] = useState(6)
+  const [minPerDay, setMinPerDay] = useState(4)
   const weekStart = getWeekStart()
 
   const load = useCallback(async () => {
@@ -254,35 +255,50 @@ export default function ScheduleResult() {
 
   async function autoSchedule() {
     setApplying(true)
+    const MIN = minPerDay
+    const MAX = maxPerDay
 
-    // 하루 최대 레이드 수: 이미 배정된 레이드도 포함해서 카운트
-    const MAX_PER_DAY = maxPerDay
-    const dayCount: Record<string, number> = {}
-
-    // 이미 배정된 레이드 카운트
-    results.forEach(r => {
-      if (r.raid.day_of_week && r.commonDays.length === 0) {
-        dayCount[r.raid.day_of_week] = (dayCount[r.raid.day_of_week] ?? 0) + 1
-      }
+    // 각 요일에 몇 개의 레이드가 갈 수 있는지 파악
+    const dayPotential: Partial<Record<DayOfWeek, number>> = {}
+    WEEK_DAYS.forEach(day => {
+      dayPotential[day] = results.filter(r => r.commonDays.includes(day)).length
     })
 
-    const toUpdate = results.filter(r => r.commonDays.length > 0)
+    // MIN 이상 채울 수 있는 요일만 유효
+    const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN))
+
+    // 유효 요일이 있는 레이드만 대상, 가능 요일 적은 것부터 (제약 많은 것 우선)
+    const toSchedule = results
+      .filter(r => r.commonDays.some(d => validDays.has(d)))
+      .sort((a, b) => {
+        const aValid = a.commonDays.filter(d => validDays.has(d)).length
+        const bValid = b.commonDays.filter(d => validDays.has(d)).length
+        return aValid - bValid
+      })
+
+    const dayCount: Record<string, number> = {}
     const updates: { id: string; day: string }[] = []
 
-    for (const { raid, commonDays } of toUpdate) {
-      // 기존 고정 요일이 공통 가능이고 여유 있으면 유지
-      const candidates = commonDays.includes(raid.day_of_week as DayOfWeek)
-        ? [raid.day_of_week as DayOfWeek, ...commonDays.filter(d => d !== raid.day_of_week)]
-        : commonDays
+    for (const { raid, commonDays } of toSchedule) {
+      const available = commonDays.filter(d => validDays.has(d) && (dayCount[d] ?? 0) < MAX)
+      if (available.length === 0) continue
 
-      const bestDay = candidates.find(d => (dayCount[d] ?? 0) < MAX_PER_DAY)
-      if (bestDay) {
-        dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
-        updates.push({ id: raid.id, day: bestDay })
-      }
+      // 기존 요일 유지 or 가장 많이 채워진 날 우선(집중 배치)
+      const keepExisting = raid.day_of_week && available.includes(raid.day_of_week as DayOfWeek)
+      const bestDay = keepExisting
+        ? raid.day_of_week as string
+        : [...available].sort((a, b) => (dayCount[b] ?? 0) - (dayCount[a] ?? 0))[0]
+
+      dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
+      updates.push({ id: raid.id, day: bestDay })
     }
 
-    await Promise.all(updates.map(({ id, day }) =>
+    // MIN 미만인 날은 제거 (혼자 or 소수만 오는 날 방지)
+    const dayFinal: Record<string, number> = {}
+    updates.forEach(u => { dayFinal[u.day] = (dayFinal[u.day] ?? 0) + 1 })
+    const finalUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
+
+    await Promise.all(finalUpdates.map(({ id, day }) =>
       supabase.from('raids').update({ day_of_week: day }).eq('id', id)
     ))
 
@@ -330,16 +346,28 @@ export default function ScheduleResult() {
           </p>
           <div className="flex items-center gap-2">
             <label className="text-xs text-gray-400 flex items-center gap-1.5">
-              하루 최대
+              최소
               <input
                 type="number"
                 min={1}
+                max={maxPerDay}
+                value={minPerDay}
+                onChange={e => setMinPerDay(Math.max(1, Number(e.target.value)))}
+                className="w-10 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
+              />
+            </label>
+            <span className="text-gray-600 text-xs">~</span>
+            <label className="text-xs text-gray-400 flex items-center gap-1.5">
+              최대
+              <input
+                type="number"
+                min={minPerDay}
                 max={20}
                 value={maxPerDay}
-                onChange={e => setMaxPerDay(Math.max(1, Number(e.target.value)))}
-                className="w-12 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
+                onChange={e => setMaxPerDay(Math.max(minPerDay, Number(e.target.value)))}
+                className="w-10 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
               />
-              개
+              개/일
             </label>
             <button
               onClick={autoSchedule}
