@@ -47,7 +47,7 @@ export default function RaidOverview() {
         <span className="text-xs text-gray-400">{data.length}개 레이드</span>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {data.map(({ raid, characters }) => {
           const filled = characters.length
           const total = raid.size
@@ -59,89 +59,53 @@ export default function RaidOverview() {
           return (
             <div
               key={raid.id}
-              className="bg-gray-700 rounded-xl overflow-hidden"
-              style={{ borderLeft: `4px solid ${color}` }}
+              className="bg-gray-700 rounded-xl overflow-hidden flex flex-col"
             >
               {/* 헤더 */}
-              <div className="px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="font-bold">{raid.name}</span>
-                  <span className="text-xs bg-gray-600 px-2 py-0.5 rounded">{total}인</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* 서폿 충족 여부 */}
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${supportOk ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                    서폿 {supports.length}/{supportNeeded(total)}
-                  </span>
-                  {/* 인원 진행바 */}
-                  <span className={`text-xs font-medium ${filled === total ? 'text-green-400' : 'text-gray-400'}`}>
-                    {filled}/{total}명
+              <div
+                className="px-3 py-2 flex items-center justify-between"
+                style={{ backgroundColor: `${color}33`, borderBottom: `2px solid ${color}` }}
+              >
+                <span className="text-xs font-bold text-white truncate">{raid.name}</span>
+                <div className="flex items-center gap-1 shrink-0 ml-1">
+                  <span className={`text-xs ${supportOk ? 'text-green-400' : 'text-red-400'}`}>
+                    {filled}/{total}
                   </span>
                 </div>
               </div>
 
-              {/* 인원 진행바 */}
-              <div className="px-4 pb-1">
-                <div className="h-1 bg-gray-600 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${(filled / total) * 100}%`, backgroundColor: color }}
-                  />
-                </div>
-              </div>
-
-              {/* 캐릭터 목록 */}
-              <div className="px-4 py-3">
-                {characters.length === 0 ? (
-                  <p className="text-xs text-gray-500">배정된 캐릭터 없음</p>
-                ) : (
-                  <div className="flex flex-col gap-1.5">
-                    {/* 딜러 */}
-                    {dps.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {dps.map(char => (
-                          <div key={char.id} className="flex items-center gap-1.5 bg-gray-600 rounded-lg px-2.5 py-1.5">
-                            <div>
-                              <span className="text-xs font-medium text-gray-200">{char.name}</span>
-                              <span className="text-xs text-gray-400 ml-1">{char.class}</span>
-                            </div>
-                            <span className="text-xs text-gray-500 border-l border-gray-500 pl-1.5">{char.member?.nickname}</span>
-                          </div>
-                        ))}
-                        {/* 빈 딜러 슬롯 */}
-                        {Array.from({ length: Math.max(0, total - supportNeeded(total) - dps.length) }).map((_, i) => (
-                          <div key={`empty-dps-${i}`} className="flex items-center bg-gray-700 border border-dashed border-gray-500 rounded-lg px-2.5 py-1.5">
-                            <span className="text-xs text-gray-600">빈 슬롯</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* 서포터 */}
-                    {(supports.length > 0 || !supportOk) && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {supports.map(char => (
-                          <div key={char.id} className="flex items-center gap-1.5 bg-green-900/60 border border-green-800 rounded-lg px-2.5 py-1.5">
-                            <div>
-                              <span className="text-xs font-medium text-green-200">{char.name}</span>
-                              <span className="text-xs text-green-400 ml-1">{char.class}</span>
-                            </div>
-                            <span className="text-xs text-green-600 border-l border-green-700 pl-1.5">{char.member?.nickname}</span>
-                          </div>
-                        ))}
-                        {/* 빈 서폿 슬롯 */}
-                        {Array.from({ length: Math.max(0, supportNeeded(total) - supports.length) }).map((_, i) => (
-                          <div key={`empty-sup-${i}`} className="flex items-center bg-gray-700 border border-dashed border-green-800 rounded-lg px-2.5 py-1.5">
-                            <span className="text-xs text-green-800">서폿 필요</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              {/* 멤버 목록 */}
+              <div className="p-2 flex flex-col gap-1 flex-1">
+                {/* 딜러 */}
+                {dps.map(char => (
+                  <div key={char.id} className="flex items-center gap-1">
+                    <span className="text-xs text-gray-200 font-medium truncate">{char.name}</span>
+                    <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
                   </div>
-                )}
+                ))}
+                {/* 빈 딜러 슬롯 */}
+                {Array.from({ length: Math.max(0, total - supportNeeded(total) - dps.length) }).map((_, i) => (
+                  <div key={`ed-${i}`} className="flex items-center">
+                    <span className="text-xs text-gray-700">— 빈 자리</span>
+                  </div>
+                ))}
+
+                {/* 구분선 (딜러/서폿) */}
+                {total > 0 && <div className="border-t border-gray-600 my-0.5" />}
+
+                {/* 서포터 */}
+                {supports.map(char => (
+                  <div key={char.id} className="flex items-center gap-1">
+                    <span className="text-xs text-green-300 font-medium truncate">{char.name}</span>
+                    <span className="text-xs text-green-600 truncate shrink-0">{char.class}</span>
+                  </div>
+                ))}
+                {/* 빈 서폿 슬롯 */}
+                {Array.from({ length: Math.max(0, supportNeeded(total) - supports.length) }).map((_, i) => (
+                  <div key={`es-${i}`} className="flex items-center">
+                    <span className="text-xs text-green-900">— 서폿 필요</span>
+                  </div>
+                ))}
               </div>
             </div>
           )
