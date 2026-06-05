@@ -127,8 +127,25 @@ export default function AllSchedules() {
                 const available = s.submitted && s.available_days.includes(day)
                 const times: string[] = s.available_times[day] ?? []
                 const isAllDay = times.length >= 15
-                const first = times[0]
-                const last = times[times.length - 1]
+
+                // 연속 구간 분석
+                function getRanges(hours: string[]): string {
+                  if (hours.length === 0) return ''
+                  const nums = hours.map(Number).sort((a, b) => a - b)
+                  const ranges: string[] = []
+                  let start = nums[0], prev = nums[0]
+                  for (let i = 1; i < nums.length; i++) {
+                    if (nums[i] === prev + 1) {
+                      prev = nums[i]
+                    } else {
+                      ranges.push(start === prev ? `${start}` : `${start}~${prev}`)
+                      start = nums[i]; prev = nums[i]
+                    }
+                  }
+                  ranges.push(start === prev ? `${start}` : `${start}~${prev}`)
+                  return ranges.join(', ')
+                }
+
                 return (
                   <div key={day} className="flex flex-col items-center justify-center py-2 gap-0.5">
                     {!s.submitted ? (
@@ -138,7 +155,7 @@ export default function AllSchedules() {
                         <span className="w-6 h-6 flex items-center justify-center bg-blue-700 rounded-full text-xs text-white font-bold">✓</span>
                       ) : (
                         <span className="text-xs text-blue-300 text-center leading-tight">
-                          {times.length > 0 ? `${first}~${last}` : '✓'}
+                          {getRanges(times)}
                         </span>
                       )
                     ) : (
