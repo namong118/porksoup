@@ -5,9 +5,10 @@ import { RAID_COLORS } from '../types'
 
 interface Props {
   member: Member
+  isDraft?: boolean
 }
 
-export default function RaidManager({ member }: Props) {
+export default function RaidManager({ member, isDraft = false }: Props) {
   const [raids, setRaids] = useState<Raid[]>([])
   const [allCharacters, setAllCharacters] = useState<(Character & { member: Member })[]>([])
   const [allMembers, setAllMembers] = useState<Member[]>([])
@@ -17,10 +18,11 @@ export default function RaidManager({ member }: Props) {
   const [selectedMember, setSelectedMember] = useState<string | null>(null)
   const [colorPickerId, setColorPickerId] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', size: 4 as 4 | 8, color: RAID_COLORS[0] })
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     Promise.all([
-      supabase.from('raids').select('*').order('name'),
+      supabase.from('raids').select('*').eq('is_draft', isDraft).order('name'),
       supabase.from('characters').select('*, member:members(*)').order('name'),
       supabase.from('raid_characters').select('*'),
       supabase.from('members').select('*').order('nickname'),
@@ -43,7 +45,7 @@ export default function RaidManager({ member }: Props) {
     if (!form.name.trim()) return
     const { data, error } = await supabase
       .from('raids')
-      .insert({ name: form.name.trim(), size: form.size, color: form.color })
+      .insert({ name: form.name.trim(), size: form.size, color: form.color, is_draft: isDraft })
       .select()
       .single()
     if (error) { alert(error.message); return }
@@ -66,6 +68,51 @@ export default function RaidManager({ member }: Props) {
   async function updateDifficulty(id: string, difficulty: number) {
     await supabase.from('raids').update({ difficulty }).eq('id', id)
     setRaids(prev => prev.map(r => r.id === id ? { ...r, difficulty } : r))
+  }
+
+  async function importFromMain() {
+    if (!confirm('레이드 관리의 모든 레이드를 낙서장으로 복사할까요? 기존 낙서장 내용은 유지됩니다.')) return
+    setImporting(true)
+
+    // 메인 레이드 + 파티 구성 가져오기
+    const [raidsRes, rcRes] = await Promise.all([
+      supabase.from('raids').select('*').eq('is_draft', false),
+      supabase.from('raid_characters').select('*'),
+    ])
+
+    const mainRaids = raidsRes.data ?? []
+    const mainRc = rcRes.data ?? []
+
+    for (const raid of mainRaids) {
+      const { id: oldId, created_at, is_draft, day_of_week, time, sort_order, ...rest } = raid
+      const { data: newRaid } = await supabase
+        .from('raids')
+        .insert({ ...rest, is_draft: true, day_of_week: null, time: null, completed: false })
+        .select().single()
+
+      if (newRaid) {
+        const chars = mainRc.filter(rc => rc.raid_id === oldId)
+        if (chars.length > 0) {
+          await supabase.from('raid_characters').insert(
+            chars.map(rc => ({ raid_id: newRaid.id, character_id: rc.character_id }))
+          )
+        }
+      }
+    }
+
+    setImporting(false)
+    // 목록 새로고침
+    const { data } = await supabase.from('raids').select('*').eq('is_draft', true).order('name')
+    if (data) setRaids(data)
+    const { data: rc } = await supabase.from('raid_characters').select('*')
+    if (rc) {
+      const map: Record<string, string[]> = {}
+      rc.forEach((item: RaidCharacter) => {
+        if (!map[item.raid_id]) map[item.raid_id] = []
+        map[item.raid_id].push(item.character_id)
+      })
+      setRaidCharacters(map)
+    }
   }
 
   async function deleteRaid(id: string) {
@@ -96,14 +143,31 @@ export default function RaidManager({ member }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">레이드 관리</h2>
-        <button
-          onClick={() => setAdding(true)}
-          className="bg-blue-600 hover:bg-blue-500 text-sm px-3 py-1.5 rounded-lg transition-colors"
-        >
-          + 레이드 추가
-        </button>
+        <h2 className="text-lg font-bold">{isDraft ? '📝 낙서장' : '레이드 관리'}</h2>
+        <div className="flex gap-2">
+          {isDraft && (
+            <button
+              onClick={importFromMain}
+              disabled={importing}
+              className="bg-gray-600 hover:bg-gray-500 text-sm px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {importing ? '가져오는 중...' : '↙ 레이드관리에서 가져오기'}
+            </button>
+          )}
+          <button
+            onClick={() => setAdding(true)}
+            className="bg-blue-600 hover:bg-blue-500 text-sm px-3 py-1.5 rounded-lg transition-colors"
+          >
+            + 레이드 추가
+          </button>
+        </div>
       </div>
+
+      {isDraft && (
+        <p className="text-xs text-gray-500 mb-4 bg-gray-700 rounded-xl px-4 py-2.5">
+          다음 주 파티 구성을 미리 짜보는 공간입니다. 여기서 수정해도 실제 레이드 관리에는 영향 없습니다.
+        </p>
+      )}
 
       {/* 내가 등록된 레이드 요약 */}
       {myRaids.length > 0 && (

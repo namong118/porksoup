@@ -43,6 +43,7 @@ export interface Raid {
   color: string
   completed: boolean
   difficulty: number
+  is_draft: boolean
   created_at: string
 }
 
