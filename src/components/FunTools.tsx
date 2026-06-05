@@ -12,7 +12,7 @@ function RouletteWheel({ members }: { members: Member[] }) {
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const rotRef = useRef(0)
-  const rafRef = useRef<number>()
+  const rafRef = useRef<number | null>(null)
 
   const draw = useCallback((rot: number) => {
     const canvas = canvasRef.current
