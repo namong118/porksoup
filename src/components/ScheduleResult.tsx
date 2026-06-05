@@ -212,10 +212,17 @@ function RaidCard({
             return a.role === 'support' ? 1 : -1
           })
           .map(char => (
-          <span key={char.id} className={`text-xs px-2 py-0.5 rounded-full
-            ${char.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-300'}`}>
+          <span
+            key={char.id}
+            className="text-xs px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: `${char.member?.color ?? '#94a3b8'}22`,
+              color: char.member?.color ?? '#e2e8f0',
+              border: `1px solid ${char.member?.color ?? '#94a3b8'}55`,
+            }}
+          >
             {char.name}
-            <span className="text-gray-500 ml-1">{char.class}</span>
+            <span className="opacity-60 ml-1">{char.class}</span>
           </span>
         ))}
         {characters.length === 0 && (

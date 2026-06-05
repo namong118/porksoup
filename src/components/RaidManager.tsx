@@ -252,12 +252,19 @@ export default function RaidManager({ member }: Props) {
                         const charId = char!.id
                         if (!char) return null
                         return (
-                          <span key={charId} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${char.role === 'support' ? 'bg-green-800 text-green-200' : 'bg-blue-900 text-blue-200'}`}>
-                            {char.name}
-                            <span className={`opacity-70 ${char.role === 'support' ? 'text-green-400' : 'text-blue-400'}`}>{char.class}</span>
+                          <span
+                            key={charId}
+                            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg"
+                            style={{
+                              backgroundColor: `${char.member?.color ?? '#94a3b8'}25`,
+                              border: `1px solid ${char.member?.color ?? '#94a3b8'}55`,
+                            }}
+                          >
+                            <span style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
+                            <span className="opacity-60 text-gray-400">{char.class}</span>
                             <button
                               onClick={() => toggleCharacter(raid.id, charId)}
-                              className={`ml-1 hover:text-red-400 transition-colors ${char.role === 'support' ? 'text-green-400' : 'text-blue-400'}`}
+                              className="ml-1 opacity-60 hover:text-red-400 transition-colors"
                             >✕</button>
                           </span>
                         )
@@ -272,8 +279,13 @@ export default function RaidManager({ member }: Props) {
                       <button
                         key={m.id}
                         onClick={() => setSelectedMember(selectedMember === m.id ? null : m.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors
-                          ${selectedMember === m.id ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
+                        style={selectedMember === m.id ? {
+                          backgroundColor: `${m.color ?? '#94a3b8'}33`,
+                          borderColor: m.color ?? '#94a3b8',
+                          color: m.color ?? '#e2e8f0',
+                        } : {}}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors border
+                          ${selectedMember === m.id ? 'border-opacity-100' : 'bg-gray-600 hover:bg-gray-500 text-gray-300 border-transparent'}`}
                       >
                         {m.nickname}
                       </button>
@@ -297,21 +309,23 @@ export default function RaidManager({ member }: Props) {
                             <button
                               key={char.id}
                               onClick={() => toggleCharacter(raid.id, char.id)}
-                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                                ${isAssigned
-                                  ? char.role === 'support'
-                                    ? 'bg-green-800 text-green-200'
-                                    : 'bg-blue-900 text-blue-200'
-                                  : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
+                              style={isAssigned ? {
+                                backgroundColor: `${char.member?.color ?? '#94a3b8'}25`,
+                                borderColor: `${char.member?.color ?? '#94a3b8'}88`,
+                              } : {}}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors border
+                                ${isAssigned ? 'border-opacity-100' : 'bg-gray-600 hover:bg-gray-500 text-gray-300 border-transparent'}`}
                             >
                               <div className="flex items-center gap-2">
-                                <span>{char.name}</span>
+                                <span style={isAssigned ? { color: char.member?.color ?? '#e2e8f0' } : {}}>
+                                  {char.name}
+                                </span>
                                 <span className="text-xs text-gray-400">{char.class}</span>
                                 <span className={`text-xs px-1.5 py-0.5 rounded ${char.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
                                   {char.role === 'support' ? '서폿' : '딜러'}
                                 </span>
                               </div>
-                              {isAssigned && <span className="text-blue-400 text-xs">✓ 배정됨</span>}
+                              {isAssigned && <span className="text-xs opacity-70" style={{ color: char.member?.color ?? '#94a3b8' }}>✓ 배정됨</span>}
                             </button>
                           )
                         })
