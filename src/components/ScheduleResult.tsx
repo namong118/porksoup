@@ -263,11 +263,10 @@ export default function ScheduleResult() {
       timesMap[s.member_id] = s.available_times ?? {}
     })
 
-    // 레이드 시간이 어떤 시간대인지 판별 (16시대: '16', 20시대: '20')
-    function getTimeSlot(time: string | null): string | null {
+    // 레이드 시간에서 시(hour) 추출
+    function getHour(time: string | null): string | null {
       if (!time) return null
-      const hour = parseInt(time.split(':')[0])
-      return hour < 18 ? '16' : '20'
+      return String(parseInt(time.split(':')[0]))
     }
 
     const results: RaidResult[] = raids.map(raid => {
@@ -280,17 +279,17 @@ export default function ScheduleResult() {
       const submittedIds = memberIds.filter(mid => scheduleMap[mid] !== undefined)
       const missingCount = memberIds.length - submittedIds.length
 
-      const raidTimeSlot = getTimeSlot(raid.time)
+      const raidHour = getHour(raid.time)
 
       const commonDays = submittedIds.length === 0
         ? []
         : WEEK_DAYS.filter(day =>
             submittedIds.every(mid => {
               if (!scheduleMap[mid].includes(day)) return false
-              // 레이드 시간대가 정해진 경우, 해당 시간대도 가능한지 체크
-              if (raidTimeSlot) {
-                const memberTimes = timesMap[mid]?.[day] ?? ['16', '20']
-                if (!memberTimes.includes(raidTimeSlot)) return false
+              // 레이드 시간이 정해진 경우, 해당 시간에 가능한지 체크
+              if (raidHour) {
+                const memberHours: string[] = timesMap[mid]?.[day] ?? []
+                if (memberHours.length > 0 && !memberHours.includes(raidHour)) return false
               }
               return true
             })

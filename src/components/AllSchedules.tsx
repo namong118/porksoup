@@ -125,18 +125,17 @@ export default function AllSchedules() {
             <div className="grid grid-cols-7">
               {WEEK_DAYS.map(day => {
                 const available = s.submitted && s.available_days.includes(day)
-                const times = s.available_times[day] ?? ['16', '20']
-                const has16 = times.includes('16')
-                const has20 = times.includes('20')
+                const times: string[] = s.available_times[day] ?? []
+                const first = times[0]
+                const last = times[times.length - 1]
                 return (
                   <div key={day} className="flex flex-col items-center justify-center py-2 gap-0.5">
                     {!s.submitted ? (
                       <span className="text-gray-700 text-xs">-</span>
                     ) : available ? (
-                      <>
-                        <span className={`text-xs px-1 rounded ${has16 ? 'text-blue-300' : 'text-gray-700 line-through'}`}>16</span>
-                        <span className={`text-xs px-1 rounded ${has20 ? 'text-blue-300' : 'text-gray-700 line-through'}`}>20</span>
-                      </>
+                      <span className="text-xs text-blue-300 text-center leading-tight">
+                        {times.length > 0 ? `${first}~${last}` : '✓'}
+                      </span>
                     ) : (
                       <span className="text-gray-600 text-sm">✕</span>
                     )}
