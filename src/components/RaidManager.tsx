@@ -10,6 +10,8 @@ export default function RaidManager() {
   const [adding, setAdding] = useState(false)
   const [expandedRaid, setExpandedRaid] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', size: 4 as 4 | 8, day_of_week: '', time: '20:10' })
+  const [editingTime, setEditingTime] = useState<string | null>(null)
+  const [timeValue, setTimeValue] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -52,6 +54,12 @@ export default function RaidManager() {
     if (!confirm('레이드를 삭제할까요?')) return
     await supabase.from('raids').delete().eq('id', id)
     setRaids(prev => prev.filter(r => r.id !== id))
+  }
+
+  async function saveTime(raidId: string) {
+    await supabase.from('raids').update({ time: timeValue || null }).eq('id', raidId)
+    setRaids(prev => prev.map(r => r.id === raidId ? { ...r, time: timeValue || null } : r))
+    setEditingTime(null)
   }
 
   async function toggleCharacter(raidId: string, charId: string) {
@@ -142,7 +150,28 @@ export default function RaidManager() {
                   <span className="font-medium">{raid.name}</span>
                   <span className="text-xs bg-gray-600 px-2 py-0.5 rounded">{raid.size}인</span>
                   {raid.day_of_week && (
-                    <span className="text-xs text-blue-400">{raid.day_of_week} {raid.time}</span>
+                    <span className="text-xs text-blue-400">{raid.day_of_week}</span>
+                  )}
+                  {editingTime === raid.id ? (
+                    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                      <input
+                        autoFocus
+                        value={timeValue}
+                        onChange={e => setTimeValue(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveTime(raid.id); if (e.key === 'Escape') setEditingTime(null) }}
+                        placeholder="20:10"
+                        className="bg-gray-600 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500 w-16"
+                      />
+                      <button onClick={() => saveTime(raid.id)} className="text-blue-400 text-xs hover:text-blue-300">저장</button>
+                      <button onClick={() => setEditingTime(null)} className="text-gray-500 text-xs hover:text-gray-300">취소</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={e => { e.stopPropagation(); setEditingTime(raid.id); setTimeValue(raid.time ?? '') }}
+                      className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
+                    >
+                      {raid.time ?? '시간 미정'}
+                    </button>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
