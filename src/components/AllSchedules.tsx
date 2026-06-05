@@ -56,13 +56,6 @@ export default function AllSchedules() {
 
   const submittedCount = schedules.filter(s => s.submitted).length
 
-  const dayCount = WEEK_DAYS.reduce((acc, day) => {
-    acc[day] = schedules.filter(s => s.submitted && s.available_days.includes(day)).length
-    return acc
-  }, {} as Record<DayOfWeek, number>)
-
-  const maxCount = Math.max(...Object.values(dayCount))
-
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -79,23 +72,6 @@ export default function AllSchedules() {
         <span className="text-xs text-gray-500">
           {schedules.length - submittedCount > 0 && `${schedules.length - submittedCount}명 미제출`}
         </span>
-      </div>
-
-      {/* 요일별 가능 인원 요약 */}
-      <div className="bg-gray-700 rounded-xl p-3 mb-4">
-        <p className="text-xs text-gray-400 mb-2">요일별 가능 인원</p>
-        <div className="grid grid-cols-7 gap-1">
-          {WEEK_DAYS.map(day => {
-            const count = dayCount[day]
-            const isBest = count === maxCount && count > 0
-            return (
-              <div key={day} className={`flex flex-col items-center py-2 rounded-lg ${isBest ? 'bg-blue-800' : 'bg-gray-600'}`}>
-                <span className={`text-xs font-bold ${isBest ? 'text-blue-200' : 'text-gray-400'}`}>{day}</span>
-                <span className={`text-lg font-bold mt-0.5 ${isBest ? 'text-white' : 'text-gray-300'}`}>{count}</span>
-              </div>
-            )
-          })}
-        </div>
       </div>
 
       {/* 멤버별 스케줄 */}
