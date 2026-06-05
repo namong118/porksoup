@@ -12,6 +12,21 @@ import WeeklyView from './components/WeeklyView'
 import FunTools from './components/FunTools'
 import type { Member } from './types'
 
+const COLOR_EMOJI: Record<string, string> = {
+  '#94a3b8': '🌫️',
+  '#f87171': '🍑',
+  '#fb923c': '🦊',
+  '#fbbf24': '🐣',
+  '#84cc16': '🌿',
+  '#22c55e': '🌲',
+  '#06b6d4': '🌊',
+  '#60a5fa': '💧',
+  '#3b82f6': '🌌',
+  '#8b5cf6': '☂️',
+  '#ec4899': '🌺',
+  '#f43f5e': '🍎',
+}
+
 type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'settings' | 'draft' | 'fun'
 
 const READ_TABS: { id: Tab; label: string }[] = [
@@ -80,9 +95,11 @@ export default function App() {
         </div>
         <button
           onClick={() => setMember(null)}
-          className="text-sm text-gray-400 hover:text-gray-200 bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors"
+          className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
         >
-          {member.nickname} ▼
+          <span>{COLOR_EMOJI[member.color ?? '#94a3b8'] ?? '🌫️'}</span>
+          <span style={{ color: member.color ?? '#94a3b8' }} className="font-medium">{member.nickname}</span>
+          <span className="text-gray-400">▼</span>
         </button>
       </header>
 
