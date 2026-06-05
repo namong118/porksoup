@@ -606,7 +606,9 @@ export default function ScheduleResult() {
   unscheduled.sort((a, b) => {
     const ai = RAID_COLORS.indexOf(a.raid.color ?? '#6b7280')
     const bi = RAID_COLORS.indexOf(b.raid.color ?? '#6b7280')
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+    const colorDiff = (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+    if (colorDiff !== 0) return colorDiff
+    return a.raid.name.localeCompare(b.raid.name, 'ko', { numeric: true })
   })
 
   return (
