@@ -315,7 +315,11 @@ export default function ScheduleResult() {
         </button>
       </div>
 
-      <div className="flex flex-col gap-2">
+      {/* 메인 레이아웃: 캘린더 + 사이드바 */}
+      <div className="flex gap-3 items-start">
+
+      {/* 캘린더 */}
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
         {DAYS.map(day => {
           const dayRaids = raidsByDay[day]
           const dayDate = new Date(weekStart)
@@ -391,9 +395,10 @@ export default function ScheduleResult() {
         })}
       </div>
 
+      {/* 사이드바: 미배정 레이드 */}
       {unscheduled.length > 0 && (
-        <div className="mt-4">
-          <p className="text-xs text-gray-500 mb-2">요일 미정</p>
+        <div className="w-44 shrink-0 sticky top-4">
+          <p className="text-xs text-yellow-400 font-medium mb-2">⏳ 미배정 {unscheduled.length}개</p>
           <div className="flex flex-col gap-2">
             {unscheduled.map((r, i) => (
               <div key={r.raid.id} className="rounded-xl overflow-hidden border border-dashed border-gray-600">
@@ -411,6 +416,8 @@ export default function ScheduleResult() {
           </div>
         </div>
       )}
+
+      </div>{/* end flex layout */}
     </div>
   )
 }
