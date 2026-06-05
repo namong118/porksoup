@@ -141,7 +141,7 @@ function RaidCard({
   isDragOver: boolean
   isDragging: boolean
 }) {
-  const { raid, characters, commonDays, missingCount, totalMembers } = raidResult
+  const { raid, characters, commonDays, missingCount, totalMembers, conflictMembers } = raidResult
   const [editing, setEditing] = useState(false)
   const [splitTime, setSplitTime] = useState('')
   const [splitting, setSplitting] = useState(false)
