@@ -57,7 +57,7 @@ export default function App() {
       <main className="max-w-2xl mx-auto p-4">
         {tab === 'schedule' && <WeeklySchedule member={member} />}
         {tab === 'characters' && <CharacterManager member={member} />}
-        {tab === 'raids' && <RaidManager />}
+        {tab === 'raids' && <RaidManager member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'result' && <ScheduleResult />}
         {tab === 'settings' && <ClassManager />}
