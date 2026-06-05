@@ -22,7 +22,6 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
   { id: 'schedule', label: '📅 내 스케줄' },
   { id: 'result', label: '🗓️ 일정 관리' },
   { id: 'raids', label: '🛡️ 레이드 관리' },
-  { id: 'settings', label: '⚙️ 설정' },
   { id: 'characters', label: '⚔️ 내 캐릭터' },
 ]
 
