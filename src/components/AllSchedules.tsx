@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Member, DayOfWeek } from '../types'
-import { getWeekStart, WEEK_DAYS } from '../lib/weekUtils'
+import { getWeekStart, WEEK_DAYS, parseLocalDate } from '../lib/weekUtils'
 
 interface MemberSchedule {
   member: Member
@@ -43,8 +43,8 @@ export default function AllSchedules() {
 
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
-  const weekStartDate = new Date(weekStart)
-  const weekEndDate = new Date(weekStart)
+  const weekStartDate = parseLocalDate(weekStart)
+  const weekEndDate = parseLocalDate(weekStart)
   weekEndDate.setDate(weekEndDate.getDate() + 6)
   const formatDate = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
 

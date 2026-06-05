@@ -15,7 +15,10 @@ export function getWeekStart(): string {
     wednesday.setDate(wednesday.getDate() - 7)
   }
 
-  return wednesday.toISOString().split('T')[0]
+  const y = wednesday.getFullYear()
+  const m = String(wednesday.getMonth() + 1).padStart(2, '0')
+  const d = String(wednesday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 // 수요일부터 시작하는 요일 순서
@@ -24,4 +27,10 @@ export const WEEK_DAYS: DayOfWeek[] = ['수', '목', '금', '토', '일', '월',
 // weekStart(수요일)로부터 해당 요일까지 며칠 차이인지
 export function getDayOffset(day: DayOfWeek): number {
   return WEEK_DAYS.indexOf(day)
+}
+
+// "YYYY-MM-DD" 문자열을 로컬 시간 기준 Date로 파싱 (UTC 파싱 방지)
+export function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
 }

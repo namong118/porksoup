@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Member, DayOfWeek } from '../types'
-import { getWeekStart, WEEK_DAYS } from '../lib/weekUtils'
+import { getWeekStart, WEEK_DAYS, parseLocalDate } from '../lib/weekUtils'
 
 interface Props {
   member: Member
@@ -50,8 +50,8 @@ export default function WeeklySchedule({ member }: Props) {
     if (!error) setSaved(true)
   }
 
-  const weekStartDate = new Date(weekStart)
-  const weekEndDate = new Date(weekStart)
+  const weekStartDate = parseLocalDate(weekStart)
+  const weekEndDate = parseLocalDate(weekStart)
   weekEndDate.setDate(weekEndDate.getDate() + 6)
 
   const formatDate = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
-import { getWeekStart, WEEK_DAYS, getDayOffset } from '../lib/weekUtils'
+import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate } from '../lib/weekUtils'
 
 interface RaidResult {
   raid: Raid
@@ -267,8 +267,8 @@ export default function ScheduleResult() {
 
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
-  const weekStartDate = new Date(weekStart)
-  const weekEndDate = new Date(weekStart)
+  const weekStartDate = parseLocalDate(weekStart)
+  const weekEndDate = parseLocalDate(weekStart)
   weekEndDate.setDate(weekEndDate.getDate() + 6)
   const formatDate = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
 
@@ -320,7 +320,7 @@ export default function ScheduleResult() {
       <div className="flex-1 flex flex-col gap-2 min-w-0">
         {WEEK_DAYS.map(day => {
           const dayRaids = raidsByDay[day]
-          const dayDate = new Date(weekStart)
+          const dayDate = parseLocalDate(weekStart)
           dayDate.setDate(dayDate.getDate() + getDayOffset(day))
 
           return (
