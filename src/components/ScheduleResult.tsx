@@ -40,6 +40,8 @@ function RaidCard({
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers } = raidResult
   const [editing, setEditing] = useState(false)
+  const [editingTime, setEditingTime] = useState(false)
+  const [timeValue, setTimeValue] = useState(raid.time ?? '')
   const submittedCount = totalMembers - missingCount
   const isConfirmed = currentDay ? commonDays.includes(currentDay) : false
 
@@ -47,6 +49,12 @@ function RaidCard({
     await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setEditing(false)
+  }
+
+  async function saveTime() {
+    await supabase.from('raids').update({ time: timeValue || null }).eq('id', raid.id)
+    onDayChange(raid.id, currentDay)
+    setEditingTime(false)
   }
 
   return (
@@ -82,7 +90,27 @@ function RaidCard({
 
           <span className="font-medium text-sm">{raid.name}</span>
           <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded">{raid.size}인</span>
-          {raid.time && <span className="text-xs text-gray-400">{raid.time}</span>}
+          {editingTime ? (
+            <div className="flex items-center gap-1">
+              <input
+                autoFocus
+                value={timeValue}
+                onChange={e => setTimeValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveTime(); if (e.key === 'Escape') setEditingTime(false) }}
+                placeholder="20:10"
+                className="bg-gray-600 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500 w-16"
+              />
+              <button onClick={saveTime} className="text-blue-400 text-xs hover:text-blue-300">저장</button>
+              <button onClick={() => setEditingTime(false)} className="text-gray-500 text-xs hover:text-gray-300">취소</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setEditingTime(true)}
+              className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              {raid.time ?? '시간 미정'}
+            </button>
+          )}
           {currentDay && (
             isConfirmed
               ? <span className="text-xs bg-green-900 text-green-300 px-1.5 py-0.5 rounded-full">✓ 확정</span>
