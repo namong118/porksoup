@@ -19,6 +19,8 @@ export default function RaidManager({ member, isDraft = false }: Props) {
   const [colorPickerId, setColorPickerId] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', color: RAID_COLORS[0] })
   const [importing, setImporting] = useState(false)
+  const [editingRaidId, setEditingRaidId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -119,6 +121,14 @@ export default function RaidManager({ member, isDraft = false }: Props) {
       })
       setRaidCharacters(map)
     }
+  }
+
+  async function renameRaid(id: string) {
+    const trimmed = editingName.trim()
+    if (!trimmed) { setEditingRaidId(null); return }
+    await supabase.from('raids').update({ name: trimmed }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, name: trimmed } : r).sort((a, b) => a.name.localeCompare(b.name)))
+    setEditingRaidId(null)
   }
 
   async function deleteRaid(id: string) {
@@ -280,7 +290,26 @@ export default function RaidManager({ member, isDraft = false }: Props) {
                     style={{ backgroundColor: raid.color ?? '#6b7280' }}
                     className="w-4 h-4 rounded-full shrink-0 hover:ring-2 ring-white transition-all"
                   />
-                  <span className={`font-medium ${raid.completed ? 'line-through text-gray-500' : ''}`}>{raid.name}</span>
+                  {editingRaidId === raid.id ? (
+                    <input
+                      autoFocus
+                      value={editingName}
+                      onChange={e => setEditingName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') renameRaid(raid.id)
+                        if (e.key === 'Escape') setEditingRaidId(null)
+                      }}
+                      onBlur={() => renameRaid(raid.id)}
+                      className="bg-gray-600 rounded px-2 py-0.5 text-sm font-medium outline-none focus:ring-2 ring-blue-500 w-40"
+                      onClick={e => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span
+                      className={`font-medium cursor-pointer hover:text-blue-300 transition-colors ${raid.completed ? 'line-through text-gray-500' : ''}`}
+                      onDoubleClick={e => { e.stopPropagation(); setEditingRaidId(raid.id); setEditingName(raid.name) }}
+                      title="더블클릭해서 이름 수정"
+                    >{raid.name}</span>
+                  )}
                   {/* 별점 */}
                   <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
                     {[1,2,3,4,5].map(star => (
