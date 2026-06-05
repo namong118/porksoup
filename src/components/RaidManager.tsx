@@ -133,11 +133,10 @@ export default function RaidManager({ member, isDraft = false }: Props) {
       await supabase.from('raid_characters').delete().eq('raid_id', raidId).eq('character_id', charId)
       setRaidCharacters(prev => ({ ...prev, [raidId]: prev[raidId].filter(id => id !== charId) }))
     } else {
-      if (current.length >= 8) { alert('최대 8명입니다.'); return }
-
-      // 같은 멤버의 다른 캐릭터가 이미 배정됐으면 교체
       const char = allCharacters.find(c => c.id === charId)
       let newList = [...current]
+
+      // 같은 멤버의 다른 캐릭터가 있으면 먼저 교체 (최대 인원 체크 불필요)
       if (char) {
         const sameMemCharId = current.find(id => {
           const c = allCharacters.find(ac => ac.id === id)
@@ -146,6 +145,9 @@ export default function RaidManager({ member, isDraft = false }: Props) {
         if (sameMemCharId) {
           await supabase.from('raid_characters').delete().eq('raid_id', raidId).eq('character_id', sameMemCharId)
           newList = newList.filter(id => id !== sameMemCharId)
+        } else {
+          // 교체가 아닌 신규 추가일 때만 최대 인원 체크
+          if (current.length >= 8) { alert('최대 8명입니다.'); return }
         }
       }
 
