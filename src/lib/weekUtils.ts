@@ -37,3 +37,16 @@ export function parseLocalDate(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
+
+// 이번 주에서 이미 지난 요일 목록 반환
+export function getPastDays(weekStart: string): Set<DayOfWeek> {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const past = new Set<DayOfWeek>()
+  WEEK_DAYS.forEach((day, i) => {
+    const dayDate = parseLocalDate(weekStart)
+    dayDate.setDate(dayDate.getDate() + i)
+    if (dayDate < today) past.add(day)
+  })
+  return past
+}

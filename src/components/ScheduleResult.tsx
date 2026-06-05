@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
-import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate } from '../lib/weekUtils'
+import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate, getPastDays } from '../lib/weekUtils'
 
 interface RaidResult {
   raid: Raid
@@ -21,6 +21,7 @@ function RaidCard({
   canMoveUp,
   canMoveDown,
   order,
+  pastDays,
 }: {
   raidResult: RaidResult
   currentDay: DayOfWeek | null
@@ -30,6 +31,7 @@ function RaidCard({
   canMoveUp: boolean
   canMoveDown: boolean
   order?: number
+  pastDays: Set<DayOfWeek>
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers } = raidResult
   const [editing, setEditing] = useState(false)
@@ -125,19 +127,24 @@ function RaidCard({
         <div className="mb-3 p-3 bg-gray-700 rounded-xl">
           <p className="text-xs text-gray-400 mb-2">이동할 요일 선택</p>
           <div className="flex flex-wrap gap-1.5">
-            {WEEK_DAYS.map(d => (
-              <button
-                key={d}
-                onClick={() => changeDay(d)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
-                  ${currentDay === d ? 'bg-blue-600 text-white' :
-                    commonDays.includes(d) ? 'bg-green-800 text-green-200 hover:bg-green-700' :
-                    'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
-              >
-                {d}요일
-                {commonDays.includes(d) && <span className="ml-1 opacity-70">✓</span>}
-              </button>
-            ))}
+            {WEEK_DAYS.map(d => {
+              const isPast = pastDays.has(d)
+              return (
+                <button
+                  key={d}
+                  onClick={() => !isPast && changeDay(d)}
+                  disabled={isPast}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                    ${isPast ? 'bg-gray-700 text-gray-600 cursor-not-allowed line-through' :
+                      currentDay === d ? 'bg-blue-600 text-white' :
+                      commonDays.includes(d) ? 'bg-green-800 text-green-200 hover:bg-green-700' :
+                      'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+                >
+                  {d}요일
+                  {!isPast && commonDays.includes(d) && <span className="ml-1 opacity-70">✓</span>}
+                </button>
+              )
+            })}
             <button
               onClick={() => changeDay(null)}
               className="px-3 py-1.5 rounded-lg text-xs text-gray-400 bg-gray-600 hover:bg-gray-500 transition-colors"
@@ -178,6 +185,7 @@ export default function ScheduleResult() {
   const [maxPerDay, setMaxPerDay] = useState(6)
   const [minPerDay, setMinPerDay] = useState(4)
   const weekStart = getWeekStart()
+  const pastDays = getPastDays(weekStart)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -267,8 +275,8 @@ export default function ScheduleResult() {
       dayPotential[day] = activeResults.filter(r => r.commonDays.includes(day)).length
     })
 
-    // MIN 이상 채울 수 있는 요일만 유효
-    const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN))
+    // MIN 이상 채울 수 있는 요일만 유효 (지난 날 제외)
+    const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN && !pastDays.has(d)))
 
     // 제약 많은 레이드(가능 요일 적은 것) 먼저 배정
     const toSchedule = activeResults
@@ -480,6 +488,7 @@ export default function ScheduleResult() {
                                 canMoveUp={i > 0}
                                 canMoveDown={i < groupRaids.length - 1}
                                 order={i + 1}
+                                pastDays={pastDays}
                               />
                             ))}
                           </div>
@@ -509,6 +518,7 @@ export default function ScheduleResult() {
                   onMoveDown={() => handleMove(unscheduled, i, 'down')}
                   canMoveUp={i > 0}
                   canMoveDown={i < unscheduled.length - 1}
+                  pastDays={pastDays}
                 />
               </div>
             ))}
