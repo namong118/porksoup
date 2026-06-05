@@ -175,6 +175,7 @@ export default function ScheduleResult() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [maxPerDay, setMaxPerDay] = useState(6)
   const weekStart = getWeekStart()
 
   const load = useCallback(async () => {
@@ -253,13 +254,38 @@ export default function ScheduleResult() {
 
   async function autoSchedule() {
     setApplying(true)
+
+    // 하루 최대 레이드 수: 이미 배정된 레이드도 포함해서 카운트
+    const MAX_PER_DAY = maxPerDay
+    const dayCount: Record<string, number> = {}
+
+    // 이미 배정된 레이드 카운트
+    results.forEach(r => {
+      if (r.raid.day_of_week && r.commonDays.length === 0) {
+        dayCount[r.raid.day_of_week] = (dayCount[r.raid.day_of_week] ?? 0) + 1
+      }
+    })
+
     const toUpdate = results.filter(r => r.commonDays.length > 0)
-    await Promise.all(toUpdate.map(({ raid, commonDays }) => {
-      const bestDay = commonDays.includes(raid.day_of_week as DayOfWeek)
-        ? raid.day_of_week
-        : commonDays[0]
-      return supabase.from('raids').update({ day_of_week: bestDay }).eq('id', raid.id)
-    }))
+    const updates: { id: string; day: string }[] = []
+
+    for (const { raid, commonDays } of toUpdate) {
+      // 기존 고정 요일이 공통 가능이고 여유 있으면 유지
+      const candidates = commonDays.includes(raid.day_of_week as DayOfWeek)
+        ? [raid.day_of_week as DayOfWeek, ...commonDays.filter(d => d !== raid.day_of_week)]
+        : commonDays
+
+      const bestDay = candidates.find(d => (dayCount[d] ?? 0) < MAX_PER_DAY)
+      if (bestDay) {
+        dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
+        updates.push({ id: raid.id, day: bestDay })
+      }
+    }
+
+    await Promise.all(updates.map(({ id, day }) =>
+      supabase.from('raids').update({ day_of_week: day }).eq('id', id)
+    ))
+
     setApplied(true)
     setApplying(false)
     load()
@@ -296,21 +322,37 @@ export default function ScheduleResult() {
         </span>
       </div>
 
-      <div className="bg-gray-700 rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
-        <p className="text-xs text-gray-400">
-          편성 가능 <span className="text-green-400 font-medium">{autoSchedulable}개</span>
-          {unscheduled.length > 0 && <> · 미배정 <span className="text-yellow-400 font-medium">{unscheduled.length}개</span></>}
-        </p>
-        <button
-          onClick={autoSchedule}
-          disabled={applying || autoSchedulable === 0}
-          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors
-            ${applied ? 'bg-green-700 text-green-200' :
-              autoSchedulable === 0 ? 'bg-gray-600 text-gray-500 cursor-not-allowed' :
-              'bg-blue-600 hover:bg-blue-500 text-white'}`}
-        >
-          {applying ? '적용 중...' : applied ? '✓ 편성 완료' : '자동 편성'}
-        </button>
+      <div className="bg-gray-700 rounded-xl px-4 py-3 mb-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">
+            편성 가능 <span className="text-green-400 font-medium">{autoSchedulable}개</span>
+            {unscheduled.length > 0 && <> · 미배정 <span className="text-yellow-400 font-medium">{unscheduled.length}개</span></>}
+          </p>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-400 flex items-center gap-1.5">
+              하루 최대
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={maxPerDay}
+                onChange={e => setMaxPerDay(Math.max(1, Number(e.target.value)))}
+                className="w-12 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
+              />
+              개
+            </label>
+            <button
+              onClick={autoSchedule}
+              disabled={applying || autoSchedulable === 0}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors
+                ${applied ? 'bg-green-700 text-green-200' :
+                  autoSchedulable === 0 ? 'bg-gray-600 text-gray-500 cursor-not-allowed' :
+                  'bg-blue-600 hover:bg-blue-500 text-white'}`}
+            >
+              {applying ? '적용 중...' : applied ? '✓ 완료' : '자동 편성'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 메인 레이아웃: 캘린더 + 사이드바 */}
