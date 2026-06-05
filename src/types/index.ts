@@ -36,7 +36,7 @@ export interface Character {
 export interface Raid {
   id: string
   name: string
-  size: 4 | 8
+  size: number
   day_of_week: DayOfWeek | null
   time: string | null
   sort_order: number

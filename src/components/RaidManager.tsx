@@ -17,7 +17,7 @@ export default function RaidManager({ member, isDraft = false }: Props) {
   const [expandedRaid, setExpandedRaid] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<string | null>(null)
   const [colorPickerId, setColorPickerId] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', size: 4 as 4 | 8, color: RAID_COLORS[0] })
+  const [form, setForm] = useState({ name: '', color: RAID_COLORS[0] })
   const [importing, setImporting] = useState(false)
 
   useEffect(() => {
@@ -45,12 +45,12 @@ export default function RaidManager({ member, isDraft = false }: Props) {
     if (!form.name.trim()) return
     const { data, error } = await supabase
       .from('raids')
-      .insert({ name: form.name.trim(), size: form.size, color: form.color, is_draft: isDraft })
+      .insert({ name: form.name.trim(), size: 8, color: form.color, is_draft: isDraft })
       .select()
       .single()
     if (error) { alert(error.message); return }
     setRaids(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-    setForm({ name: '', size: 4, color: RAID_COLORS[0] })
+    setForm({ name: '', color: RAID_COLORS[0] })
     setAdding(false)
   }
 
@@ -222,17 +222,6 @@ export default function RaidManager({ member, isDraft = false }: Props) {
             className="bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
           />
           <div className="flex items-center gap-4 flex-wrap">
-            <label className="text-sm text-gray-400 flex items-center gap-2">
-              인원
-              <select
-                value={form.size}
-                onChange={e => setForm(p => ({ ...p, size: Number(e.target.value) as 4 | 8 }))}
-                className="bg-gray-600 rounded-lg px-2 py-1 outline-none"
-              >
-                <option value={4}>4인</option>
-                <option value={8}>8인</option>
-              </select>
-            </label>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400">색상</span>
               <div className="flex gap-1.5 flex-wrap">
@@ -276,7 +265,6 @@ export default function RaidManager({ member, isDraft = false }: Props) {
                     className="w-4 h-4 rounded-full shrink-0 hover:ring-2 ring-white transition-all"
                   />
                   <span className={`font-medium ${raid.completed ? 'line-through text-gray-500' : ''}`}>{raid.name}</span>
-                  <span className="text-xs bg-gray-600 px-2 py-0.5 rounded">{raid.size}인</span>
                   {/* 별점 */}
                   <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
                     {[1,2,3,4,5].map(star => (
@@ -294,7 +282,7 @@ export default function RaidManager({ member, isDraft = false }: Props) {
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400">{chars.length}/{raid.size}명</span>
+                  <span className="text-sm text-gray-400">{chars.length}명</span>
                   {!isDraft && (
                     <button
                       onClick={e => { e.stopPropagation(); toggleCompleted(raid.id, raid.completed) }}

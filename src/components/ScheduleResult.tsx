@@ -35,7 +35,6 @@ function UnscheduledChip({ raidResult, onDayChange, pastDays }: {
       >
         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: raid.color ?? '#6b7280' }} />
         {raid.name}
-        <span className="text-gray-500">{raid.size}인</span>
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 z-10 bg-gray-700 rounded-xl p-2 shadow-xl border border-gray-600 min-w-max">

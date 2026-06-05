@@ -38,7 +38,7 @@ export default function RaidOverview() {
 
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
-  const supportNeeded = (size: number) => size === 4 ? 1 : 2
+  const supportNeeded = () => 1
 
   return (
     <div>
@@ -68,7 +68,6 @@ export default function RaidOverview() {
           const total = raid.size
           const supports = characters.filter(c => c.role === 'support')
           const dps = characters.filter(c => c.role === 'dps')
-          const supportOk = supports.length >= supportNeeded(total)
           const color = raid.color ?? '#6b7280'
 
           return (
@@ -84,9 +83,7 @@ export default function RaidOverview() {
                 <span className="text-xs font-bold text-white truncate">{raid.name}</span>
                   <span className="text-xs text-yellow-400 shrink-0">{'★'.repeat(raid.difficulty ?? 1)}</span>
                 <div className="flex items-center gap-1 shrink-0 ml-1">
-                  <span className={`text-xs ${supportOk ? 'text-green-400' : 'text-red-400'}`}>
-                    {filled}/{total}
-                  </span>
+                  <span className="text-xs text-gray-400">{filled}명</span>
                 </div>
               </div>
 
@@ -100,7 +97,7 @@ export default function RaidOverview() {
                   </div>
                 ))}
                 {/* 빈 딜러 슬롯 */}
-                {Array.from({ length: Math.max(0, total - supportNeeded(total) - dps.length) }).map((_, i) => (
+                {Array.from({ length: Math.max(0, total - supportNeeded() - dps.length) }).map((_, i) => (
                   <div key={`ed-${i}`} className="flex items-center">
                     <span className="text-xs text-gray-700">— 빈 자리</span>
                   </div>
@@ -117,7 +114,7 @@ export default function RaidOverview() {
                   </div>
                 ))}
                 {/* 빈 서폿 슬롯 */}
-                {Array.from({ length: Math.max(0, supportNeeded(total) - supports.length) }).map((_, i) => (
+                {Array.from({ length: Math.max(0, supportNeeded() - supports.length) }).map((_, i) => (
                   <div key={`es-${i}`} className="flex items-center">
                     <span className="text-xs text-green-900">— 서폿 필요</span>
                   </div>
