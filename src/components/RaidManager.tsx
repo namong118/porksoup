@@ -65,6 +65,12 @@ export default function RaidManager({ member, isDraft = false }: Props) {
     setRaids(prev => prev.map(r => r.id === id ? { ...r, completed: !current } : r))
   }
 
+  async function resetAllCompleted() {
+    if (!confirm('모든 레이드를 미완료 처리할까요?')) return
+    await supabase.from('raids').update({ completed: false }).eq('is_draft', false)
+    setRaids(prev => prev.map(r => ({ ...r, completed: false })))
+  }
+
   async function updateDifficulty(id: string, difficulty: number) {
     await supabase.from('raids').update({ difficulty }).eq('id', id)
     setRaids(prev => prev.map(r => r.id === id ? { ...r, difficulty } : r))
@@ -145,6 +151,14 @@ export default function RaidManager({ member, isDraft = false }: Props) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">{isDraft ? '📝 낙서장' : '레이드 관리'}</h2>
         <div className="flex gap-2">
+          {!isDraft && (
+            <button
+              onClick={resetAllCompleted}
+              className="bg-gray-600 hover:bg-gray-500 text-sm px-3 py-1.5 rounded-lg transition-colors text-yellow-400 hover:text-yellow-300"
+            >
+              ↩ 전부 미완료
+            </button>
+          )}
           <button
             onClick={() => importRaids(!isDraft)}
             disabled={importing}
