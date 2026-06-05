@@ -11,6 +11,8 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
   const [members, setMembers] = useState<Member[]>([])
   const [newNickname, setNewNickname] = useState('')
   const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
 
   useEffect(() => {
     supabase.from('members').select('*').order('nickname').then(({ data }) => {
@@ -32,6 +34,19 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
     onSelect(data)
   }
 
+  async function updateMember(id: string) {
+    if (!editValue.trim()) return
+    const { data, error } = await supabase
+      .from('members')
+      .update({ nickname: editValue.trim() })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) { alert('이미 있는 닉네임입니다.'); return }
+    setMembers(prev => prev.map(m => m.id === id ? data : m).sort((a, b) => a.nickname.localeCompare(b.nickname)))
+    setEditingId(null)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-md shadow-2xl">
@@ -40,16 +55,39 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
 
         <div className="flex flex-col gap-2">
           {members.map(m => (
-            <button
-              key={m.id}
-              onClick={() => onSelect(m)}
-              className={`w-full py-3 px-4 rounded-xl text-left font-medium transition-colors
-                ${currentMember?.id === m.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
-            >
-              {m.nickname}
-            </button>
+            <div key={m.id} className="flex items-center gap-2">
+              {editingId === m.id ? (
+                <div className="flex gap-2 flex-1">
+                  <input
+                    autoFocus
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') updateMember(m.id); if (e.key === 'Escape') setEditingId(null) }}
+                    className="flex-1 bg-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+                  />
+                  <button onClick={() => updateMember(m.id)} className="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm">저장</button>
+                  <button onClick={() => setEditingId(null)} className="bg-gray-600 hover:bg-gray-500 px-3 py-2 rounded-lg text-sm">취소</button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => onSelect(m)}
+                    className={`flex-1 py-3 px-4 rounded-xl text-left font-medium transition-colors
+                      ${currentMember?.id === m.id
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200'}`}
+                  >
+                    {m.nickname}
+                  </button>
+                  <button
+                    onClick={() => { setEditingId(m.id); setEditValue(m.nickname) }}
+                    className="p-3 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-gray-200 transition-colors text-xs shrink-0"
+                  >
+                    수정
+                  </button>
+                </>
+              )}
+            </div>
           ))}
         </div>
 
