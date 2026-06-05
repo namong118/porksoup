@@ -10,6 +10,7 @@ interface RaidResult {
   commonDays: DayOfWeek[]
   missingCount: number
   totalMembers: number
+  conflictMembers: Member[]
 }
 
 
@@ -190,6 +191,15 @@ function RaidCard({
               ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▼</button>
         </div>
         <span className="font-semibold text-sm">{raid.name}</span>
+        {conflictMembers.length > 0 && (
+          <span
+            className="flex items-center gap-1 bg-red-900/60 border border-red-700 text-red-300 text-xs px-1.5 py-0.5 rounded-full"
+            title={`불참 불가: ${conflictMembers.map(m => m.nickname).join(', ')}`}
+          >
+            <span>❗</span>
+            <span>{conflictMembers.map(m => m.nickname).join(', ')}</span>
+          </span>
+        )}
         <span className="text-xs text-gray-500 ml-auto">{submittedCount}/{totalMembers}명</span>
       </div>
 
@@ -357,7 +367,22 @@ export default function ScheduleResult() {
             })
           )
 
-      return { raid, characters: assigned, commonDays, missingCount, totalMembers: memberIds.length }
+      const assignedDay = raid.day_of_week as DayOfWeek | null
+      const conflictMembers: Member[] = assignedDay
+        ? submittedIds
+            .filter(mid => {
+              if (!scheduleMap[mid].includes(assignedDay)) return true
+              if (raidHour) {
+                const memberHours: string[] = timesMap[mid]?.[assignedDay] ?? []
+                if (memberHours.length > 0 && !memberHours.includes(raidHour)) return true
+              }
+              return false
+            })
+            .map(mid => assigned.find(c => c.member_id === mid)?.member)
+            .filter(Boolean) as Member[]
+        : []
+
+      return { raid, characters: assigned, commonDays, missingCount, totalMembers: memberIds.length, conflictMembers }
     })
 
     setResults(results)
