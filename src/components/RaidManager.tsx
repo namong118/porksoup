@@ -142,12 +142,12 @@ export default function RaidManager() {
                         const char = allCharacters.find(c => c.id === charId)
                         if (!char) return null
                         return (
-                          <span key={charId} className="flex items-center gap-1 bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded-lg">
+                          <span key={charId} className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${char.role === 'support' ? 'bg-green-800 text-green-200' : 'bg-blue-900 text-blue-200'}`}>
                             {char.name}
-                            <span className="text-blue-400 opacity-70">{char.class}</span>
+                            <span className={`opacity-70 ${char.role === 'support' ? 'text-green-400' : 'text-blue-400'}`}>{char.class}</span>
                             <button
                               onClick={() => toggleCharacter(raid.id, charId)}
-                              className="ml-1 text-blue-400 hover:text-red-400 transition-colors"
+                              className={`ml-1 hover:text-red-400 transition-colors ${char.role === 'support' ? 'text-green-400' : 'text-blue-400'}`}
                             >✕</button>
                           </span>
                         )
@@ -183,7 +183,11 @@ export default function RaidManager() {
                               key={char.id}
                               onClick={() => toggleCharacter(raid.id, char.id)}
                               className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                                ${isAssigned ? 'bg-blue-900 text-blue-200' : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
+                                ${isAssigned
+                                  ? char.role === 'support'
+                                    ? 'bg-green-800 text-green-200'
+                                    : 'bg-blue-900 text-blue-200'
+                                  : 'bg-gray-600 hover:bg-gray-500 text-gray-300'}`}
                             >
                               <div className="flex items-center gap-2">
                                 <span>{char.name}</span>
