@@ -6,9 +6,10 @@ import RaidManager from './components/RaidManager'
 import ScheduleResult from './components/ScheduleResult'
 import ClassManager from './components/ClassManager'
 import AllSchedules from './components/AllSchedules'
+import RaidOverview from './components/RaidOverview'
 import type { Member } from './types'
 
-type Tab = 'schedule' | 'characters' | 'raids' | 'allschedules' | 'result' | 'settings'
+type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'settings'
 
 export default function App() {
   const [member, setMember] = useState<Member | null>(null)
@@ -21,7 +22,8 @@ export default function App() {
   const tabs: { id: Tab; label: string }[] = [
     { id: 'schedule', label: '📅 내 스케줄' },
     { id: 'allschedules', label: '👥 전체 스케줄' },
-    { id: 'raids', label: '🛡️ 레이드' },
+    { id: 'raidoverview', label: '📋 레이드 현황' },
+    { id: 'raids', label: '🛡️ 레이드 관리' },
     { id: 'result', label: '📊 이번 주 편성' },
     { id: 'settings', label: '⚙️ 설정' },
     { id: 'characters', label: '⚔️ 내 캐릭터' },
@@ -59,6 +61,7 @@ export default function App() {
         {tab === 'characters' && <CharacterManager member={member} />}
         {tab === 'raids' && <RaidManager member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
+        {tab === 'raidoverview' && <RaidOverview />}
         {tab === 'result' && <ScheduleResult />}
         {tab === 'settings' && <ClassManager />}
       </main>
