@@ -37,7 +37,10 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
-        <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
+        <div>
+          <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
+          <p className="text-xs text-gray-500">열심히 일하고 회식합시다!</p>
+        </div>
         <button
           onClick={() => setMember(null)}
           className="text-sm text-gray-400 hover:text-gray-200 bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors"
