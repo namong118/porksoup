@@ -332,10 +332,17 @@ export default function ScheduleResult() {
       updates.push({ id: raid.id, day: bestDay })
     }
 
-    // MIN 미만인 날은 제거
+    // MIN 미만인 날 제거 + MAX 초과 하드 제한
     const dayFinal: Record<string, number> = {}
     updates.forEach(u => { dayFinal[u.day] = (dayFinal[u.day] ?? 0) + 1 })
-    const finalUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
+    const midUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
+
+    // MAX 초과 안전장치: 날짜별로 MAX개까지만 허용
+    const dayHardCount: Record<string, number> = {}
+    const finalUpdates = midUpdates.filter(u => {
+      dayHardCount[u.day] = (dayHardCount[u.day] ?? 0) + 1
+      return dayHardCount[u.day] <= MAX
+    })
     // 1단계: 완료되지 않은 모든 레이드의 요일 초기화
     await Promise.all(
       results
