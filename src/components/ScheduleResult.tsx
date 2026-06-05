@@ -339,23 +339,53 @@ export default function ScheduleResult() {
                 <div className="px-4 py-2 bg-gray-800">
                   <span className="text-xs text-gray-600">레이드 없음</span>
                 </div>
-              ) : (
-                <div className="divide-y divide-gray-600">
-                  {dayRaids.map((r, i) => (
-                    <RaidCard
-                      key={r.raid.id}
-                      raidResult={r}
-                      currentDay={r.raid.day_of_week as DayOfWeek}
-                      onDayChange={handleDayChange}
-                      onMoveUp={() => handleMove(dayRaids, i, 'up')}
-                      onMoveDown={() => handleMove(dayRaids, i, 'down')}
-                      canMoveUp={i > 0}
-                      canMoveDown={i < dayRaids.length - 1}
-                      order={i + 1}
-                    />
-                  ))}
-                </div>
-              )}
+              ) : (() => {
+                // 시간대별 그룹핑
+                const timeGroups: Record<string, RaidResult[]> = {}
+                dayRaids.forEach(r => {
+                  const key = r.raid.time ?? '시간 미정'
+                  if (!timeGroups[key]) timeGroups[key] = []
+                  timeGroups[key].push(r)
+                })
+                const sortedTimes = Object.keys(timeGroups).sort((a, b) => {
+                  if (a === '시간 미정') return 1
+                  if (b === '시간 미정') return -1
+                  return a.localeCompare(b)
+                })
+
+                return (
+                  <div className="divide-y divide-gray-600">
+                    {sortedTimes.map(time => {
+                      const groupRaids = timeGroups[time]
+                      return (
+                        <div key={time}>
+                          {/* 타임슬롯 헤더 */}
+                          <div className="px-4 py-1.5 bg-gray-750 bg-gray-900 flex items-center gap-2">
+                            <span className="text-xs font-bold text-blue-400">⏰ {time}</span>
+                            <span className="text-xs text-gray-500">{groupRaids.length}개</span>
+                          </div>
+                          {/* 해당 타임슬롯 레이드들 */}
+                          <div className="divide-y divide-gray-700">
+                            {groupRaids.map((r, i) => (
+                              <RaidCard
+                                key={r.raid.id}
+                                raidResult={r}
+                                currentDay={r.raid.day_of_week as DayOfWeek}
+                                onDayChange={handleDayChange}
+                                onMoveUp={() => handleMove(groupRaids, i, 'up')}
+                                onMoveDown={() => handleMove(groupRaids, i, 'down')}
+                                canMoveUp={i > 0}
+                                canMoveDown={i < groupRaids.length - 1}
+                                order={i + 1}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           )
         })}
