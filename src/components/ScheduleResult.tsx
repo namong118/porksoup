@@ -258,7 +258,7 @@ export default function ScheduleResult() {
     const MIN = minPerDay
     const MAX = maxPerDay
 
-    // 각 요일에 몇 개의 레이드가 갈 수 있는지 파악
+    // 각 요일에 갈 수 있는 레이드 수 파악
     const dayPotential: Partial<Record<DayOfWeek, number>> = {}
     WEEK_DAYS.forEach(day => {
       dayPotential[day] = results.filter(r => r.commonDays.includes(day)).length
@@ -267,7 +267,7 @@ export default function ScheduleResult() {
     // MIN 이상 채울 수 있는 요일만 유효
     const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN))
 
-    // 유효 요일이 있는 레이드만 대상, 가능 요일 적은 것부터 (제약 많은 것 우선)
+    // 제약 많은 레이드(가능 요일 적은 것) 먼저 배정
     const toSchedule = results
       .filter(r => r.commonDays.some(d => validDays.has(d)))
       .sort((a, b) => {
@@ -277,23 +277,40 @@ export default function ScheduleResult() {
       })
 
     const dayCount: Record<string, number> = {}
+    // 멤버별로 어느 날 가는지 추적
+    const memberDays: Record<string, Set<string>> = {}
     const updates: { id: string; day: string }[] = []
 
-    for (const { raid, commonDays } of toSchedule) {
+    for (const { raid, commonDays, characters } of toSchedule) {
+      const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
       const available = commonDays.filter(d => validDays.has(d) && (dayCount[d] ?? 0) < MAX)
       if (available.length === 0) continue
 
-      // 기존 요일 유지 or 가장 많이 채워진 날 우선(집중 배치)
-      const keepExisting = raid.day_of_week && available.includes(raid.day_of_week as DayOfWeek)
-      const bestDay = keepExisting
-        ? raid.day_of_week as string
-        : [...available].sort((a, b) => (dayCount[b] ?? 0) - (dayCount[a] ?? 0))[0]
+      // 각 후보 요일 점수 계산:
+      // 1순위: 이 레이드 멤버 중 이미 그날 가는 사람 수 (많을수록 좋음)
+      // 2순위: 그날 배정된 레이드 수 (집중 배치)
+      const scored = available.map(day => {
+        const memberOverlap = raidMemberIds.filter(mid => memberDays[mid]?.has(day)).length
+        const raidCount = dayCount[day] ?? 0
+        return { day, memberOverlap, raidCount }
+      }).sort((a, b) => {
+        if (b.memberOverlap !== a.memberOverlap) return b.memberOverlap - a.memberOverlap
+        return b.raidCount - a.raidCount
+      })
 
+      const bestDay = scored[0].day
       dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
+
+      // 해당 날에 가는 멤버 기록
+      raidMemberIds.forEach(mid => {
+        if (!memberDays[mid]) memberDays[mid] = new Set()
+        memberDays[mid].add(bestDay)
+      })
+
       updates.push({ id: raid.id, day: bestDay })
     }
 
-    // MIN 미만인 날은 제거 (혼자 or 소수만 오는 날 방지)
+    // MIN 미만인 날은 제거
     const dayFinal: Record<string, number> = {}
     updates.forEach(u => { dayFinal[u.day] = (dayFinal[u.day] ?? 0) + 1 })
     const finalUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
