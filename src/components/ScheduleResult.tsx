@@ -336,21 +336,35 @@ export default function ScheduleResult() {
     const dayFinal: Record<string, number> = {}
     updates.forEach(u => { dayFinal[u.day] = (dayFinal[u.day] ?? 0) + 1 })
     const finalUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
-    const scheduledIds = new Set(finalUpdates.map(u => u.id))
+    // 1단계: 완료되지 않은 모든 레이드의 요일 초기화
+    await Promise.all(
+      results
+        .filter(r => !r.raid.completed && r.raid.day_of_week)
+        .map(r => supabase.from('raids').update({ day_of_week: null }).eq('id', r.raid.id))
+    )
 
-    // 기존에 배정되어 있던 레이드 중 이번 편성에 포함 안 된 것도 초기화 (완료된 레이드 제외)
-    const toUnschedule = results
-      .filter(r => !scheduledIds.has(r.raid.id) && r.raid.day_of_week && !r.raid.completed)
-      .map(r => r.raid.id)
-
-    await Promise.all([
-      ...finalUpdates.map(({ id, day }) =>
+    // 2단계: 새로 편성된 레이드만 배정
+    await Promise.all(
+      finalUpdates.map(({ id, day }) =>
         supabase.from('raids').update({ day_of_week: day }).eq('id', id)
-      ),
-      ...toUnschedule.map(id =>
-        supabase.from('raids').update({ day_of_week: null }).eq('id', id)
-      ),
-    ])
+      )
+    )
+
+    // 안전장치: 혹시 지난 날에 배정된 경우 재차 초기화
+    const allRaidsRes = await supabase.from('raids').select('id, day_of_week')
+    if (allRaidsRes.data) {
+      const wrongDays = allRaidsRes.data.filter(
+        (r: { id: string; day_of_week: string | null }) =>
+          r.day_of_week && currentPastDays.has(r.day_of_week as DayOfWeek)
+      )
+      if (wrongDays.length > 0) {
+        await Promise.all(
+          wrongDays.map((r: { id: string }) =>
+            supabase.from('raids').update({ day_of_week: null }).eq('id', r.id)
+          )
+        )
+      }
+    }
 
     setApplied(true)
     setApplying(false)
