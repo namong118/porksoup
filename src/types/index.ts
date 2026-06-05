@@ -25,6 +25,7 @@ export interface Raid {
   time: string | null
   sort_order: number
   color: string
+  completed: boolean
   created_at: string
 }
 

@@ -258,17 +258,20 @@ export default function ScheduleResult() {
     const MIN = minPerDay
     const MAX = maxPerDay
 
+    // 완료된 레이드 제외
+    const activeResults = results.filter(r => !r.raid.completed)
+
     // 각 요일에 갈 수 있는 레이드 수 파악
     const dayPotential: Partial<Record<DayOfWeek, number>> = {}
     WEEK_DAYS.forEach(day => {
-      dayPotential[day] = results.filter(r => r.commonDays.includes(day)).length
+      dayPotential[day] = activeResults.filter(r => r.commonDays.includes(day)).length
     })
 
     // MIN 이상 채울 수 있는 요일만 유효
     const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN))
 
     // 제약 많은 레이드(가능 요일 적은 것) 먼저 배정
-    const toSchedule = results
+    const toSchedule = activeResults
       .filter(r => r.commonDays.some(d => validDays.has(d)))
       .sort((a, b) => {
         const aValid = a.commonDays.filter(d => validDays.has(d)).length
@@ -316,9 +319,9 @@ export default function ScheduleResult() {
     const finalUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
     const scheduledIds = new Set(finalUpdates.map(u => u.id))
 
-    // 기존에 배정되어 있던 레이드 중 이번 편성에 포함 안 된 것도 초기화
+    // 기존에 배정되어 있던 레이드 중 이번 편성에 포함 안 된 것도 초기화 (완료된 레이드 제외)
     const toUnschedule = results
-      .filter(r => !scheduledIds.has(r.raid.id) && r.raid.day_of_week)
+      .filter(r => !scheduledIds.has(r.raid.id) && r.raid.day_of_week && !r.raid.completed)
       .map(r => r.raid.id)
 
     await Promise.all([

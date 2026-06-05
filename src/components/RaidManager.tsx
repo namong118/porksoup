@@ -58,6 +58,11 @@ export default function RaidManager({ member }: Props) {
     setColorPickerId(null)
   }
 
+  async function toggleCompleted(id: string, current: boolean) {
+    await supabase.from('raids').update({ completed: !current }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, completed: !current } : r))
+  }
+
   async function deleteRaid(id: string) {
     if (!confirm('레이드를 삭제할까요?')) return
     await supabase.from('raids').delete().eq('id', id)
@@ -173,7 +178,11 @@ export default function RaidManager({ member }: Props) {
           const chars = raidCharacters[raid.id] ?? []
           const isExpanded = expandedRaid === raid.id
           return (
-            <div key={raid.id} className="bg-gray-700 rounded-xl overflow-hidden" style={{ borderLeft: `4px solid ${raid.color ?? '#6b7280'}` }}>
+            <div
+              key={raid.id}
+              className={`rounded-xl overflow-hidden transition-opacity ${raid.completed ? 'opacity-50' : ''}`}
+              style={{ borderLeft: `4px solid ${raid.completed ? '#4b5563' : (raid.color ?? '#6b7280')}`, backgroundColor: '#374151' }}
+            >
               <div
                 className="px-4 py-3 flex items-center justify-between cursor-pointer"
                 onClick={() => setExpandedRaid(isExpanded ? null : raid.id)}
@@ -185,11 +194,24 @@ export default function RaidManager({ member }: Props) {
                     style={{ backgroundColor: raid.color ?? '#6b7280' }}
                     className="w-4 h-4 rounded-full shrink-0 hover:ring-2 ring-white transition-all"
                   />
-                  <span className="font-medium">{raid.name}</span>
+                  <span className={`font-medium ${raid.completed ? 'line-through text-gray-500' : ''}`}>{raid.name}</span>
                   <span className="text-xs bg-gray-600 px-2 py-0.5 rounded">{raid.size}인</span>
+                  {raid.completed && (
+                    <span className="text-xs bg-gray-600 text-gray-400 px-2 py-0.5 rounded-full">완료</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-gray-400">{chars.length}/{raid.size}명</span>
+                  <button
+                    onClick={e => { e.stopPropagation(); toggleCompleted(raid.id, raid.completed) }}
+                    className={`text-xs px-2 py-0.5 rounded transition-colors ${
+                      raid.completed
+                        ? 'bg-gray-600 text-gray-300 hover:bg-blue-700 hover:text-blue-200'
+                        : 'bg-green-800 text-green-300 hover:bg-green-700'
+                    }`}
+                  >
+                    {raid.completed ? '↩ 되돌리기' : '✓ 완료'}
+                  </button>
                   <button
                     onClick={e => { e.stopPropagation(); deleteRaid(raid.id) }}
                     className="text-gray-500 hover:text-red-400 text-xs transition-colors"
