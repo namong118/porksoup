@@ -76,15 +76,11 @@ export default function WeeklyView() {
           // 시간대별 그룹핑
           const timeGroups: Record<string, RaidInfo[]> = {}
           dayRaids.forEach(r => {
-            const key = r.raid.time ?? '시간 미정'
+            const key = r.raid.time ?? '20:10'
             if (!timeGroups[key]) timeGroups[key] = []
             timeGroups[key].push(r)
           })
-          const sortedTimes = Object.keys(timeGroups).sort((a, b) => {
-            if (a === '시간 미정') return 1
-            if (b === '시간 미정') return -1
-            return a.localeCompare(b)
-          })
+          const sortedTimes = Object.keys(timeGroups).sort((a, b) => a.localeCompare(b))
 
           return (
             <div key={day} className="bg-gray-700 rounded-2xl overflow-hidden">

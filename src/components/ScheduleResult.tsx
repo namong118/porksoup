@@ -646,15 +646,11 @@ export default function ScheduleResult() {
                 // 시간대별 그룹핑
                 const timeGroups: Record<string, RaidResult[]> = {}
                 dayRaids.forEach(r => {
-                  const key = r.raid.time ?? '시간 미정'
+                  const key = r.raid.time ?? '20:10'
                   if (!timeGroups[key]) timeGroups[key] = []
                   timeGroups[key].push(r)
                 })
-                const sortedTimes = Object.keys(timeGroups).sort((a, b) => {
-                  if (a === '시간 미정') return 1
-                  if (b === '시간 미정') return -1
-                  return a.localeCompare(b)
-                })
+                const sortedTimes = Object.keys(timeGroups).sort((a, b) => a.localeCompare(b))
 
                 return (
                   <div className="divide-y divide-gray-600">
@@ -665,7 +661,7 @@ export default function ScheduleResult() {
                         <div key={time}>
                           {/* 타임슬롯 헤더 - 편집 가능 */}
                           <TimeSlotHeader
-                            time={time === '시간 미정' ? '' : time}
+                            time={time}
                             count={groupRaids.length}
                             onSave={async (newTime) => {
                               await Promise.all(raidIds.map(id =>
