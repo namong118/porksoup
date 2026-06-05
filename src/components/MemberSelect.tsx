@@ -49,6 +49,12 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
     setEditingId(null)
   }
 
+  async function deleteMember(id: string, nickname: string) {
+    if (!confirm(`"${nickname}" 닉네임을 삭제할까요?\n해당 멤버의 캐릭터·스케줄 데이터도 함께 삭제됩니다.`)) return
+    await supabase.from('members').delete().eq('id', id)
+    setMembers(prev => prev.filter(m => m.id !== id))
+  }
+
   async function updateColor(id: string, color: string) {
     await supabase.from('members').update({ color }).eq('id', id)
     setMembers(prev => prev.map(m => m.id === id ? { ...m, color } : m))
@@ -100,6 +106,12 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
                     className="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-gray-200 transition-colors text-xs shrink-0"
                   >
                     수정
+                  </button>
+                  <button
+                    onClick={() => deleteMember(m.id, m.nickname)}
+                    className="p-2.5 rounded-xl bg-gray-700 hover:bg-red-900 text-gray-600 hover:text-red-400 transition-colors text-xs shrink-0"
+                  >
+                    삭제
                   </button>
                 </div>
               )}
