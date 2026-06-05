@@ -126,6 +126,7 @@ export default function AllSchedules() {
               {WEEK_DAYS.map(day => {
                 const available = s.submitted && s.available_days.includes(day)
                 const times: string[] = s.available_times[day] ?? []
+                const isAllDay = times.length >= 15
                 const first = times[0]
                 const last = times[times.length - 1]
                 return (
@@ -133,9 +134,13 @@ export default function AllSchedules() {
                     {!s.submitted ? (
                       <span className="text-gray-700 text-xs">-</span>
                     ) : available ? (
-                      <span className="text-xs text-blue-300 text-center leading-tight">
-                        {times.length > 0 ? `${first}~${last}` : '✓'}
-                      </span>
+                      isAllDay ? (
+                        <span className="w-6 h-6 flex items-center justify-center bg-blue-700 rounded-full text-xs text-white font-bold">✓</span>
+                      ) : (
+                        <span className="text-xs text-blue-300 text-center leading-tight">
+                          {times.length > 0 ? `${first}~${last}` : '✓'}
+                        </span>
+                      )
                     ) : (
                       <span className="text-gray-600 text-sm">✕</span>
                     )}
