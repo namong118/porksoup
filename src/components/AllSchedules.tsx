@@ -1,21 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Member, DayOfWeek } from '../types'
-import { DAYS } from '../types'
+import { getWeekStart, WEEK_DAYS } from '../lib/weekUtils'
 
 interface MemberSchedule {
   member: Member
   available_days: DayOfWeek[]
   note: string | null
   submitted: boolean
-}
-
-function getWeekStart(): string {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  const monday = new Date(d.setDate(diff))
-  return monday.toISOString().split('T')[0]
 }
 
 export default function AllSchedules() {
@@ -59,7 +51,7 @@ export default function AllSchedules() {
   const submittedCount = schedules.filter(s => s.submitted).length
 
   // 요일별 가능 인원 수
-  const dayCount = DAYS.reduce((acc, day) => {
+  const dayCount = WEEK_DAYS.reduce((acc, day) => {
     acc[day] = schedules.filter(s => s.submitted && s.available_days.includes(day)).length
     return acc
   }, {} as Record<DayOfWeek, number>)
@@ -88,7 +80,7 @@ export default function AllSchedules() {
       <div className="bg-gray-700 rounded-xl p-3 mb-4">
         <p className="text-xs text-gray-400 mb-2">요일별 가능 인원</p>
         <div className="grid grid-cols-7 gap-1">
-          {DAYS.map(day => {
+          {WEEK_DAYS.map(day => {
             const count = dayCount[day]
             const isBest = count === maxCount && count > 0
             return (
@@ -108,7 +100,7 @@ export default function AllSchedules() {
         <div className="grid grid-cols-[auto_1fr] border-b border-gray-600">
           <div className="px-4 py-2 text-xs text-gray-400 w-24">멤버</div>
           <div className="grid grid-cols-7">
-            {DAYS.map(day => (
+            {WEEK_DAYS.map(day => (
               <div key={day} className="py-2 text-center text-xs text-gray-400 font-medium">{day}</div>
             ))}
           </div>
@@ -126,7 +118,7 @@ export default function AllSchedules() {
               </div>
             </div>
             <div className="grid grid-cols-7">
-              {DAYS.map(day => {
+              {WEEK_DAYS.map(day => {
                 const available = s.submitted && s.available_days.includes(day)
                 return (
                   <div key={day} className="flex items-center justify-center py-3">

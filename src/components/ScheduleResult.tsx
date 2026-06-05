@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
-import { DAYS } from '../types'
+import { getWeekStart, WEEK_DAYS, getDayOffset } from '../lib/weekUtils'
 
 interface RaidResult {
   raid: Raid
@@ -11,13 +11,6 @@ interface RaidResult {
   totalMembers: number
 }
 
-function getWeekStart(): string {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  const monday = new Date(d.setDate(diff))
-  return monday.toISOString().split('T')[0]
-}
 
 function RaidCard({
   raidResult,
@@ -132,7 +125,7 @@ function RaidCard({
         <div className="mb-3 p-3 bg-gray-700 rounded-xl">
           <p className="text-xs text-gray-400 mb-2">이동할 요일 선택</p>
           <div className="flex flex-wrap gap-1.5">
-            {DAYS.map(d => (
+            {WEEK_DAYS.map(d => (
               <button
                 key={d}
                 onClick={() => changeDay(d)}
@@ -213,7 +206,7 @@ export default function ScheduleResult() {
 
       const commonDays = submittedIds.length === 0
         ? []
-        : DAYS.filter(day => submittedIds.every(mid => scheduleMap[mid].includes(day)))
+        : WEEK_DAYS.filter(day => submittedIds.every(mid => scheduleMap[mid].includes(day)))
 
       return { raid, characters: assigned, commonDays, missingCount, totalMembers: memberIds.length }
     })
@@ -325,10 +318,10 @@ export default function ScheduleResult() {
 
       {/* 캘린더 */}
       <div className="flex-1 flex flex-col gap-2 min-w-0">
-        {DAYS.map(day => {
+        {WEEK_DAYS.map(day => {
           const dayRaids = raidsByDay[day]
           const dayDate = new Date(weekStart)
-          dayDate.setDate(dayDate.getDate() + DAYS.indexOf(day))
+          dayDate.setDate(dayDate.getDate() + getDayOffset(day))
 
           return (
             <div key={day} className={`rounded-xl overflow-hidden border ${dayRaids.length > 0 ? 'border-gray-600' : 'border-gray-700'}`}>

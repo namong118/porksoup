@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Member, DayOfWeek } from '../types'
-import { DAYS } from '../types'
+import { getWeekStart, WEEK_DAYS } from '../lib/weekUtils'
 
 interface Props {
   member: Member
-}
-
-function getWeekStart(): string {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  const monday = new Date(d.setDate(diff))
-  return monday.toISOString().split('T')[0]
 }
 
 export default function WeeklySchedule({ member }: Props) {
@@ -78,7 +70,7 @@ export default function WeeklySchedule({ member }: Props) {
       <p className="text-sm text-gray-400 mb-4">레이드 가능한 요일을 선택하세요</p>
 
       <div className="grid grid-cols-7 gap-2 mb-4">
-        {DAYS.map(day => (
+        {WEEK_DAYS.map(day => (
           <button
             key={day}
             onClick={() => toggleDay(day)}
