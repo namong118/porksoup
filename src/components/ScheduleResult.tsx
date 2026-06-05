@@ -241,6 +241,7 @@ export default function ScheduleResult() {
   const [resetting, setResetting] = useState(false)
   const [maxPerDay, setMaxPerDay] = useState(6)
   const [minPerDay, setMinPerDay] = useState(4)
+  const [maxStarsPerDay, setMaxStarsPerDay] = useState(15)
   const weekStart = getWeekStart()
   const pastDays = getPastDays(weekStart)
 
@@ -389,8 +390,8 @@ export default function ScheduleResult() {
       })
 
     const dayCount: Record<string, number> = {}
-    const dayHardCount: Record<string, number> = {} // 고난이도(4~5성) 레이드 카운트
-    const MAX_HARD = 3 // 고난이도 하루 최대
+    const dayStars: Record<string, number> = {} // 요일별 누적 별 합계
+    const MAX_STARS = maxStarsPerDay
 
     // 완료된 레이드가 이미 차지한 자리를 미리 반영
     results
@@ -398,9 +399,7 @@ export default function ScheduleResult() {
       .forEach(r => {
         const d = r.raid.day_of_week!
         dayCount[d] = (dayCount[d] ?? 0) + 1
-        if ((r.raid.difficulty ?? 1) >= 4) {
-          dayHardCount[d] = (dayHardCount[d] ?? 0) + 1
-        }
+        dayStars[d] = (dayStars[d] ?? 0) + (r.raid.difficulty ?? 1)
       })
     // 멤버별로 어느 날 가는지 추적
     const memberDays: Record<string, Set<string>> = {}
@@ -408,11 +407,11 @@ export default function ScheduleResult() {
 
     for (const { raid, commonDays, characters } of toSchedule) {
       const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
-      const isHard = (raid.difficulty ?? 1) >= 4
+      const raidDiff = raid.difficulty ?? 1
       const available = commonDays.filter(d =>
         validDays.has(d) &&
         (dayCount[d] ?? 0) < MAX &&
-        (!isHard || (dayHardCount[d] ?? 0) < MAX_HARD)
+        (dayStars[d] ?? 0) + raidDiff <= MAX_STARS
       )
       if (available.length === 0) continue
 
@@ -430,7 +429,7 @@ export default function ScheduleResult() {
 
       const bestDay = scored[0].day
       dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
-      if (isHard) dayHardCount[bestDay] = (dayHardCount[bestDay] ?? 0) + 1
+      dayStars[bestDay] = (dayStars[bestDay] ?? 0) + raidDiff
 
       // 해당 날에 가는 멤버 기록
       raidMemberIds.forEach(mid => {
@@ -556,6 +555,19 @@ export default function ScheduleResult() {
                 className="w-10 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500"
               />
               개/일
+            </label>
+            <span className="text-gray-600 text-xs">·</span>
+            <label className="text-xs text-gray-400 flex items-center gap-1.5">
+              별 합계
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={maxStarsPerDay}
+                onChange={e => setMaxStarsPerDay(Math.max(1, Number(e.target.value)))}
+                className="w-12 bg-gray-600 rounded px-2 py-0.5 text-center text-xs outline-none focus:ring-1 ring-yellow-500"
+              />
+              ★/일
             </label>
             <button
               onClick={autoSchedule}
