@@ -140,6 +140,12 @@ function RaidCard({
     setEditing(false)
   }
 
+  async function complete() {
+    if (!confirm(`"${raid.name}" 완료 처리할까요?`)) return
+    await supabase.from('raids').update({ completed: true }).eq('id', raid.id)
+    onDayChange(raid.id, null)
+  }
+
   async function saveSplitTime() {
     await supabase.from('raids').update({ time: splitTime || null }).eq('id', raid.id)
     setSplitting(false)
@@ -182,6 +188,12 @@ function RaidCard({
             className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600 shrink-0"
           >
             요일 변경
+          </button>
+          <button
+            onClick={complete}
+            className="text-xs text-green-500 hover:text-green-300 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-green-900 shrink-0"
+          >
+            ✓ 완료
           </button>
         </div>
       </div>
