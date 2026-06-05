@@ -140,6 +140,13 @@ function RaidCard({
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500">{submittedCount}/{totalMembers}명</span>
           <button
+            onClick={() => changeDay(null)}
+            className="text-xs text-gray-400 hover:text-red-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
+            title="미배정으로 이동"
+          >
+            ↩ 미배정
+          </button>
+          <button
             onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
             className="text-xs text-gray-400 hover:text-yellow-400 transition-colors px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600"
             title="이 레이드만 다른 시간대로 분리"
