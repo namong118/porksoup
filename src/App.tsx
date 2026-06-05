@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from './lib/supabase'
 import MemberSelect from './components/MemberSelect'
 import CharacterManager from './components/CharacterManager'
 import WeeklySchedule from './components/WeeklySchedule'
@@ -29,6 +30,22 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
 export default function App() {
   const [member, setMember] = useState<Member | null>(null)
   const [tab, setTab] = useState<Tab>('weeklyview')
+  const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
+  const [editingMsg, setEditingMsg] = useState(false)
+  const [msgDraft, setMsgDraft] = useState('')
+
+  useEffect(() => {
+    supabase.from('settings').select('value').eq('key', 'header_message').single()
+      .then(({ data }) => { if (data?.value) setHeaderMsg(data.value) })
+  }, [])
+
+  async function saveMsg() {
+    const trimmed = msgDraft.trim()
+    if (!trimmed) { setEditingMsg(false); return }
+    await supabase.from('settings').upsert({ key: 'header_message', value: trimmed })
+    setHeaderMsg(trimmed)
+    setEditingMsg(false)
+  }
 
   if (!member) {
     return <MemberSelect currentMember={member} onSelect={setMember} />
@@ -39,7 +56,25 @@ export default function App() {
       <header className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
-          <p className="text-xs text-gray-500">열심히 일하고 회식합시다!</p>
+          {editingMsg ? (
+            <div className="flex items-center gap-1 mt-0.5">
+              <input
+                autoFocus
+                value={msgDraft}
+                onChange={e => setMsgDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveMsg(); if (e.key === 'Escape') setEditingMsg(false) }}
+                className="bg-gray-700 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500 w-48"
+              />
+              <button onClick={saveMsg} className="text-blue-400 text-xs hover:text-blue-300">저장</button>
+              <button onClick={() => setEditingMsg(false)} className="text-gray-600 text-xs hover:text-gray-400">취소</button>
+            </div>
+          ) : (
+            <p
+              onClick={() => { setMsgDraft(headerMsg); setEditingMsg(true) }}
+              className="text-xs text-gray-500 hover:text-gray-400 cursor-pointer mt-0.5"
+              title="클릭해서 수정"
+            >{headerMsg}</p>
+          )}
         </div>
         <button
           onClick={() => setMember(null)}
