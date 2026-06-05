@@ -12,6 +12,55 @@ interface RaidResult {
 }
 
 
+function UnscheduledChip({ raidResult, onDayChange, pastDays }: {
+  raidResult: RaidResult
+  onDayChange: (raidId: string, day: DayOfWeek | null) => void
+  pastDays: Set<DayOfWeek>
+}) {
+  const { raid, commonDays } = raidResult
+  const [open, setOpen] = useState(false)
+
+  async function assignDay(day: DayOfWeek) {
+    await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
+    onDayChange(raid.id, day)
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{ borderColor: raid.color ?? '#6b7280', backgroundColor: `${raid.color ?? '#6b7280'}18` }}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium text-gray-200 hover:opacity-80 transition-opacity"
+      >
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: raid.color ?? '#6b7280' }} />
+        {raid.name}
+        <span className="text-gray-500">{raid.size}인</span>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-10 bg-gray-700 rounded-xl p-2 shadow-xl border border-gray-600 min-w-max">
+          <p className="text-xs text-gray-400 mb-1.5 px-1">요일 배정</p>
+          <div className="flex flex-wrap gap-1">
+            {WEEK_DAYS.map(d => {
+              const isPast = pastDays.has(d)
+              const isCommon = commonDays.includes(d)
+              return (
+                <button key={d} onClick={() => !isPast && assignDay(d)} disabled={isPast}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors
+                    ${isPast ? 'text-gray-700 cursor-not-allowed line-through' :
+                      isCommon ? 'bg-green-800 text-green-200 hover:bg-green-700' :
+                      'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}>
+                  {d}{isCommon && !isPast && ' ✓'}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function TimeSlotHeader({ time, count, onSave }: {
   time: string
   count: number
@@ -551,11 +600,25 @@ export default function ScheduleResult() {
         </button>
       </div>
 
-      {/* 메인 레이아웃: 캘린더 + 사이드바 */}
-      <div className="flex gap-3 items-start">
+      {/* 미배정 레이드 - 컴팩트 칩 */}
+      {unscheduled.length > 0 && (
+        <div className="mb-3 p-3 bg-gray-800 rounded-xl border border-dashed border-gray-600">
+          <p className="text-xs text-yellow-400 font-medium mb-2">⏳ 미배정 {unscheduled.length}개</p>
+          <div className="flex flex-wrap gap-1.5">
+            {unscheduled.map(r => (
+              <UnscheduledChip
+                key={r.raid.id}
+                raidResult={r}
+                onDayChange={handleDayChange}
+                pastDays={pastDays}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 캘린더 */}
-      <div className="flex-1 flex flex-col gap-2 min-w-0">
+      <div className="flex flex-col gap-2">
         {WEEK_DAYS.map(day => {
           const dayRaids = raidsByDay[day]
           const dayDate = parseLocalDate(weekStart)
@@ -639,32 +702,6 @@ export default function ScheduleResult() {
           )
         })}
       </div>
-
-      {/* 사이드바: 미배정 레이드 */}
-      {unscheduled.length > 0 && (
-        <div className="w-44 shrink-0 sticky top-4">
-          <p className="text-xs text-yellow-400 font-medium mb-2">⏳ 미배정 {unscheduled.length}개</p>
-          <div className="flex flex-col gap-2">
-            {unscheduled.map((r, i) => (
-              <div key={r.raid.id} className="rounded-xl overflow-hidden border border-dashed border-gray-600">
-                <RaidCard
-                  raidResult={r}
-                  currentDay={null}
-                  onDayChange={handleDayChange}
-                  onMoveUp={() => handleMove(unscheduled, i, 'up')}
-                  onMoveDown={() => handleMove(unscheduled, i, 'down')}
-                  canMoveUp={i > 0}
-                  canMoveDown={i < unscheduled.length - 1}
-                  pastDays={pastDays}
-                  onTimeChange={load}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      </div>{/* end flex layout */}
     </div>
   )
 }
