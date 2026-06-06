@@ -68,7 +68,7 @@ export default function RaidOverview() {
                 )}
 
                 {/* 레이드 카드 컬럼 */}
-                <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: 0 }}>
+                <div className="flex flex-col gap-0.5 flex-1" style={{ minWidth: 0 }}>
                   {group.map(({ raid, characters }) => {
                     const filled = characters.length
                     const total = raid.size
