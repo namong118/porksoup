@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const { character } = req.query
   if (!character) return res.status(400).json({ error: '캐릭터명을 입력하세요' })
 
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     )
 
     if (response.status === 404) return res.status(404).json({ error: '캐릭터를 찾을 수 없습니다' })
-    if (!response.ok) return res.status(502).json({ error: '로스트아크 API 오류' })
+    if (!response.ok) return res.status(502).json({ error: `로스트아크 API 오류 (${response.status})` })
 
     const data = await response.json()
     const rawLevel = data.ItemMaxLevel ?? ''
