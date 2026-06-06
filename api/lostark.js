@@ -22,15 +22,7 @@ export default async function handler(req, res) {
     }
 
     const data = JSON.parse(text)
-    const rawLevel = data.ItemMaxLevel ?? ''
-    const itemLevel = parseFloat(rawLevel.replace(/,/g, '')) || null
-
-    return res.json({
-      name: data.CharacterName,
-      server: data.ServerName,
-      class: data.CharacterClassName,
-      itemLevel,
-    })
+    return res.json(data)
   } catch (err) {
     return res.status(500).json({ error: String(err?.message ?? err) })
   }
