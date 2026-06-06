@@ -15,6 +15,7 @@ import type { Member } from './types'
 const COLOR_EMOJI: Record<string, string> = {
   '#94a3b8': '🌫️',
   '#f87171': '🍑',
+  '#fca5a5': '🍑',
   '#fb923c': '🦊',
   '#fbbf24': '🐣',
   '#84cc16': '🌿',
