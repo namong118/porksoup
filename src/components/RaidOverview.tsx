@@ -74,31 +74,31 @@ export default function RaidOverview() {
                     const total = raid.size
                     const supports = characters.filter(c => c.role === 'support')
                     const dps = characters.filter(c => c.role === 'dps')
-                    const raidColor = raid.color ?? '#6b7280'
+                    const raidColor = raid.completed ? '#4b5563' : (raid.color ?? '#6b7280')
 
                     return (
-                      <div key={raid.id} className="bg-gray-700 rounded-lg overflow-hidden flex flex-col">
+                      <div key={raid.id} className={`rounded-lg overflow-hidden flex flex-col ${raid.completed ? 'bg-gray-800 opacity-50' : 'bg-gray-700'}`}>
                         <div
                           className="px-2 py-1 flex items-center justify-between gap-1"
                           style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
                         >
-                          <span className="text-xs font-bold text-white truncate">{raid.name}</span>
-                          <span className="text-xs text-gray-400 shrink-0">{filled}/{total}</span>
+                          <span className={`text-xs font-bold truncate ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}>{raid.name}</span>
+                          <span className="text-xs text-gray-500 shrink-0">{filled}/{total}</span>
                         </div>
                         <div className="px-1.5 py-1 flex flex-col gap-0.5">
                           {dps.map(char => (
-                            <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
-                              <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
-                              {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
-                              <span className="text-xs text-gray-400 shrink-0">{char.class}</span>
+                            <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8')}` }}>
+                              <span className="text-xs font-medium truncate" style={{ color: raid.completed ? '#6b7280' : (char.member?.color ?? '#e2e8f0') }}>{char.name}</span>
+                              {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8') }}>{Number(char.item_level).toLocaleString()}</span>}
+                              <span className="text-xs text-gray-600 shrink-0">{char.class}</span>
                             </div>
                           ))}
-                          {supports.length > 0 && dps.length > 0 && <div className="border-t border-gray-600 my-0.5" />}
+                          {supports.length > 0 && dps.length > 0 && <div className="border-t border-gray-700 my-0.5" />}
                           {supports.map(char => (
-                            <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
-                              <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
-                              {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
-                              <span className="text-xs text-gray-400 shrink-0">{char.class}</span>
+                            <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8')}` }}>
+                              <span className="text-xs font-medium truncate" style={{ color: raid.completed ? '#6b7280' : (char.member?.color ?? '#e2e8f0') }}>{char.name}</span>
+                              {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8') }}>{Number(char.item_level).toLocaleString()}</span>}
+                              <span className="text-xs text-gray-600 shrink-0">{char.class}</span>
                             </div>
                           ))}
                         </div>
