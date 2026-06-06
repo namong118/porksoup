@@ -34,6 +34,8 @@ export default function CharacterManager({ member }: Props) {
   const [rosterFetching, setRosterFetching] = useState(false)
   const [rosterError, setRosterError] = useState('')
   const [importing, setImporting] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshResult, setRefreshResult] = useState<string>('')
 
   useEffect(() => {
     supabase.from('members').select('*').order('nickname').then(({ data }) => {
@@ -170,6 +172,36 @@ export default function CharacterManager({ member }: Props) {
     setImporting(false)
   }
 
+  async function refreshItemLevels() {
+    if (characters.length === 0) return
+    setRefreshing(true)
+    setRefreshResult('')
+    try {
+      const anyChar = characters[0].name
+      const res = await fetch(`/api/lostark?character=${encodeURIComponent(anyChar)}&all=true`)
+      const text = await res.text()
+      let data: any
+      try { data = JSON.parse(text) } catch { setRefreshResult('파싱 오류'); setRefreshing(false); return }
+      if (!res.ok) { setRefreshResult(data.error ?? '조회 실패'); setRefreshing(false); return }
+
+      const rosterMap = new Map<string, number | null>(data.map((c: RosterChar) => [c.name, c.itemLevel]))
+      let updated = 0
+      for (const char of characters) {
+        if (!rosterMap.has(char.name)) continue
+        const newLevel = rosterMap.get(char.name) ?? null
+        if (newLevel === char.item_level) continue
+        await supabase.from('characters').update({ item_level: newLevel }).eq('id', char.id)
+        updated++
+      }
+      setCharacters(prev => prev.map(c => rosterMap.has(c.name) ? { ...c, item_level: rosterMap.get(c.name) ?? c.item_level } : c))
+      setRefreshResult(`${updated}개 업데이트됨`)
+    } catch (e: any) {
+      setRefreshResult('네트워크 오류')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
   const isMyself = targetMember.id === member.id
   const existingNames = new Set(characters.map(c => c.name))
 
@@ -177,7 +209,16 @@ export default function CharacterManager({ member }: Props) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">캐릭터 관리</h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {refreshResult && <span className="text-xs text-gray-400">{refreshResult}</span>}
+          <button
+            onClick={refreshItemLevels}
+            disabled={refreshing || characters.length === 0}
+            className="bg-gray-600 hover:bg-gray-500 disabled:opacity-40 text-sm px-3 py-1.5 rounded-lg transition-colors"
+            title="템레벨 일괄 새로고침"
+          >
+            {refreshing ? '조회중...' : '🔄 새로고침'}
+          </button>
           <button
             onClick={() => { setShowRoster(v => !v); setAdding(false) }}
             className="bg-indigo-700 hover:bg-indigo-600 text-sm px-3 py-1.5 rounded-lg transition-colors"
