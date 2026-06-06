@@ -31,7 +31,6 @@ export interface Character {
   class: string
   role: Role
   item_level?: number | null
-  combat_power?: number | null
   member?: Member
 }
 
