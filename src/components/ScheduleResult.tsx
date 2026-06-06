@@ -292,6 +292,11 @@ function RaidCard({
               {char.name}
             </span>
             <span className="text-xs text-gray-500 truncate">{char.class}</span>
+            {char.item_level && (
+              <span className="text-xs opacity-70 truncate" style={{ color: char.member?.color ?? '#94a3b8' }}>
+                {Number(char.item_level).toLocaleString()}
+              </span>
+            )}
           </div>
         ))}
         {characters.length === 0 && (
