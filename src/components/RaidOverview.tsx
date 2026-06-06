@@ -38,8 +38,6 @@ export default function RaidOverview() {
 
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
-  const supportNeeded = () => 1
-
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
