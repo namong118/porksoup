@@ -140,7 +140,7 @@ export default function WeeklyView({ member }: Props) {
                                     >
                                       <span className={`text-xs truncate ${isMe ? 'font-bold text-white' : 'font-medium text-gray-400'}`}>{c.name}</span>
                                       {c.item_level && <span className="text-xs opacity-50" style={{ color: isMe ? color : undefined }}>{Number(c.item_level).toLocaleString()}</span>}
-                                      <span className="text-xs text-gray-600">{c.class}</span>
+                                      <span className={`text-xs ${isMe ? 'text-gray-300' : 'text-gray-500'}`}>{c.class}</span>
                                     </div>
                                   )
                                 })}
