@@ -298,7 +298,7 @@ function RaidCard({
                   </span>
                 )}
               </div>
-              <span className="text-xs text-gray-500 truncate">{char.class}</span>
+              <span className="text-xs text-gray-300 truncate">{char.class}</span>
           </div>
         ))}
         {characters.length === 0 && (
