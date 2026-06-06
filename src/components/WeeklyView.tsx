@@ -137,15 +137,15 @@ export default function WeeklyView() {
                                 {supports.map(c => (
                                   <div
                                     key={c.id}
-                                    className="flex items-center gap-1 rounded-lg px-2 py-1 border border-green-800/50"
+                                    className="flex items-center gap-1 rounded-lg px-2 py-1"
                                     style={{
                                       backgroundColor: `${c.member?.color ?? '#94a3b8'}22`,
                                       borderLeft: `3px solid ${c.member?.color ?? '#94a3b8'}`
                                     }}
                                   >
-                                    <span className="text-xs font-medium text-green-200">{c.name}</span>
+                                    <span className="text-xs font-medium text-gray-200">{c.name}</span>
                                     {c.item_level && <span className="text-xs opacity-70" style={{ color: c.member?.color ?? '#94a3b8' }}>{Number(c.item_level).toLocaleString()}</span>}
-                                    <span className="text-xs text-green-600">{c.class}</span>
+                                    <span className="text-xs text-gray-500">{c.class}</span>
                                   </div>
                                 ))}
                               </div>
