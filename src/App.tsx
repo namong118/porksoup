@@ -147,15 +147,17 @@ export default function App() {
           <div className="flex items-stretch px-2">
             <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">관리</span>
             {EDIT_TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
-                  ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
-                style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
-              >
-                {t.label}
-              </button>
+              <div key={t.id} className="flex items-stretch">
+                {t.id === 'fun' && <div className="w-px bg-gray-600 my-2 mx-1" />}
+                <button
+                  onClick={() => setTab(t.id)}
+                  className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
+                    ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                  style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                >
+                  {t.label}
+                </button>
+              </div>
             ))}
           </div>
         </div>
