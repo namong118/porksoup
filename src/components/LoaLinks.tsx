@@ -3,6 +3,8 @@ const LINKS = [
   { name: 'KLOA', url: 'https://kloa.gg/', desc: '캐릭터 정보 · 아이템 분석' },
   { name: 'LOAUP', url: 'https://loaup.com/', desc: '각종 로아 유틸 도구 모음' },
   { name: 'ALOA', url: 'https://aloa.gg/ko', desc: '공략 · 가이드 · 정보' },
+  { name: '인벤', url: 'https://lostark.inven.co.kr/', desc: '커뮤니티 · 공략 · 뉴스' },
+  { name: '공식 홈페이지', url: 'https://lostark.game.onstove.com/Main', desc: '로스트아크 공식 사이트' },
 ]
 
 export default function LoaLinks() {
