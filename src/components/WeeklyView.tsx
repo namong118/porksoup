@@ -113,8 +113,11 @@ export default function WeeklyView({ member }: Props) {
                         return (
                           <div
                             key={raid.id}
-                            className="rounded-xl overflow-hidden bg-gray-800"
-                            style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
+                            className="rounded-xl overflow-hidden"
+                            style={{
+                              backgroundColor: `${raid.color ?? '#6b7280'}12`,
+                              borderLeft: `3px solid ${raid.color ?? '#6b7280'}`,
+                            }}
                           >
                             <div className="px-3 py-2">
                               <div className="flex items-center gap-2 mb-2">
