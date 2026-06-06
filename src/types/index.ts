@@ -11,7 +11,7 @@ export interface Member {
 
 export const MEMBER_COLORS = [
   '#94a3b8', // 회색 (기본)
-  '#f87171', // 빨강
+  '#ef4444', // 빨강
   '#fca5a5', // 연빨강
   '#fb923c', // 주황
   '#fbbf24', // 노랑
