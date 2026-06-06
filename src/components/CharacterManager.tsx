@@ -56,14 +56,16 @@ export default function CharacterManager({ member }: Props) {
         `${supabaseUrl}/functions/v1/lostark?character=${encodeURIComponent(name.trim())}`,
         { headers: { Authorization: `Bearer ${supabaseKey}`, apikey: supabaseKey } }
       )
-      const data = await res.json()
+      const text = await res.text()
+      let data: any
+      try { data = JSON.parse(text) } catch { setFetchError(`파싱오류 (${res.status}): ${text.slice(0, 100)}`); return }
       if (!res.ok) { setFetchError(data.error ?? '조회 실패'); return }
       setItemLevel(data.itemLevel)
       if (data.class && classList.some(c => c.name === data.class)) {
         setSelectedClass(data.class)
       }
-    } catch {
-      setFetchError('조회 중 오류가 발생했습니다')
+    } catch (e: any) {
+      setFetchError('네트워크오류: ' + (e?.message ?? String(e)))
     } finally {
       setFetching(false)
     }
