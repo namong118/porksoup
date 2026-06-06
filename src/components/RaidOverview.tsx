@@ -98,7 +98,7 @@ export default function RaidOverview() {
                             <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8')}` }}>
                               <span className="text-xs font-medium truncate" style={{ color: raid.completed ? '#6b7280' : (char.member?.color ?? '#e2e8f0') }}>{char.name}</span>
                               {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8') }}>{Number(char.item_level).toLocaleString()}</span>}
-                              <span className="text-xs text-gray-600 shrink-0">{char.class}</span>
+                              <span className="text-xs text-gray-400 shrink-0">{char.class}</span>
                             </div>
                           ))}
                         </div>
