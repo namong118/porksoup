@@ -68,7 +68,7 @@ export default function RaidOverview() {
                 )}
 
                 {/* 레이드 카드 컬럼 */}
-                <div className="flex flex-col gap-2 flex-1" style={{ minWidth: 0 }}>
+                <div className="flex flex-col gap-3 flex-1" style={{ minWidth: 0 }}>
                   {group.map(({ raid, characters }) => {
                     const filled = characters.length
                     const total = raid.size
@@ -77,7 +77,7 @@ export default function RaidOverview() {
                     const raidColor = raid.completed ? '#4b5563' : (raid.color ?? '#6b7280')
 
                     return (
-                      <div key={raid.id} className={`rounded-lg overflow-hidden flex flex-col ${raid.completed ? 'bg-gray-800 opacity-70' : 'bg-gray-700'}`}>
+                      <div key={raid.id} className={`rounded-lg overflow-hidden flex flex-col ${raid.completed ? 'bg-gray-800 opacity-85' : 'bg-gray-700'}`}>
                         <div
                           className="px-2 py-1 flex items-center justify-between gap-1"
                           style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
