@@ -30,6 +30,7 @@ export interface Character {
   name: string
   class: string
   role: Role
+  item_level?: number | null
   member?: Member
 }
 

@@ -130,6 +130,7 @@ export default function WeeklyView() {
                                     }}
                                   >
                                     <span className="text-xs font-medium text-gray-200">{c.name}</span>
+                                    {c.item_level && <span className="text-xs text-yellow-500">{Number(c.item_level).toLocaleString()}</span>}
                                     <span className="text-xs text-gray-500">{c.class}</span>
                                   </div>
                                 ))}
@@ -143,6 +144,7 @@ export default function WeeklyView() {
                                     }}
                                   >
                                     <span className="text-xs font-medium text-green-200">{c.name}</span>
+                                    {c.item_level && <span className="text-xs text-yellow-500">{Number(c.item_level).toLocaleString()}</span>}
                                     <span className="text-xs text-green-600">{c.class}</span>
                                   </div>
                                 ))}
