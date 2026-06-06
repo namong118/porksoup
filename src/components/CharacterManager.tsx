@@ -16,6 +16,9 @@ export default function CharacterManager({ member }: Props) {
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [selectedClass, setSelectedClass] = useState('')
+  const [itemLevel, setItemLevel] = useState<number | null>(null)
+  const [fetching, setFetching] = useState(false)
+  const [fetchError, setFetchError] = useState('')
 
   useEffect(() => {
     supabase.from('members').select('*').order('nickname').then(({ data }) => {
@@ -41,17 +44,38 @@ export default function CharacterManager({ member }: Props) {
 
   const classRole = classList.find(c => c.name === selectedClass)?.role ?? 'dps'
 
+  async function fetchLostArk() {
+    if (!name.trim()) return
+    setFetching(true)
+    setFetchError('')
+    setItemLevel(null)
+    try {
+      const res = await fetch(`/api/lostark?character=${encodeURIComponent(name.trim())}`)
+      const data = await res.json()
+      if (!res.ok) { setFetchError(data.error ?? '조회 실패'); return }
+      setItemLevel(data.itemLevel)
+      if (data.class && classList.some(c => c.name === data.class)) {
+        setSelectedClass(data.class)
+      }
+    } catch {
+      setFetchError('조회 중 오류가 발생했습니다')
+    } finally {
+      setFetching(false)
+    }
+  }
+
   async function addCharacter() {
     if (!name.trim()) return
     const role = classList.find(c => c.name === selectedClass)?.role ?? 'dps'
     const { data, error } = await supabase
       .from('characters')
-      .insert({ member_id: targetMember.id, name: name.trim(), class: selectedClass, role })
+      .insert({ member_id: targetMember.id, name: name.trim(), class: selectedClass, role, item_level: itemLevel })
       .select()
       .single()
     if (error) { alert('오류: ' + error.message); return }
     setCharacters(prev => [...prev, data])
     setName('')
+    setItemLevel(null)
     setAdding(false)
   }
 
@@ -105,14 +129,27 @@ export default function CharacterManager({ member }: Props) {
 
       {adding && (
         <div className="bg-gray-700 rounded-xl p-4 mb-4 flex flex-col gap-3">
-          <input
-            autoFocus
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addCharacter()}
-            placeholder={`${targetMember.nickname}의 캐릭터 닉네임`}
-            className="bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
-          />
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              value={name}
+              onChange={e => { setName(e.target.value); setItemLevel(null); setFetchError('') }}
+              onKeyDown={e => e.key === 'Enter' && fetchLostArk()}
+              placeholder={`${targetMember.nickname}의 캐릭터 닉네임`}
+              className="flex-1 bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-blue-500"
+            />
+            <button
+              onClick={fetchLostArk}
+              disabled={!name.trim() || fetching}
+              className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors"
+            >
+              {fetching ? '조회중...' : '🔍 조회'}
+            </button>
+          </div>
+          {itemLevel !== null && (
+            <div className="text-xs text-yellow-400">✅ 템레벨 {itemLevel.toLocaleString()} — 직업이 자동으로 선택됐어요</div>
+          )}
+          {fetchError && <div className="text-xs text-red-400">⚠️ {fetchError}</div>}
           <select
             value={selectedClass}
             onChange={e => setSelectedClass(e.target.value)}
@@ -150,6 +187,9 @@ export default function CharacterManager({ member }: Props) {
               <div>
                 <span className="font-medium">{c.name}</span>
                 <span className="text-sm text-gray-400 ml-2">{c.class}</span>
+                {c.item_level && (
+                  <span className="text-xs text-yellow-400 ml-2">{Number(c.item_level).toLocaleString()}</span>
+                )}
                 <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
                   {c.role === 'support' ? '서포터' : '딜러'}
                 </span>
