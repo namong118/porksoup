@@ -288,15 +288,17 @@ function RaidCard({
               borderLeft: `3px solid ${char.member?.color ?? '#94a3b8'}`,
             }}
           >
-            <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>
-              {char.name}
-            </span>
-            <span className="text-xs text-gray-500 truncate">{char.class}</span>
-            {char.item_level && (
-              <span className="text-xs opacity-70 truncate" style={{ color: char.member?.color ?? '#94a3b8' }}>
-                {Number(char.item_level).toLocaleString()}
-              </span>
-            )}
+            <div className="flex items-baseline gap-1 min-w-0">
+                <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>
+                  {char.name}
+                </span>
+                {char.item_level && (
+                  <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>
+                    {Number(char.item_level).toLocaleString()}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-gray-500 truncate">{char.class}</span>
           </div>
         ))}
         {characters.length === 0 && (
