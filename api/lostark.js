@@ -16,10 +16,12 @@ export default async function handler(req, res) {
       }
     )
 
-    if (response.status === 404) return res.status(404).json({ error: '캐릭터를 찾을 수 없습니다' })
-    if (!response.ok) return res.status(502).json({ error: `로스트아크 API 오류 (${response.status})` })
+    const text = await response.text()
+    if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+      return res.status(502).json({ error: `status=${response.status} body=${text.slice(0, 200)}` })
+    }
 
-    const data = await response.json()
+    const data = JSON.parse(text)
     const rawLevel = data.ItemMaxLevel ?? ''
     const itemLevel = parseFloat(rawLevel.replace(/,/g, '')) || null
 
