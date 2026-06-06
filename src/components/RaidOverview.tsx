@@ -83,7 +83,7 @@ export default function RaidOverview() {
                 <span className="text-xs font-bold text-white truncate">{raid.name}</span>
                   <span className="text-xs text-yellow-400 shrink-0">{'★'.repeat(raid.difficulty ?? 1)}</span>
                 <div className="flex items-center gap-1 shrink-0 ml-1">
-                  <span className="text-xs text-gray-400">{filled}명</span>
+                  <span className="text-xs text-gray-400">{filled}/{total}명</span>
                 </div>
               </div>
 
@@ -96,27 +96,15 @@ export default function RaidOverview() {
                     <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
                   </div>
                 ))}
-                {/* 빈 딜러 슬롯 */}
-                {Array.from({ length: Math.max(0, total - supportNeeded() - dps.length) }).map((_, i) => (
-                  <div key={`ed-${i}`} className="flex items-center">
-                    <span className="text-xs text-gray-700">— 빈 자리</span>
-                  </div>
-                ))}
 
                 {/* 구분선 (딜러/서폿) */}
-                {total > 0 && <div className="border-t border-gray-600 my-0.5" />}
+                {supports.length > 0 && <div className="border-t border-gray-600 my-0.5" />}
 
                 {/* 서포터 */}
                 {supports.map(char => (
                   <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
                     <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
                     <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
-                  </div>
-                ))}
-                {/* 빈 서폿 슬롯 */}
-                {Array.from({ length: Math.max(0, supportNeeded() - supports.length) }).map((_, i) => (
-                  <div key={`es-${i}`} className="flex items-center">
-                    <span className="text-xs text-green-900">— 서폿 필요</span>
                   </div>
                 ))}
               </div>
