@@ -45,8 +45,8 @@ export default function RaidOverview() {
         <span className="text-xs text-gray-400">{data.length}개 레이드</span>
       </div>
 
-      <div className="overflow-x-auto pb-2">
-        <div className="flex gap-2" style={{ minWidth: 'max-content' }}>
+      <div>
+        <div className="flex flex-wrap gap-2">
           {data.map(({ raid, characters }) => {
             const filled = characters.length
             const total = raid.size
