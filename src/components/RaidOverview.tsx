@@ -62,7 +62,7 @@ export default function RaidOverview() {
               <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="text-xs text-gray-400">{group.length}개</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2 items-start">
               {group.map(({ raid, characters }) => {
           const filled = characters.length
           const total = raid.size
