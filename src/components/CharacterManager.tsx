@@ -22,8 +22,7 @@ export default function CharacterManager({ member }: Props) {
   const [name, setName] = useState('')
   const [selectedClass, setSelectedClass] = useState('')
   const [itemLevel, setItemLevel] = useState<number | null>(null)
-  const [combatPower, setCombatPower] = useState<number | null>(null)
-  const [fetching, setFetching] = useState(false)
+const [fetching, setFetching] = useState(false)
   const [fetchError, setFetchError] = useState('')
 
   // 원정대 가져오기 상태
@@ -67,7 +66,6 @@ export default function CharacterManager({ member }: Props) {
     setFetching(true)
     setFetchError('')
     setItemLevel(null)
-    setCombatPower(null)
     try {
       const res = await fetch(`/api/lostark?character=${encodeURIComponent(name.trim())}`)
       const text = await res.text()
@@ -75,7 +73,6 @@ export default function CharacterManager({ member }: Props) {
       try { data = JSON.parse(text) } catch { setFetchError(`파싱오류 (${res.status}): ${text.slice(0, 100)}`); return }
       if (!res.ok) { setFetchError(data.error ?? '조회 실패'); return }
       setItemLevel(data.itemLevel)
-      setCombatPower(data.combatPower ?? null)
       if (data.class && classList.some(c => c.name === data.class)) {
         setSelectedClass(data.class)
       }
@@ -91,14 +88,13 @@ export default function CharacterManager({ member }: Props) {
     const role = classList.find(c => c.name === selectedClass)?.role ?? 'dps'
     const { data, error } = await supabase
       .from('characters')
-      .insert({ member_id: targetMember.id, name: name.trim(), class: selectedClass, role, item_level: itemLevel, combat_power: combatPower })
+      .insert({ member_id: targetMember.id, name: name.trim(), class: selectedClass, role, item_level: itemLevel })
       .select()
       .single()
     if (error) { alert('오류: ' + error.message); return }
     setCharacters(prev => [...prev, data])
     setName('')
     setItemLevel(null)
-    setCombatPower(null)
     setAdding(false)
   }
 
@@ -367,7 +363,6 @@ export default function CharacterManager({ member }: Props) {
           {itemLevel !== null && (
             <div className="text-xs text-yellow-400">
               ✅ 템레벨 {itemLevel.toLocaleString()}
-              {combatPower !== null && <span className="ml-2 text-gray-400">· 전투력 {Math.round(combatPower).toLocaleString()}</span>}
               {' '}— 직업이 자동으로 선택됐어요
             </div>
           )}
@@ -412,10 +407,7 @@ export default function CharacterManager({ member }: Props) {
                 {c.item_level && (
                   <span className="text-xs ml-2 opacity-80" style={{ color: targetMember.color }}>{Number(c.item_level).toLocaleString()}</span>
                 )}
-                {c.combat_power && (
-                  <span className="text-xs ml-1 text-gray-500">전투력 {Math.round(Number(c.combat_power)).toLocaleString()}</span>
-                )}
-                <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
+<span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
                   {c.role === 'support' ? '서포터' : '딜러'}
                 </span>
               </div>
