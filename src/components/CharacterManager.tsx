@@ -114,9 +114,8 @@ export default function CharacterManager({ member }: Props) {
       if (!res.ok) { setRosterError(data.error ?? '조회 실패'); return }
       const list: RosterChar[] = data
       setRosterList(list)
-      // 기존 캐릭터 제외하고 기본 전체 선택
-      const existingNames = new Set(characters.map(c => c.name))
-      setRosterSelected(new Set(list.filter(c => !existingNames.has(c.name)).map(c => c.name)))
+      // 전체 선택 (기존 캐릭터는 업데이트, 신규는 추가)
+      setRosterSelected(new Set(list.map(c => c.name)))
     } catch (e: any) {
       setRosterError('네트워크오류: ' + (e?.message ?? String(e)))
     } finally {
@@ -134,21 +133,32 @@ export default function CharacterManager({ member }: Props) {
   }
 
   async function importRoster() {
-    const toImport = rosterList.filter(c => rosterSelected.has(c.name))
-    if (toImport.length === 0) return
+    const toProcess = rosterList.filter(c => rosterSelected.has(c.name))
+    if (toProcess.length === 0) return
     setImporting(true)
-    const inserted: Character[] = []
-    for (const c of toImport) {
-      const dbClass = classList.find(cl => cl.name === c.class)
-      const role: Role = dbClass?.role ?? (SUPPORT_CLASSES.has(c.class) ? 'support' : 'dps')
-      const { data } = await supabase
-        .from('characters')
-        .insert({ member_id: targetMember.id, name: c.name, class: c.class, role, item_level: c.itemLevel })
-        .select()
-        .single()
-      if (data) inserted.push(data)
+    for (const c of toProcess) {
+      const existing = characters.find(ch => ch.name === c.name)
+      if (existing) {
+        // 기존 캐릭터 → 템레벨만 업데이트
+        const { data } = await supabase
+          .from('characters')
+          .update({ item_level: c.itemLevel })
+          .eq('id', existing.id)
+          .select()
+          .single()
+        if (data) setCharacters(prev => prev.map(ch => ch.id === existing.id ? { ...ch, item_level: data.item_level } : ch))
+      } else {
+        // 신규 캐릭터 → 추가
+        const dbClass = classList.find(cl => cl.name === c.class)
+        const role: Role = dbClass?.role ?? (SUPPORT_CLASSES.has(c.class) ? 'support' : 'dps')
+        const { data } = await supabase
+          .from('characters')
+          .insert({ member_id: targetMember.id, name: c.name, class: c.class, role, item_level: c.itemLevel })
+          .select()
+          .single()
+        if (data) setCharacters(prev => [...prev, data])
+      }
     }
-    setCharacters(prev => [...prev, ...inserted])
     setShowRoster(false)
     setRosterList([])
     setRosterSelected(new Set())
@@ -235,11 +245,8 @@ export default function CharacterManager({ member }: Props) {
           {rosterList.length > 0 && (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">총 {rosterList.length}개 캐릭터 — {rosterSelected.size}개 선택됨</span>
+                <span className="text-xs text-gray-400">총 {rosterList.length}개 — {rosterSelected.size}개 선택</span>
                 <div className="flex gap-2">
-                  <button onClick={() => {
-                    setRosterSelected(new Set(rosterList.filter(c => !existingNames.has(c.name)).map(c => c.name)))
-                  }} className="text-xs text-indigo-400 hover:text-indigo-300">신규만 선택</button>
                   <button onClick={() => setRosterSelected(new Set(rosterList.map(c => c.name)))} className="text-xs text-indigo-400 hover:text-indigo-300">전체 선택</button>
                   <button onClick={() => setRosterSelected(new Set())} className="text-xs text-gray-500 hover:text-gray-400">전체 해제</button>
                 </div>
@@ -255,8 +262,7 @@ export default function CharacterManager({ member }: Props) {
                       <label
                         key={c.name}
                         className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors
-                          ${rosterSelected.has(c.name) ? 'bg-indigo-900/40' : 'hover:bg-gray-700'}
-                          ${alreadyExists ? 'opacity-50' : ''}`}
+                          ${rosterSelected.has(c.name) ? 'bg-indigo-900/40' : 'hover:bg-gray-700'}`}
                       >
                         <input
                           type="checkbox"
@@ -267,7 +273,9 @@ export default function CharacterManager({ member }: Props) {
                         <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
                         <span className={`text-xs ${isSupport ? 'text-green-400' : 'text-orange-400'}`}>{c.class}</span>
                         {c.itemLevel && <span className="text-xs text-yellow-400 shrink-0">{c.itemLevel.toLocaleString()}</span>}
-                        {alreadyExists && <span className="text-xs text-gray-500 shrink-0">이미 있음</span>}
+                        {alreadyExists
+                          ? <span className="text-xs text-blue-400 shrink-0">업데이트</span>
+                          : <span className="text-xs text-emerald-500 shrink-0">신규</span>}
                       </label>
                     )
                   })}
