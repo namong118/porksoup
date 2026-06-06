@@ -11,6 +11,7 @@ import RaidOverview from './components/RaidOverview'
 import WeeklyView from './components/WeeklyView'
 import FunTools from './components/FunTools'
 import LoaLinks from './components/LoaLinks'
+import GoldGuide from './components/GoldGuide'
 import type { Member } from './types'
 
 const COLOR_EMOJI: Record<string, string> = {
@@ -31,12 +32,13 @@ const COLOR_EMOJI: Record<string, string> = {
   '#f43f5e': '🍎',
 }
 
-type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'settings' | 'draft' | 'fun' | 'loalinks'
+type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide'
 
 const READ_TABS: { id: Tab; label: string }[] = [
   { id: 'weeklyview', label: '📅 이번 주 일정' },
   { id: 'allschedules', label: '👥 전체 스케줄' },
   { id: 'raidoverview', label: '📋 레이드 현황' },
+  { id: 'goldguide', label: '💰 골드 가이드' },
   { id: 'loalinks', label: '🔗 각종 사이트' },
 ]
 
@@ -170,6 +172,7 @@ export default function App() {
         {tab === 'settings' && <ClassManager />}
         {tab === 'characters' && <CharacterManager member={member} />}
         {tab === 'fun' && <FunTools />}
+        {tab === 'goldguide' && <GoldGuide />}
         {tab === 'loalinks' && <LoaLinks />}
       </main>
     </div>
