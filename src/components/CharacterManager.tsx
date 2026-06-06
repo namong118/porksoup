@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Character, Member, Role } from '../types'
+import { CLASSES } from '../types'
 
 interface ClassItem { id: string; name: string; role: Role }
+
+interface RosterChar { name: string; server: string; class: string; itemLevel: number | null }
 
 interface Props {
   member: Member
 }
+
+const SUPPORT_CLASSES = new Set(CLASSES.filter(c => c.role === 'support').map(c => c.name))
 
 export default function CharacterManager({ member }: Props) {
   const [allMembers, setAllMembers] = useState<Member[]>([])
@@ -19,6 +24,15 @@ export default function CharacterManager({ member }: Props) {
   const [itemLevel, setItemLevel] = useState<number | null>(null)
   const [fetching, setFetching] = useState(false)
   const [fetchError, setFetchError] = useState('')
+
+  // 원정대 가져오기 상태
+  const [showRoster, setShowRoster] = useState(false)
+  const [rosterName, setRosterName] = useState('')
+  const [rosterList, setRosterList] = useState<RosterChar[]>([])
+  const [rosterSelected, setRosterSelected] = useState<Set<string>>(new Set())
+  const [rosterFetching, setRosterFetching] = useState(false)
+  const [rosterError, setRosterError] = useState('')
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     supabase.from('members').select('*').order('nickname').then(({ data }) => {
@@ -40,6 +54,7 @@ export default function CharacterManager({ member }: Props) {
       .order('name')
       .then(({ data }) => { if (data) setCharacters(data) })
     setAdding(false)
+    setShowRoster(false)
   }, [targetMember.id])
 
   const classRole = classList.find(c => c.name === selectedClass)?.role ?? 'dps'
@@ -86,18 +101,82 @@ export default function CharacterManager({ member }: Props) {
     setCharacters(prev => prev.filter(c => c.id !== id))
   }
 
+  async function fetchRoster() {
+    if (!rosterName.trim()) return
+    setRosterFetching(true)
+    setRosterError('')
+    setRosterList([])
+    try {
+      const res = await fetch(`/api/lostark?character=${encodeURIComponent(rosterName.trim())}&all=true`)
+      const text = await res.text()
+      let data: any
+      try { data = JSON.parse(text) } catch { setRosterError(`파싱오류: ${text.slice(0, 100)}`); return }
+      if (!res.ok) { setRosterError(data.error ?? '조회 실패'); return }
+      const list: RosterChar[] = data
+      setRosterList(list)
+      // 기존 캐릭터 제외하고 기본 전체 선택
+      const existingNames = new Set(characters.map(c => c.name))
+      setRosterSelected(new Set(list.filter(c => !existingNames.has(c.name)).map(c => c.name)))
+    } catch (e: any) {
+      setRosterError('네트워크오류: ' + (e?.message ?? String(e)))
+    } finally {
+      setRosterFetching(false)
+    }
+  }
+
+  function toggleRosterChar(charName: string) {
+    setRosterSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(charName)) next.delete(charName)
+      else next.add(charName)
+      return next
+    })
+  }
+
+  async function importRoster() {
+    const toImport = rosterList.filter(c => rosterSelected.has(c.name))
+    if (toImport.length === 0) return
+    setImporting(true)
+    const inserted: Character[] = []
+    for (const c of toImport) {
+      const dbClass = classList.find(cl => cl.name === c.class)
+      const role: Role = dbClass?.role ?? (SUPPORT_CLASSES.has(c.class) ? 'support' : 'dps')
+      const { data } = await supabase
+        .from('characters')
+        .insert({ member_id: targetMember.id, name: c.name, class: c.class, role, item_level: c.itemLevel })
+        .select()
+        .single()
+      if (data) inserted.push(data)
+    }
+    setCharacters(prev => [...prev, ...inserted])
+    setShowRoster(false)
+    setRosterList([])
+    setRosterSelected(new Set())
+    setRosterName('')
+    setImporting(false)
+  }
+
   const isMyself = targetMember.id === member.id
+  const existingNames = new Set(characters.map(c => c.name))
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">캐릭터 관리</h2>
-        <button
-          onClick={() => setAdding(true)}
-          className="bg-blue-600 hover:bg-blue-500 text-sm px-3 py-1.5 rounded-lg transition-colors"
-        >
-          + 캐릭터 추가
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setShowRoster(v => !v); setAdding(false) }}
+            className="bg-indigo-700 hover:bg-indigo-600 text-sm px-3 py-1.5 rounded-lg transition-colors"
+          >
+            원정대 가져오기
+          </button>
+          <button
+            onClick={() => { setAdding(true); setShowRoster(false) }}
+            className="bg-blue-600 hover:bg-blue-500 text-sm px-3 py-1.5 rounded-lg transition-colors"
+          >
+            + 캐릭터 추가
+          </button>
+        </div>
       </div>
 
       {/* 멤버 선택 */}
@@ -129,6 +208,86 @@ export default function CharacterManager({ member }: Props) {
         </div>
       )}
 
+      {/* 원정대 가져오기 */}
+      {showRoster && (
+        <div className="bg-gray-700 rounded-xl p-4 mb-4 flex flex-col gap-3">
+          <p className="text-sm font-medium text-indigo-300">원정대 전체 가져오기</p>
+          <p className="text-xs text-gray-400">원정대 캐릭터 중 아무 캐릭터 이름이나 입력하면 원정대 전체를 불러옵니다.</p>
+          <div className="flex gap-2">
+            <input
+              autoFocus
+              value={rosterName}
+              onChange={e => setRosterName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && fetchRoster()}
+              placeholder="캐릭터 닉네임 입력"
+              className="flex-1 bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500"
+            />
+            <button
+              onClick={fetchRoster}
+              disabled={!rosterName.trim() || rosterFetching}
+              className="bg-indigo-700 hover:bg-indigo-600 disabled:opacity-40 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors"
+            >
+              {rosterFetching ? '조회중...' : '조회'}
+            </button>
+          </div>
+          {rosterError && <div className="text-xs text-red-400">⚠️ {rosterError}</div>}
+
+          {rosterList.length > 0 && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">총 {rosterList.length}개 캐릭터 — {rosterSelected.size}개 선택됨</span>
+                <div className="flex gap-2">
+                  <button onClick={() => {
+                    setRosterSelected(new Set(rosterList.filter(c => !existingNames.has(c.name)).map(c => c.name)))
+                  }} className="text-xs text-indigo-400 hover:text-indigo-300">신규만 선택</button>
+                  <button onClick={() => setRosterSelected(new Set(rosterList.map(c => c.name)))} className="text-xs text-indigo-400 hover:text-indigo-300">전체 선택</button>
+                  <button onClick={() => setRosterSelected(new Set())} className="text-xs text-gray-500 hover:text-gray-400">전체 해제</button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto rounded-lg bg-gray-800 p-2">
+                {rosterList
+                  .slice()
+                  .sort((a, b) => (b.itemLevel ?? 0) - (a.itemLevel ?? 0))
+                  .map(c => {
+                    const alreadyExists = existingNames.has(c.name)
+                    const isSupport = SUPPORT_CLASSES.has(c.class)
+                    return (
+                      <label
+                        key={c.name}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors
+                          ${rosterSelected.has(c.name) ? 'bg-indigo-900/40' : 'hover:bg-gray-700'}
+                          ${alreadyExists ? 'opacity-50' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={rosterSelected.has(c.name)}
+                          onChange={() => toggleRosterChar(c.name)}
+                          className="accent-indigo-400"
+                        />
+                        <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
+                        <span className={`text-xs ${isSupport ? 'text-green-400' : 'text-orange-400'}`}>{c.class}</span>
+                        {c.itemLevel && <span className="text-xs text-yellow-400 shrink-0">{c.itemLevel.toLocaleString()}</span>}
+                        {alreadyExists && <span className="text-xs text-gray-500 shrink-0">이미 있음</span>}
+                      </label>
+                    )
+                  })}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={importRoster}
+                  disabled={rosterSelected.size === 0 || importing}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  {importing ? '추가 중...' : `${rosterSelected.size}개 추가`}
+                </button>
+                <button onClick={() => setShowRoster(false)} className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg text-sm">취소</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 단건 추가 폼 */}
       {adding && (
         <div className="bg-gray-700 rounded-xl p-4 mb-4 flex flex-col gap-3">
           <div className="flex gap-2">
