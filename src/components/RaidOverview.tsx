@@ -45,76 +45,51 @@ export default function RaidOverview() {
         <span className="text-xs text-gray-400">{data.length}개 레이드</span>
       </div>
 
-      {/* 색상별 그룹핑 */}
-      {(() => {
-        const colorGroups: Record<string, RaidWithMembers[]> = {}
-        data.forEach(r => {
-          const c = r.raid.color ?? '#6b7280'
-          if (!colorGroups[c]) colorGroups[c] = []
-          colorGroups[c].push(r)
-        })
+      <div className="overflow-x-auto pb-2">
+        <div className="flex gap-2" style={{ minWidth: 'max-content' }}>
+          {data.map(({ raid, characters }) => {
+            const filled = characters.length
+            const total = raid.size
+            const supports = characters.filter(c => c.role === 'support')
+            const dps = characters.filter(c => c.role === 'dps')
+            const color = raid.color ?? '#6b7280'
 
-        return Object.entries(colorGroups).map(([color, group]) => (
-          <div key={color} className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="text-xs text-gray-400">{group.length}개</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 items-start">
-              {group.map(({ raid, characters }) => {
-          const filled = characters.length
-          const total = raid.size
-          const supports = characters.filter(c => c.role === 'support')
-          const dps = characters.filter(c => c.role === 'dps')
-          const color = raid.color ?? '#6b7280'
-
-          return (
-            <div
-              key={raid.id}
-              className="bg-gray-700 rounded-xl overflow-hidden flex flex-col"
-            >
-              {/* 헤더 */}
+            return (
               <div
-                className="px-3 py-2 flex items-center justify-between"
-                style={{ backgroundColor: `${color}33`, borderBottom: `2px solid ${color}` }}
+                key={raid.id}
+                className="bg-gray-700 rounded-xl overflow-hidden flex flex-col"
+                style={{ width: '140px', flexShrink: 0 }}
               >
-                <span className="text-xs font-bold text-white truncate">{raid.name}</span>
-                  <span className="text-xs text-yellow-400 shrink-0">{'★'.repeat(raid.difficulty ?? 1)}</span>
-                <div className="flex items-center gap-1 shrink-0 ml-1">
-                  <span className="text-xs text-gray-400">{filled}/{total}명</span>
+                {/* 헤더 */}
+                <div
+                  className="px-2.5 py-1.5 flex items-center justify-between gap-1"
+                  style={{ backgroundColor: `${color}33`, borderBottom: `2px solid ${color}` }}
+                >
+                  <span className="text-xs font-bold text-white truncate">{raid.name}</span>
+                  <span className="text-xs text-gray-400 shrink-0">{filled}/{total}</span>
+                </div>
+
+                {/* 멤버 목록 */}
+                <div className="p-1.5 flex flex-col gap-0.5 flex-1">
+                  {dps.map(char => (
+                    <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
+                      <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
+                      {char.item_level && <span className="text-xs shrink-0 opacity-60" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
+                    </div>
+                  ))}
+                  {supports.length > 0 && dps.length > 0 && <div className="border-t border-gray-600 my-0.5" />}
+                  {supports.map(char => (
+                    <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
+                      <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
+                      {char.item_level && <span className="text-xs shrink-0 opacity-60" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* 멤버 목록 */}
-              <div className="p-2 flex flex-col gap-1 flex-1">
-                {/* 딜러 */}
-                {dps.map(char => (
-                  <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
-                    <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
-                    {char.item_level && <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
-                    <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
-                  </div>
-                ))}
-
-                {/* 구분선 (딜러/서폿) */}
-                {supports.length > 0 && <div className="border-t border-gray-600 my-0.5" />}
-
-                {/* 서포터 */}
-                {supports.map(char => (
-                  <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
-                    <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
-                    {char.item_level && <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
-                    <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-              )
-            })}
-            </div>
-          </div>
-        ))
-      })()}
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
