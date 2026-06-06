@@ -113,11 +113,8 @@ export default function WeeklyView({ member }: Props) {
                         return (
                           <div
                             key={raid.id}
-                            className="rounded-xl overflow-hidden"
-                            style={{
-                              backgroundColor: `${raid.color ?? '#6b7280'}12`,
-                              borderLeft: `3px solid ${raid.color ?? '#6b7280'}`,
-                            }}
+                            className="rounded-xl overflow-hidden bg-gray-800"
+                            style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
                           >
                             <div className="px-3 py-2">
                               <div className="flex items-center gap-2 mb-2">
@@ -141,8 +138,8 @@ export default function WeeklyView({ member }: Props) {
                                         borderLeft: '3px solid #ffffff18',
                                       }}
                                     >
-                                      <span className={`text-xs truncate ${isMe ? 'font-bold' : 'font-medium'}`} style={{ color: isMe ? '#ffffff' : color }}>{c.name}</span>
-                                      {c.item_level && <span className="text-xs opacity-50" style={{ color }}>{Number(c.item_level).toLocaleString()}</span>}
+                                      <span className={`text-xs truncate ${isMe ? 'font-bold text-white' : 'font-medium text-gray-400'}`}>{c.name}</span>
+                                      {c.item_level && <span className="text-xs opacity-50" style={{ color: isMe ? color : undefined }}>{Number(c.item_level).toLocaleString()}</span>}
                                       <span className="text-xs text-gray-600">{c.class}</span>
                                     </div>
                                   )
