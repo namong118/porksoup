@@ -55,17 +55,20 @@ export default function RaidOverview() {
         })
 
         return (
-          <div className="flex flex-col gap-3">
+          <div className="flex gap-0 items-stretch">
             {colorGroups.map(({ color, raids: group }, gi) => (
-              <div key={color}>
+              <div key={color} className="flex items-stretch">
+                {/* 세로 구분선 */}
                 {gi > 0 && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex-1 h-px" style={{ backgroundColor: `${color}40` }} />
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                    <div className="flex-1 h-px" style={{ backgroundColor: `${color}40` }} />
+                  <div className="flex flex-col items-center mx-2">
+                    <div className="flex-1 w-px" style={{ backgroundColor: `${color}50` }} />
+                    <span className="w-1.5 h-1.5 rounded-full my-1 shrink-0" style={{ backgroundColor: color }} />
+                    <div className="flex-1 w-px" style={{ backgroundColor: `${color}50` }} />
                   </div>
                 )}
-                <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' }}>
+
+                {/* 레이드 카드 컬럼 */}
+                <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: 0 }}>
                   {group.map(({ raid, characters }) => {
                     const filled = characters.length
                     const total = raid.size
@@ -74,20 +77,20 @@ export default function RaidOverview() {
                     const raidColor = raid.color ?? '#6b7280'
 
                     return (
-                      <div key={raid.id} className="bg-gray-700 rounded-xl overflow-hidden flex flex-col">
+                      <div key={raid.id} className="bg-gray-700 rounded-lg overflow-hidden flex flex-col">
                         <div
-                          className="px-2.5 py-1.5 flex items-center justify-between gap-1"
+                          className="px-2 py-1 flex items-center justify-between gap-1"
                           style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
                         >
                           <span className="text-xs font-bold text-white truncate">{raid.name}</span>
                           <span className="text-xs text-gray-400 shrink-0">{filled}/{total}</span>
                         </div>
-                        <div className="p-1.5 flex flex-col gap-0.5 flex-1">
+                        <div className="px-1.5 py-1 flex flex-col gap-0.5">
                           {dps.map(char => (
                             <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
                               <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
                               {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
-                              <span className="text-xs text-gray-400 shrink-0 truncate">{char.class}</span>
+                              <span className="text-xs text-gray-400 shrink-0">{char.class}</span>
                             </div>
                           ))}
                           {supports.length > 0 && dps.length > 0 && <div className="border-t border-gray-600 my-0.5" />}
@@ -95,7 +98,7 @@ export default function RaidOverview() {
                             <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
                               <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
                               {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
-                              <span className="text-xs text-gray-400 shrink-0 truncate">{char.class}</span>
+                              <span className="text-xs text-gray-400 shrink-0">{char.class}</span>
                             </div>
                           ))}
                         </div>
