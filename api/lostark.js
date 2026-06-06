@@ -31,7 +31,8 @@ export default async function handler(req, res) {
 
     const data = await lostarkFetch(apiKey, `/armories/characters/${encodeURIComponent(character)}/profiles`)
     const itemLevel = parseFloat((data.ItemAvgLevel ?? data.ItemMaxLevel ?? '').replace(/,/g, '')) || null
-    return res.json({ name: data.CharacterName, server: data.ServerName, class: data.CharacterClassName, itemLevel, characterImage: data.CharacterImage ?? null, _raw: data })
+    const combatPower = parseFloat((data.CombatPower ?? '').replace(/,/g, '')) || null
+    return res.json({ name: data.CharacterName, server: data.ServerName, class: data.CharacterClassName, itemLevel, combatPower })
   } catch (err) {
     return res.status(500).json({ error: String(err?.message ?? err) })
   }
