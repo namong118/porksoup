@@ -8,7 +8,9 @@ interface RaidInfo {
   characters: (Character & { member: Member })[]
 }
 
-export default function WeeklyView() {
+interface Props { member: Member | null }
+
+export default function WeeklyView({ member }: Props) {
   const [raidsByDay, setRaidsByDay] = useState<Record<DayOfWeek, RaidInfo[]>>({
     '수': [], '목': [], '금': [], '토': [], '일': [], '월': [], '화': []
   })
@@ -120,34 +122,25 @@ export default function WeeklyView() {
                                 <span className="font-bold text-sm" style={{ color: raid.color ?? '#6b7280' }}>{raid.name}</span>
                               </div>
                               <div className="flex flex-wrap gap-1.5">
-                                {dps.map(c => (
-                                  <div
-                                    key={c.id}
-                                    className="flex items-center gap-1 rounded-lg px-2 py-1"
-                                    style={{
-                                      backgroundColor: `${c.member?.color ?? '#94a3b8'}22`,
-                                      borderLeft: `3px solid ${c.member?.color ?? '#94a3b8'}`
-                                    }}
-                                  >
-                                    <span className="text-xs font-medium text-gray-200">{c.name}</span>
-                                    {c.item_level && <span className="text-xs opacity-70" style={{ color: c.member?.color ?? '#94a3b8' }}>{Number(c.item_level).toLocaleString()}</span>}
-                                    <span className="text-xs text-gray-500">{c.class}</span>
-                                  </div>
-                                ))}
-                                {supports.map(c => (
-                                  <div
-                                    key={c.id}
-                                    className="flex items-center gap-1 rounded-lg px-2 py-1"
-                                    style={{
-                                      backgroundColor: `${c.member?.color ?? '#94a3b8'}22`,
-                                      borderLeft: `3px solid ${c.member?.color ?? '#94a3b8'}`
-                                    }}
-                                  >
-                                    <span className="text-xs font-medium text-gray-200">{c.name}</span>
-                                    {c.item_level && <span className="text-xs opacity-70" style={{ color: c.member?.color ?? '#94a3b8' }}>{Number(c.item_level).toLocaleString()}</span>}
-                                    <span className="text-xs text-gray-500">{c.class}</span>
-                                  </div>
-                                ))}
+                                {[...dps, ...supports].map(c => {
+                                  const isMe = member && c.member_id === member.id
+                                  const color = c.member?.color ?? '#94a3b8'
+                                  return (
+                                    <div
+                                      key={c.id}
+                                      className="flex items-center gap-1 rounded-lg px-2 py-1"
+                                      style={{
+                                        backgroundColor: isMe ? `${color}44` : `${color}22`,
+                                        borderLeft: `${isMe ? 4 : 3}px solid ${color}`,
+                                        boxShadow: isMe ? `0 0 0 1px ${color}44` : undefined,
+                                      }}
+                                    >
+                                      <span className={`text-xs truncate ${isMe ? 'font-bold text-white' : 'font-medium text-gray-200'}`}>{c.name}</span>
+                                      {c.item_level && <span className="text-xs opacity-70" style={{ color }}>{Number(c.item_level).toLocaleString()}</span>}
+                                      <span className="text-xs text-gray-500">{c.class}</span>
+                                    </div>
+                                  )
+                                })}
                               </div>
                             </div>
                           </div>
