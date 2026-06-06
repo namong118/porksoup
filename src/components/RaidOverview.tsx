@@ -91,7 +91,7 @@ export default function RaidOverview() {
                 {dps.map(char => (
                   <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
                     <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
-                    {char.item_level && <span className="text-xs text-yellow-500 shrink-0">{Number(char.item_level).toLocaleString()}</span>}
+                    {char.item_level && <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
                     <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
                   </div>
                 ))}
@@ -103,7 +103,7 @@ export default function RaidOverview() {
                 {supports.map(char => (
                   <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${char.member?.color ?? '#94a3b8'}` }}>
                     <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>{char.name}</span>
-                    {char.item_level && <span className="text-xs text-yellow-500 shrink-0">{Number(char.item_level).toLocaleString()}</span>}
+                    {char.item_level && <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>{Number(char.item_level).toLocaleString()}</span>}
                     <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
                   </div>
                 ))}

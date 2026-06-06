@@ -357,7 +357,7 @@ export default function CharacterManager({ member }: Props) {
                 <span className="font-medium">{c.name}</span>
                 <span className="text-sm text-gray-400 ml-2">{c.class}</span>
                 {c.item_level && (
-                  <span className="text-xs text-yellow-400 ml-2">{Number(c.item_level).toLocaleString()}</span>
+                  <span className="text-xs ml-2 opacity-80" style={{ color: targetMember.color }}>{Number(c.item_level).toLocaleString()}</span>
                 )}
                 <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
                   {c.role === 'support' ? '서포터' : '딜러'}
