@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://developer-lostark.game.onstove.com/characters/${encodeURIComponent(character)}/armories/profile`,
+      `https://developer-lostark.game.onstove.com/armories/characters/${encodeURIComponent(character)}/profiles`,
       {
         headers: {
           Authorization: `bearer ${apiKey}`,
