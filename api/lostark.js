@@ -1,4 +1,4 @@
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const { character } = req.query
   if (!character) return res.status(400).json({ error: '캐릭터명을 입력하세요' })
 
