@@ -50,12 +50,7 @@ export default function CharacterManager({ member }: Props) {
     setFetchError('')
     setItemLevel(null)
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/lostark?character=${encodeURIComponent(name.trim())}`,
-        { headers: { Authorization: `Bearer ${supabaseKey}`, apikey: supabaseKey } }
-      )
+      const res = await fetch(`/api/lostark?character=${encodeURIComponent(name.trim())}`)
       const text = await res.text()
       let data: any
       try { data = JSON.parse(text) } catch { setFetchError(`파싱오류 (${res.status}): ${text.slice(0, 100)}`); return }
