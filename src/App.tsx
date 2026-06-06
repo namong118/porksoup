@@ -163,7 +163,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="max-w-2xl mx-auto p-4">
+      <main className={`mx-auto p-4 ${tab === 'raidoverview' ? 'max-w-full' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'raidoverview' && <RaidOverview />}
