@@ -129,15 +129,18 @@ export default function WeeklyView({ member }: Props) {
                                     <div
                                       key={c.id}
                                       className="flex items-center gap-1 rounded-lg px-2 py-1"
-                                      style={{
-                                        backgroundColor: isMe ? `${color}44` : `${color}22`,
-                                        borderLeft: `${isMe ? 4 : 3}px solid ${color}`,
-                                        boxShadow: isMe ? `0 0 0 1px ${color}44` : undefined,
+                                      style={isMe ? {
+                                        backgroundColor: `${color}44`,
+                                        borderLeft: `4px solid ${color}`,
+                                        boxShadow: `0 0 0 1px ${color}55`,
+                                      } : {
+                                        backgroundColor: '#ffffff08',
+                                        borderLeft: '3px solid #ffffff18',
                                       }}
                                     >
-                                      <span className={`text-xs truncate ${isMe ? 'font-bold text-white' : 'font-medium text-gray-200'}`}>{c.name}</span>
-                                      {c.item_level && <span className="text-xs opacity-70" style={{ color }}>{Number(c.item_level).toLocaleString()}</span>}
-                                      <span className="text-xs text-gray-500">{c.class}</span>
+                                      <span className={`text-xs truncate ${isMe ? 'font-bold text-white' : 'font-medium text-gray-400'}`}>{c.name}</span>
+                                      {c.item_level && <span className={`text-xs opacity-60 ${isMe ? '' : 'text-gray-500'}`} style={isMe ? { color } : {}}>{Number(c.item_level).toLocaleString()}</span>}
+                                      <span className="text-xs text-gray-600">{c.class}</span>
                                     </div>
                                   )
                                 })}
