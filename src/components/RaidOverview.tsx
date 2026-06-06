@@ -39,8 +39,8 @@ export default function RaidOverview() {
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col items-center">
+      <div className="flex items-center justify-between mb-4 w-fit gap-4">
         <h2 className="text-lg font-bold">전체 레이드 현황</h2>
         <span className="text-xs text-gray-400">{data.length}개 레이드</span>
       </div>
