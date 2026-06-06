@@ -54,7 +54,7 @@ export default function CharacterManager({ member }: Props) {
       .from('characters')
       .select('*')
       .eq('member_id', targetMember.id)
-      .order('name')
+      .order('item_level', { ascending: false, nullsFirst: false })
       .then(({ data }) => { if (data) setCharacters(data) })
     setAdding(false)
     setShowRoster(false)
@@ -193,7 +193,11 @@ export default function CharacterManager({ member }: Props) {
         await supabase.from('characters').update({ item_level: newLevel }).eq('id', char.id)
         updated++
       }
-      setCharacters(prev => prev.map(c => rosterMap.has(c.name) ? { ...c, item_level: rosterMap.get(c.name) ?? c.item_level } : c))
+      setCharacters(prev =>
+        prev
+          .map(c => rosterMap.has(c.name) ? { ...c, item_level: rosterMap.get(c.name) ?? c.item_level } : c)
+          .sort((a, b) => (b.item_level ?? -1) - (a.item_level ?? -1))
+      )
       setRefreshResult(`${updated}개 업데이트됨`)
     } catch (e: any) {
       setRefreshResult('네트워크 오류')
