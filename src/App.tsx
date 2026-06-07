@@ -66,7 +66,7 @@ export default function App() {
   async function saveMsg() {
     const trimmed = msgDraft.trim()
     if (!trimmed) { setEditingMsg(false); return }
-    await supabase.from('settings').upsert({ key: 'header_message', value: trimmed })
+    await supabase.from('settings').upsert({ key: 'header_message', value: trimmed }, { onConflict: 'key' })
     setHeaderMsg(trimmed)
     setEditingMsg(false)
   }
