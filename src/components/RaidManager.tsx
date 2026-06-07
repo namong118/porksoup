@@ -4,11 +4,10 @@ import type { Raid, Character, Member, RaidCharacter } from '../types'
 import { RAID_COLORS } from '../types'
 
 interface Props {
-  member: Member
   isDraft?: boolean
 }
 
-export default function RaidManager({ member, isDraft = false }: Props) {
+export default function RaidManager({ isDraft = false }: Props) {
   const [raids, setRaids] = useState<Raid[]>([])
   const [allCharacters, setAllCharacters] = useState<(Character & { member: Member })[]>([])
   const [allMembers, setAllMembers] = useState<Member[]>([])
@@ -169,12 +168,6 @@ export default function RaidManager({ member, isDraft = false }: Props) {
     }
   }
 
-  // 내 캐릭터가 배정된 레이드 목록
-  const myCharacterIds = allCharacters.filter(c => c.member_id === member.id).map(c => c.id)
-  const myRaids = raids.filter(raid =>
-    (raidCharacters[raid.id] ?? []).some(charId => myCharacterIds.includes(charId))
-  )
-
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -208,34 +201,6 @@ export default function RaidManager({ member, isDraft = false }: Props) {
         <p className="text-xs text-gray-500 mb-4 bg-gray-700 rounded-xl px-4 py-2.5">
           다음 주 파티 구성을 미리 짜보는 공간입니다. 여기서 수정해도 실제 레이드 관리에는 영향 없습니다.
         </p>
-      )}
-
-      {/* 내가 등록된 레이드 요약 */}
-      {myRaids.length > 0 && (
-        <div className="bg-gray-700 rounded-xl p-3 mb-4">
-          <p className="text-xs text-gray-400 mb-2">내가 등록된 레이드 ({myRaids.length}개)</p>
-          <div className="flex flex-wrap gap-1.5">
-            {myRaids.map(raid => {
-              const myChars = (raidCharacters[raid.id] ?? [])
-                .map(id => allCharacters.find(c => c.id === id))
-                .filter(c => c && myCharacterIds.includes(c.id))
-              return myChars.map(char => (
-                <span
-                  key={`${raid.id}-${char!.id}`}
-                  style={{ backgroundColor: `${raid.color ?? '#6b7280'}25`, borderColor: raid.color ?? '#6b7280' }}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border"
-                >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: raid.color ?? '#6b7280' }}
-                  />
-                  <span className="font-medium text-gray-200">{raid.name}</span>
-                  <span className="text-gray-400">{char!.name}</span>
-                </span>
-              ))
-            })}
-          </div>
-        </div>
       )}
 
       <p className="text-xs text-gray-500 mb-4">레이드 구성원을 설정합니다. 요일·시간은 이번 주 편성에서 정합니다.</p>

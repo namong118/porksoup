@@ -169,8 +169,8 @@ export default function App() {
         {tab === 'raidoverview' && <RaidOverview />}
         {tab === 'schedule' && <WeeklySchedule member={member} />}
         {tab === 'result' && <ScheduleResult />}
-        {tab === 'raids' && <RaidManager member={member} />}
-        {tab === 'draft' && <RaidManager member={member} isDraft={true} />}
+        {tab === 'raids' && <RaidManager />}
+        {tab === 'draft' && <RaidManager isDraft={true} />}
         {tab === 'settings' && <ClassManager />}
         {tab === 'characters' && <CharacterManager member={member} />}
         {tab === 'fun' && <FunTools />}
