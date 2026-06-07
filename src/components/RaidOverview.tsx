@@ -93,7 +93,7 @@ export default function RaidOverview() {
                               <span className={`text-xs shrink-0 ${raid.completed ? 'text-gray-600' : 'text-gray-400'}`}>{char.class}</span>
                             </div>
                           ))}
-                          {supports.length > 0 && dps.length > 0 && <div className="border-t border-gray-700 my-0.5" />}
+                          {supports.length > 0 && dps.length > 0 && <div className={`border-t my-0.5 ${raid.completed ? 'border-gray-700' : 'border-gray-600'}`} />}
                           {supports.map(char => (
                             <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8')}` }}>
                               <span className="text-xs font-medium truncate" style={{ color: raid.completed ? '#6b7280' : (char.member?.color ?? '#e2e8f0') }}>{char.name}</span>
