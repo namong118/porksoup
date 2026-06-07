@@ -50,19 +50,6 @@ function drawImageCover(
   ctx.drawImage(img, dx, dy, sw, sh)
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.lineTo(x + w - r, y)
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-  ctx.lineTo(x + w, y + h - r)
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-  ctx.lineTo(x + r, y + h)
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-  ctx.lineTo(x, y + r)
-  ctx.quadraticCurveTo(x, y, x + r, y)
-  ctx.closePath()
-}
 
 export default function BusLounge() {
   const [raids, setRaids] = useState<RaidWithChars[]>([])
@@ -133,18 +120,10 @@ export default function BusLounge() {
     setCardUrl(null)
 
     const chars = selected.characters
-    const COLS = Math.min(4, chars.length)
-    const ROWS = Math.ceil(chars.length / COLS)
-    const PAD = 20
-    const GAP = 10
-    const CHAR_W = 160
-    const PORTRAIT_H = 213
-    const TEXT_H = 46
-    const HEADER_H = 72
-    const FOOTER_H = 36
-
-    const W = PAD * 2 + COLS * CHAR_W + (COLS - 1) * GAP
-    const H = HEADER_H + PAD + ROWS * (PORTRAIT_H + TEXT_H) + (ROWS - 1) * GAP + PAD + FOOTER_H
+    const CHAR_W = 220
+    const H = 440
+    const W = CHAR_W * chars.length
+    const raidColor = selected.raid.color ?? '#6b7280'
 
     const canvas = document.createElement('canvas')
     canvas.width = W
@@ -152,81 +131,56 @@ export default function BusLounge() {
     const ctx = canvas.getContext('2d')!
 
     // 배경
-    ctx.fillStyle = '#111827'
+    ctx.fillStyle = '#0f172a'
     ctx.fillRect(0, 0, W, H)
 
-    // 헤더 배경
-    const raidColor = selected.raid.color ?? '#6b7280'
-    ctx.fillStyle = `${raidColor}22`
-    ctx.fillRect(0, 0, W, HEADER_H)
-    ctx.fillStyle = raidColor
-    ctx.fillRect(0, HEADER_H - 2, W, 2)
-
-    // 레이드 이름
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 20px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(selected.raid.name, W / 2, HEADER_H / 2 + 2)
-
-    if (selected.raid.day_of_week) {
-      ctx.fillStyle = '#9ca3af'
-      ctx.font = '13px sans-serif'
-      ctx.fillText(
-        `${selected.raid.day_of_week}요일${selected.raid.time ? ' ' + selected.raid.time : ''}`,
-        W / 2, HEADER_H / 2 + 20
-      )
-    }
-
-    // 캐릭터 카드
+    // 캐릭터 초상화를 나란히
     for (let i = 0; i < chars.length; i++) {
-      const col = i % COLS
-      const row = Math.floor(i / COLS)
-      const x = PAD + col * (CHAR_W + GAP)
-      const y = HEADER_H + PAD + row * (PORTRAIT_H + TEXT_H + GAP)
-      const char = chars[i]
-      const color = char.member?.color ?? '#94a3b8'
-
-      // 초상화 배경
-      ctx.fillStyle = '#1f2937'
-      roundRect(ctx, x, y, CHAR_W, PORTRAIT_H, 8)
-      ctx.fill()
-
-      // 초상화 이미지
-      const imgUrl = images[char.name]
-      if (imgUrl) {
-        try {
-          const img = await loadImage(`/api/imageProxy?url=${encodeURIComponent(imgUrl)}`)
-          ctx.save()
-          roundRect(ctx, x, y, CHAR_W, PORTRAIT_H, 8)
-          ctx.clip()
-          drawImageCover(ctx, img, x, y, CHAR_W, PORTRAIT_H)
-          ctx.restore()
-        } catch { /* 이미지 없으면 배경만 */ }
-      }
-
-      // 멤버 색 테두리
-      ctx.strokeStyle = `${color}88`
-      ctx.lineWidth = 2
-      roundRect(ctx, x, y, CHAR_W, PORTRAIT_H, 8)
-      ctx.stroke()
-
-      // 이름
-      ctx.fillStyle = color
-      ctx.font = 'bold 13px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText(char.name, x + CHAR_W / 2, y + PORTRAIT_H + 16, CHAR_W - 8)
-
-      // 직업
-      ctx.fillStyle = char.role === 'support' ? '#86efac' : '#fdba74'
-      ctx.font = '11px sans-serif'
-      ctx.fillText(char.class, x + CHAR_W / 2, y + PORTRAIT_H + 34, CHAR_W - 8)
+      const x = i * CHAR_W
+      const imgUrl = images[chars[i].name]
+      if (!imgUrl) continue
+      try {
+        const img = await loadImage(`/api/imageProxy?url=${encodeURIComponent(imgUrl)}`)
+        ctx.save()
+        ctx.beginPath()
+        ctx.rect(x, 0, CHAR_W, H)
+        ctx.clip()
+        drawImageCover(ctx, img, x, 0, CHAR_W, H)
+        ctx.restore()
+      } catch { /* 이미지 없으면 스킵 */ }
     }
 
-    // 푸터
-    ctx.fillStyle = '#4b5563'
-    ctx.font = '12px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText('돼지국밥 레이드', W / 2, H - 12)
+    // 초상화 사이 자연스러운 블렌드
+    for (let i = 1; i < chars.length; i++) {
+      const x = i * CHAR_W
+      const BLEND = 60
+      const grad = ctx.createLinearGradient(x - BLEND, 0, x + BLEND, 0)
+      grad.addColorStop(0, 'rgba(15, 23, 42, 0)')
+      grad.addColorStop(0.5, 'rgba(15, 23, 42, 0.45)')
+      grad.addColorStop(1, 'rgba(15, 23, 42, 0)')
+      ctx.fillStyle = grad
+      ctx.fillRect(x - BLEND, 0, BLEND * 2, H)
+    }
+
+    // 하단 그라디언트 (레이드 색상으로)
+    const bottomGrad = ctx.createLinearGradient(0, H * 0.6, 0, H)
+    bottomGrad.addColorStop(0, 'rgba(15, 23, 42, 0)')
+    bottomGrad.addColorStop(1, `${raidColor}99`)
+    ctx.fillStyle = bottomGrad
+    ctx.fillRect(0, 0, W, H)
+
+    // 좌우 엣지 비네트
+    const leftGrad = ctx.createLinearGradient(0, 0, W * 0.15, 0)
+    leftGrad.addColorStop(0, 'rgba(15, 23, 42, 0.7)')
+    leftGrad.addColorStop(1, 'rgba(15, 23, 42, 0)')
+    ctx.fillStyle = leftGrad
+    ctx.fillRect(0, 0, W * 0.15, H)
+
+    const rightGrad = ctx.createLinearGradient(W * 0.85, 0, W, 0)
+    rightGrad.addColorStop(0, 'rgba(15, 23, 42, 0)')
+    rightGrad.addColorStop(1, 'rgba(15, 23, 42, 0.7)')
+    ctx.fillStyle = rightGrad
+    ctx.fillRect(W * 0.85, 0, W * 0.15, H)
 
     canvas.toBlob(blob => {
       if (!blob) { setGenerating(false); return }
