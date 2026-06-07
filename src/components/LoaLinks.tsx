@@ -5,6 +5,7 @@ const LINKS = [
   { name: 'ALOA', url: 'https://aloa.gg/ko', desc: '공략 · 가이드 · 정보' },
   { name: '인벤', url: 'https://lostark.inven.co.kr/', desc: '커뮤니티 · 공략 · 뉴스' },
   { name: '공식 홈페이지', url: 'https://lostark.game.onstove.com/Main', desc: '로스트아크 공식 사이트' },
+  { name: 'LOATTO', url: 'https://loatto.kr/efficiency/hell-rewards', desc: '헬 보상 효율 계산기' },
 ]
 
 export default function LoaLinks() {
