@@ -37,6 +37,19 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
+async function loadImageViaProxy(url: string): Promise<HTMLImageElement> {
+  const res = await fetch(`/api/imageProxy?url=${encodeURIComponent(url)}`)
+  if (!res.ok) throw new Error(`proxy ${res.status}`)
+  const blob = await res.blob()
+  const blobUrl = URL.createObjectURL(blob)
+  try {
+    const img = await loadImage(blobUrl)
+    return img
+  } finally {
+    URL.revokeObjectURL(blobUrl)
+  }
+}
+
 function drawImageCover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -140,14 +153,16 @@ export default function BusLounge() {
       const imgUrl = images[chars[i].name]
       if (!imgUrl) continue
       try {
-        const img = await loadImage(`/api/imageProxy?url=${encodeURIComponent(imgUrl)}`)
+        const img = await loadImageViaProxy(imgUrl)
         ctx.save()
         ctx.beginPath()
         ctx.rect(x, 0, CHAR_W, H)
         ctx.clip()
         drawImageCover(ctx, img, x, 0, CHAR_W, H)
         ctx.restore()
-      } catch { /* 이미지 없으면 스킵 */ }
+      } catch (e) {
+        console.error(`이미지 로드 실패 (${chars[i].name}):`, e)
+      }
     }
 
     // 초상화 사이 자연스러운 블렌드
