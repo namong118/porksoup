@@ -56,7 +56,7 @@ export default function RaidOverview() {
 
         return (
           <div className="overflow-x-auto w-full pb-2">
-          <div className="flex gap-0 items-stretch" style={{ minWidth: 'max-content' }}>
+          <div className="flex gap-0 items-stretch w-fit mx-auto">
             {colorGroups.map(({ color, raids: group }, gi) => (
               <div key={color} className="flex items-stretch">
                 {/* 세로 구분선 */}
