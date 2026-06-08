@@ -248,15 +248,26 @@ export default function RaidManager({ isDraft = false }: Props) {
                           onClick={() => setSelectedRaidId(raid.id)}
                           className={`rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all ${raid.completed ? 'opacity-80' : ''}`}
                           style={{
-                            backgroundColor: isSelected ? '#374151' : '#1f2937',
-                            outline: isSelected ? `2px solid ${raidColor}99` : '2px solid transparent',
+                            backgroundColor: isSelected ? '#2d3f55' : '#1f2937',
+                            boxShadow: isSelected ? `0 0 0 2px ${raidColor}, 0 0 12px ${raidColor}55` : 'none',
                           }}
                         >
                           {/* 카드 헤더 */}
                           <div
-                            className="px-2 py-1 flex items-center justify-between gap-1"
-                            style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
+                            className="px-2 py-1.5 flex items-center gap-1"
+                            style={{
+                              backgroundColor: isSelected ? `${raidColor}55` : `${raidColor}33`,
+                              borderBottom: `2px solid ${raidColor}`,
+                            }}
                           >
+                            {/* 색상 선택 버튼 — 이름 앞 */}
+                            <button
+                              onClick={e => { e.stopPropagation(); setColorPickerId(colorPickerId === raid.id ? null : raid.id) }}
+                              style={{ backgroundColor: raidColor }}
+                              className="w-3 h-3 rounded-full shrink-0 hover:ring-1 ring-white"
+                            />
+
+                            {/* 이름 */}
                             {editingRaidId === raid.id ? (
                               <input
                                 autoFocus value={editingName}
@@ -264,21 +275,27 @@ export default function RaidManager({ isDraft = false }: Props) {
                                 onKeyDown={e => { if (e.key === 'Enter') renameRaid(raid.id); if (e.key === 'Escape') setEditingRaidId(null) }}
                                 onBlur={() => renameRaid(raid.id)}
                                 onClick={e => e.stopPropagation()}
-                                className="bg-transparent text-xs font-bold outline-none flex-1 min-w-0 text-white"
+                                className="bg-transparent text-xs font-bold outline-none min-w-0 text-white flex-1"
                               />
                             ) : (
                               <span
-                                className={`text-xs font-bold truncate flex-1 ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}
+                                className={`text-xs font-bold truncate ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}
                                 onDoubleClick={e => { e.stopPropagation(); setEditingRaidId(raid.id); setEditingName(raid.name) }}
                                 title="더블클릭해서 이름 수정"
                               >{raid.name}</span>
                             )}
-                            <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-                              <button
-                                onClick={() => setColorPickerId(colorPickerId === raid.id ? null : raid.id)}
-                                style={{ backgroundColor: raidColor }}
-                                className="w-2.5 h-2.5 rounded-full hover:ring-1 ring-white"
-                              />
+
+                            {/* 별점 — 이름 바로 뒤 */}
+                            <div className="flex items-center shrink-0" onClick={e => e.stopPropagation()}>
+                              {[1,2,3,4,5].map(star => (
+                                <button key={star} onClick={() => updateDifficulty(raid.id, star)} className="text-xs leading-none">
+                                  <span className={star <= (raid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* 완료·삭제 버튼 */}
+                            <div className="flex items-center gap-0.5 shrink-0 ml-auto" onClick={e => e.stopPropagation()}>
                               {!isDraft && (
                                 <button
                                   onClick={() => toggleCompleted(raid.id, raid.completed)}
@@ -323,15 +340,6 @@ export default function RaidManager({ isDraft = false }: Props) {
                             {characters.length === 0 && (
                               <p className="text-xs text-gray-700 px-1 py-0.5">인원 없음</p>
                             )}
-                          </div>
-
-                          {/* 별점 */}
-                          <div className="flex gap-0 px-2 pb-1" onClick={e => e.stopPropagation()}>
-                            {[1,2,3,4,5].map(star => (
-                              <button key={star} onClick={() => updateDifficulty(raid.id, star)} className="text-xs leading-none">
-                                <span className={star <= (raid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-700'}>★</span>
-                              </button>
-                            ))}
                           </div>
                         </div>
                       )
