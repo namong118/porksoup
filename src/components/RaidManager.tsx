@@ -276,7 +276,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                           className={`rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all ${raid.completed ? 'opacity-80' : ''}`}
                           style={{
                             backgroundColor: isSelected && !raid.completed ? '#3d5268' : '#1f2937',
-                            boxShadow: isSelected ? `0 0 0 2px ${raidColor}, 0 0 12px ${raidColor}55` : 'none',
+                            boxShadow: isSelected ? `0 0 0 2px ${raid.completed ? '#9ca3af' : raidColor}, 0 0 14px ${raid.completed ? '#9ca3af88' : raidColor + '55'}` : 'none',
                           }}
                         >
                           {/* 카드 헤더 */}
