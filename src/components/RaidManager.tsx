@@ -375,7 +375,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                 className="px-2 py-0.5 rounded text-xs font-medium transition-colors border"
                 style={selectedMember === m.id ? {
                   backgroundColor: `${m.color}33`, borderColor: m.color, color: m.color,
-                } : { backgroundColor: '#374151', borderColor: 'transparent', color: '#6b7280' }}
+                } : { backgroundColor: '#374151', borderColor: 'transparent', color: '#d1d5db' }}
               >{m.nickname}</button>
             ))}
           </div>
