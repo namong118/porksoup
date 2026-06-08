@@ -17,6 +17,17 @@ export default function WeeklyView({ member }: Props) {
   const [loading, setLoading] = useState(true)
   const weekStart = getWeekStart()
 
+  async function markCompleted(id: string) {
+    setRaidsByDay(prev => {
+      const next = { ...prev } as Record<DayOfWeek, RaidInfo[]>
+      for (const day of Object.keys(next) as DayOfWeek[]) {
+        next[day] = next[day].filter(r => r.raid.id !== id)
+      }
+      return next
+    })
+    await supabase.from('raids').update({ completed: true }).eq('id', id)
+  }
+
   const load = useCallback(async () => {
     const [raidsRes, rcRes] = await Promise.all([
       supabase.from('raids').select('*').eq('is_draft', false).order('sort_order').order('name'),
@@ -119,7 +130,14 @@ export default function WeeklyView({ member }: Props) {
                             <div className="px-3 py-2">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="text-xs font-bold text-gray-500">{i + 1}</span>
-                                <span className="font-bold text-sm" style={{ color: raid.color ?? '#6b7280' }}>{raid.name}</span>
+                                <span className="font-bold text-sm flex-1" style={{ color: raid.color ?? '#6b7280' }}>{raid.name}</span>
+                                <button
+                                  onClick={() => markCompleted(raid.id)}
+                                  className="text-xs text-gray-600 hover:text-green-400 hover:bg-green-900/30 transition-colors px-1.5 py-0.5 rounded"
+                                  title="완료 처리"
+                                >
+                                  ✓ 완료
+                                </button>
                               </div>
                               <div className="flex flex-wrap gap-1.5">
                                 {[...dps, ...supports].map(c => {
