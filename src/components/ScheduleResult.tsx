@@ -294,7 +294,7 @@ function RaidCard({
                 </span>
                 {char.item_level && (
                   <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>
-                    {Number(char.item_level).toLocaleString()}
+                    {Math.floor(Number(char.item_level)).toLocaleString()}
                   </span>
                 )}
               </div>

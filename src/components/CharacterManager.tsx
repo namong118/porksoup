@@ -317,7 +317,7 @@ const [fetching, setFetching] = useState(false)
                         />
                         <span className="text-sm font-medium flex-1 truncate">{c.name}</span>
                         <span className={`text-xs ${isSupport ? 'text-green-400' : 'text-orange-400'}`}>{c.class}</span>
-                        {c.itemLevel && <span className="text-xs text-yellow-400 shrink-0">{c.itemLevel.toLocaleString()}</span>}
+                        {c.itemLevel && <span className="text-xs text-yellow-400 shrink-0">{Math.floor(c.itemLevel).toLocaleString()}</span>}
                         {alreadyExists
                           ? <span className="text-xs text-blue-400 shrink-0">업데이트</span>
                           : <span className="text-xs text-emerald-500 shrink-0">신규</span>}
@@ -362,7 +362,7 @@ const [fetching, setFetching] = useState(false)
           </div>
           {itemLevel !== null && (
             <div className="text-xs text-yellow-400">
-              ✅ 템레벨 {itemLevel.toLocaleString()}
+              ✅ 템레벨 {Math.floor(itemLevel).toLocaleString()}
               {' '}— 직업이 자동으로 선택됐어요
             </div>
           )}
@@ -405,7 +405,7 @@ const [fetching, setFetching] = useState(false)
                 <span className="font-medium">{c.name}</span>
                 <span className="text-sm text-gray-400 ml-2">{c.class}</span>
                 {c.item_level && (
-                  <span className="text-xs ml-2 opacity-80" style={{ color: targetMember.color }}>{Number(c.item_level).toLocaleString()}</span>
+                  <span className="text-xs ml-2 opacity-80" style={{ color: targetMember.color }}>{Math.floor(Number(c.item_level)).toLocaleString()}</span>
                 )}
 <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
                   {c.role === 'support' ? '서포터' : '딜러'}
