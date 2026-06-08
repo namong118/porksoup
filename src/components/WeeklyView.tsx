@@ -116,7 +116,7 @@ export default function WeeklyView({ member }: Props) {
                     </div>
 
                     {/* 레이드 목록 */}
-                    <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                    <div className="p-3 grid grid-cols-1 gap-2">
                       {group.map((info, i) => {
                         const { raid, characters } = info
                         const dps = characters.filter(c => c.role === 'dps')
