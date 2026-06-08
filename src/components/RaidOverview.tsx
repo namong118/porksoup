@@ -55,7 +55,8 @@ export default function RaidOverview() {
         })
 
         return (
-          <div className="flex gap-0 items-stretch">
+          <div className="overflow-x-auto w-full pb-2">
+          <div className="flex gap-0 items-stretch" style={{ minWidth: 'max-content' }}>
             {colorGroups.map(({ color, raids: group }, gi) => (
               <div key={color} className="flex items-stretch">
                 {/* 세로 구분선 */}
@@ -68,7 +69,7 @@ export default function RaidOverview() {
                 )}
 
                 {/* 레이드 카드 컬럼 */}
-                <div className="flex flex-col gap-3 flex-1" style={{ minWidth: 0 }}>
+                <div className="flex flex-col gap-3" style={{ width: 160 }}>
                   {group.map(({ raid, characters }) => {
                     const supports = characters.filter(c => c.role === 'support')
                     const dps = characters.filter(c => c.role === 'dps')
@@ -105,6 +106,7 @@ export default function RaidOverview() {
                 </div>
               </div>
             ))}
+          </div>
           </div>
         )
       })()}
