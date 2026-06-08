@@ -230,7 +230,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                   )}
 
                   {/* 세로 컬럼 */}
-                  <div className="flex flex-col gap-3" style={{ width: 170 }}>
+                  <div className="flex flex-col gap-3" style={{ width: 210 }}>
                     {group.map(raid => {
                       const charIds = raidCharacters[raid.id] ?? []
                       const characters = charIds
