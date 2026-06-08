@@ -400,10 +400,10 @@ export default function RaidManager({ isDraft = false }: Props) {
                         onClick={() => selectedRaidId && toggleCharacter(selectedRaidId, char.id)}
                         disabled={!selectedRaidId}
                         className="flex items-center justify-between px-2 py-1 rounded text-xs transition-colors disabled:opacity-40"
-                        style={isAssigned ? {
-                          backgroundColor: `${char.member?.color ?? '#94a3b8'}22`,
-                          outline: `1px solid ${char.member?.color ?? '#94a3b8'}55`,
-                        } : { backgroundColor: otherCharAssigned ? 'transparent' : '#2d3748' }}
+                        style={{
+                          backgroundColor: '#2d3748',
+                          outline: isAssigned ? `1px solid ${char.member?.color ?? '#94a3b8'}55` : 'none',
+                        }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="truncate font-medium" style={{ color: isAssigned ? (char.member?.color ?? '#e2e8f0') : otherCharAssigned ? '#9ca3af' : '#e2e8f0' }}>
