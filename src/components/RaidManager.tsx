@@ -162,6 +162,7 @@ export default function RaidManager({ isDraft = false }: Props) {
     if (existing) existing.raids.push(r)
     else rawGroups.push({ color: c, raids: [r] })
   })
+  rawGroups.sort((a, b) => a.color.localeCompare(b.color))
   const colorGroups: { color: string; raids: Raid[] }[] =
     rawGroups.length <= MAX_COLS
       ? rawGroups
