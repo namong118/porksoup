@@ -153,14 +153,26 @@ export default function RaidManager({ isDraft = false }: Props) {
   const selectedRaid = raids.find(r => r.id === selectedRaidId) ?? null
   const assignedIds = selectedRaidId ? (raidCharacters[selectedRaidId] ?? []) : []
 
-  // 색상별 그룹 (RaidOverview와 동일)
-  const colorGroups: { color: string; raids: Raid[] }[] = []
+  // 색상별 그룹, 최대 7열 — 초과 색상은 레이드 수 가장 적은 열에 병합
+  const MAX_COLS = 7
+  const rawGroups: { color: string; raids: Raid[] }[] = []
   raids.forEach(r => {
     const c = r.color ?? '#6b7280'
-    const existing = colorGroups.find(g => g.color === c)
+    const existing = rawGroups.find(g => g.color === c)
     if (existing) existing.raids.push(r)
-    else colorGroups.push({ color: c, raids: [r] })
+    else rawGroups.push({ color: c, raids: [r] })
   })
+  const colorGroups: { color: string; raids: Raid[] }[] =
+    rawGroups.length <= MAX_COLS
+      ? rawGroups
+      : (() => {
+          const cols = rawGroups.slice(0, MAX_COLS).map(g => ({ color: g.color, raids: [...g.raids] }))
+          rawGroups.slice(MAX_COLS).forEach(overflow => {
+            const min = cols.reduce((a, b) => b.raids.length < a.raids.length ? b : a)
+            min.raids.push(...overflow.raids)
+          })
+          return cols
+        })()
 
   return (
     <div className="flex gap-3" style={{ minHeight: 520 }}>
