@@ -153,7 +153,8 @@ export default function RaidManager({ isDraft = false }: Props) {
   const selectedRaid = raids.find(r => r.id === selectedRaidId) ?? null
   const assignedIds = selectedRaidId ? (raidCharacters[selectedRaidId] ?? []) : []
 
-  // 색상별 그룹, 최대 7열 — 초과 색상은 레이드 수 가장 적은 열에 병합
+  // 색상별 그룹, 최대 7열
+  // 레이드 수 많은 순으로 7개가 독립 컬럼, 나머지는 가장 적은 열에 병합
   const MAX_COLS = 7
   const rawGroups: { color: string; raids: Raid[] }[] = []
   raids.forEach(r => {
@@ -162,17 +163,31 @@ export default function RaidManager({ isDraft = false }: Props) {
     if (existing) existing.raids.push(r)
     else rawGroups.push({ color: c, raids: [r] })
   })
-  const colorGroups: { color: string; raids: Raid[] }[] =
-    rawGroups.length <= MAX_COLS
-      ? rawGroups
-      : (() => {
-          const cols = rawGroups.slice(0, MAX_COLS).map(g => ({ color: g.color, raids: [...g.raids] }))
-          rawGroups.slice(MAX_COLS).forEach(overflow => {
-            const min = cols.reduce((a, b) => b.raids.length < a.raids.length ? b : a)
-            min.raids.push(...overflow.raids)
-          })
-          return cols
-        })()
+
+  let colorGroups: { color: string; raids: Raid[] }[]
+  if (rawGroups.length <= MAX_COLS) {
+    colorGroups = rawGroups
+  } else {
+    // 레이드 수 내림차순, 동점이면 색상 코드로 타이브레이크 → 상위 7개가 독립 컬럼
+    const mainColors = new Set(
+      [...rawGroups]
+        .sort((a, b) => b.raids.length - a.raids.length || a.color.localeCompare(b.color))
+        .slice(0, MAX_COLS)
+        .map(g => g.color)
+    )
+    // DB 순서(이름순) 유지하며 메인 컬럼 구성
+    const cols = rawGroups
+      .filter(g => mainColors.has(g.color))
+      .map(g => ({ color: g.color, raids: [...g.raids] }))
+    // 오버플로우 색상은 레이드 수 가장 적은 컬럼에 병합
+    rawGroups
+      .filter(g => !mainColors.has(g.color))
+      .forEach(overflow => {
+        const min = cols.reduce((a, b) => b.raids.length < a.raids.length ? b : a)
+        min.raids.push(...overflow.raids)
+      })
+    colorGroups = cols
+  }
 
   return (
     <div className="flex gap-3" style={{ minHeight: 520 }}>
