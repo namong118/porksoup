@@ -153,10 +153,7 @@ export default function RaidManager({ isDraft = false }: Props) {
   const selectedRaid = raids.find(r => r.id === selectedRaidId) ?? null
   const assignedIds = selectedRaidId ? (raidCharacters[selectedRaidId] ?? []) : []
 
-  return (
-    <div className="flex gap-3" style={{ minHeight: 520 }}>
-
-      {/* ── 왼쪽: 레이드 카드 그리드 ── */}
+      {/* ── 왼쪽: 레이드 현황 스타일 ── */}
       <div className="flex-1 min-w-0 flex flex-col gap-2">
         {/* 툴바 */}
         <div className="flex gap-1.5 flex-wrap">
@@ -201,102 +198,143 @@ export default function RaidManager({ isDraft = false }: Props) {
           </div>
         )}
 
-        {/* 레이드 카드 그리드 (4열) */}
-        <div className="grid grid-cols-4 gap-2 overflow-y-auto">
-          {raids.map(raid => {
-            const charIds = raidCharacters[raid.id] ?? []
-            const chars = charIds
-              .map(id => allCharacters.find(c => c.id === id))
-              .filter(Boolean)
-              .sort((a, b) => a!.role === b!.role ? 0 : a!.role === 'support' ? 1 : -1) as (Character & { member: Member })[]
-            const isSelected = selectedRaidId === raid.id
-            const raidColor = raid.completed ? '#4b5563' : (raid.color ?? '#6b7280')
+        {/* 레이드현황 스타일 카드 */}
+        {raids.length === 0 ? (
+          <p className="text-xs text-gray-600 text-center py-4">레이드가 없습니다</p>
+        ) : (() => {
+          // 색상별 그룹
+          const colorGroups: { color: string; raids: Raid[] }[] = []
+          raids.forEach(r => {
+            const c = r.color ?? '#6b7280'
+            const existing = colorGroups.find(g => g.color === c)
+            if (existing) existing.raids.push(r)
+            else colorGroups.push({ color: c, raids: [r] })
+          })
 
-            return (
-              <div
-                key={raid.id}
-                onClick={() => setSelectedRaidId(raid.id)}
-                className={`rounded-xl p-2.5 cursor-pointer transition-colors ${isSelected ? 'bg-gray-600' : 'bg-gray-750 hover:bg-gray-700'}`}
-                style={{
-                  borderLeft: `3px solid ${raidColor}`,
-                  backgroundColor: isSelected ? '#4b5563' : '#374151',
-                  outline: isSelected ? `1px solid ${raidColor}55` : undefined,
-                }}
-              >
-                {/* 헤더 행: 색상점 + 이름 + 별 + 액션 */}
-                <div className="flex items-center gap-1 mb-1.5">
-                  <button
-                    onClick={e => { e.stopPropagation(); setColorPickerId(colorPickerId === raid.id ? null : raid.id) }}
-                    style={{ backgroundColor: raidColor }}
-                    className="w-2.5 h-2.5 rounded-full shrink-0 hover:ring-1 ring-white"
-                  />
-                  {editingRaidId === raid.id ? (
-                    <input
-                      autoFocus value={editingName}
-                      onChange={e => setEditingName(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') renameRaid(raid.id); if (e.key === 'Escape') setEditingRaidId(null) }}
-                      onBlur={() => renameRaid(raid.id)}
-                      onClick={e => e.stopPropagation()}
-                      className="bg-gray-600 rounded px-1 py-0.5 text-xs font-bold outline-none focus:ring-1 ring-blue-500 flex-1 min-w-0"
-                    />
-                  ) : (
-                    <span
-                      className={`text-xs font-bold flex-1 truncate ${raid.completed ? 'line-through text-gray-500' : 'text-white'}`}
-                      onDoubleClick={e => { e.stopPropagation(); setEditingRaidId(raid.id); setEditingName(raid.name) }}
-                      title="더블클릭해서 이름 수정"
-                    >{raid.name}</span>
-                  )}
-                  <div className="flex gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-                    {!isDraft && (
-                      <button
-                        onClick={() => toggleCompleted(raid.id, raid.completed)}
-                        className={`text-xs leading-none px-1 py-0.5 rounded ${raid.completed ? 'text-gray-500 hover:text-blue-300' : 'text-green-500 hover:text-green-300'}`}
-                      >{raid.completed ? '↩' : '✓'}</button>
-                    )}
-                    <button onClick={() => deleteRaid(raid.id)} className="text-xs text-gray-700 hover:text-red-400 leading-none">✕</button>
-                  </div>
-                </div>
-
-                {/* 색상 선택 */}
-                {colorPickerId === raid.id && (
-                  <div className="flex flex-wrap gap-1 mb-1.5" onClick={e => e.stopPropagation()}>
-                    {RAID_COLORS.map(c => (
-                      <button key={c} onClick={() => updateColor(raid.id, c)}
-                        style={{ backgroundColor: c }}
-                        className={`w-3.5 h-3.5 rounded-full ${(raid.color ?? '#6b7280') === c ? 'ring-1 ring-white scale-110' : 'opacity-60 hover:opacity-100'}`}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* 별점 */}
-                <div className="flex gap-0 mb-1.5" onClick={e => e.stopPropagation()}>
-                  {[1,2,3,4,5].map(star => (
-                    <button key={star} onClick={() => updateDifficulty(raid.id, star)} className="text-xs leading-none">
-                      <span className={star <= (raid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-700'}>★</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* 배정된 멤버 (항상 표시) */}
-                {chars.length === 0 ? (
-                  <p className="text-xs text-gray-700">인원 없음</p>
-                ) : (
-                  <div className="flex flex-col gap-0.5">
-                    {chars.map(char => (
-                      <div key={char.id} className="flex items-center gap-1">
-                        <span className={`w-1 h-1 rounded-full shrink-0 ${char.role === 'support' ? 'bg-green-500' : 'bg-orange-500'}`} />
-                        <span className="text-xs truncate leading-tight" style={{ color: char.member?.color ?? '#9ca3af' }}>{char.name}</span>
-                        <span className="text-xs text-gray-600 shrink-0 leading-tight">{char.class}</span>
+          return (
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-0 items-stretch w-fit">
+                {colorGroups.map(({ color, raids: group }, gi) => (
+                  <div key={color} className="flex items-stretch">
+                    {/* 그룹 사이 구분선 */}
+                    {gi > 0 && (
+                      <div className="flex flex-col items-center mx-2">
+                        <div className="flex-1 w-px" style={{ backgroundColor: `${color}50` }} />
+                        <span className="w-1.5 h-1.5 rounded-full my-1 shrink-0" style={{ backgroundColor: color }} />
+                        <div className="flex-1 w-px" style={{ backgroundColor: `${color}50` }} />
                       </div>
-                    ))}
+                    )}
+
+                    {/* 레이드 카드 컬럼 */}
+                    <div className="flex flex-col gap-3" style={{ width: 170 }}>
+                      {group.map(raid => {
+                        const charIds = raidCharacters[raid.id] ?? []
+                        const characters = charIds
+                          .map(id => allCharacters.find(c => c.id === id))
+                          .filter(Boolean)
+                          .sort((a, b) => a!.role === b!.role ? 0 : a!.role === 'support' ? 1 : -1) as (Character & { member: Member })[]
+                        const dps = characters.filter(c => c.role === 'dps')
+                        const supports = characters.filter(c => c.role === 'support')
+                        const isSelected = selectedRaidId === raid.id
+                        const raidColor = raid.completed ? '#4b5563' : (raid.color ?? '#6b7280')
+
+                        return (
+                          <div
+                            key={raid.id}
+                            onClick={() => setSelectedRaidId(raid.id)}
+                            className={`rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all ${raid.completed ? 'opacity-80' : ''}`}
+                            style={{
+                              backgroundColor: isSelected ? '#374151' : '#1f2937',
+                              outline: isSelected ? `2px solid ${raidColor}88` : '2px solid transparent',
+                            }}
+                          >
+                            {/* 카드 헤더 */}
+                            <div
+                              className="px-2 py-1 flex items-center justify-between gap-1"
+                              style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
+                            >
+                              {editingRaidId === raid.id ? (
+                                <input
+                                  autoFocus value={editingName}
+                                  onChange={e => setEditingName(e.target.value)}
+                                  onKeyDown={e => { if (e.key === 'Enter') renameRaid(raid.id); if (e.key === 'Escape') setEditingRaidId(null) }}
+                                  onBlur={() => renameRaid(raid.id)}
+                                  onClick={e => e.stopPropagation()}
+                                  className="bg-transparent text-xs font-bold outline-none flex-1 min-w-0 text-white"
+                                />
+                              ) : (
+                                <span
+                                  className={`text-xs font-bold truncate flex-1 ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}
+                                  onDoubleClick={e => { e.stopPropagation(); setEditingRaidId(raid.id); setEditingName(raid.name) }}
+                                  title="더블클릭해서 이름 수정"
+                                >{raid.name}</span>
+                              )}
+                              <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setColorPickerId(colorPickerId === raid.id ? null : raid.id)}
+                                  style={{ backgroundColor: raidColor }}
+                                  className="w-2.5 h-2.5 rounded-full hover:ring-1 ring-white"
+                                />
+                                {!isDraft && (
+                                  <button
+                                    onClick={() => toggleCompleted(raid.id, raid.completed)}
+                                    className={`text-xs px-0.5 leading-none ${raid.completed ? 'text-gray-500 hover:text-blue-300' : 'text-green-500 hover:text-green-300'}`}
+                                  >{raid.completed ? '↩' : '✓'}</button>
+                                )}
+                                <button onClick={() => deleteRaid(raid.id)} className="text-xs text-gray-600 hover:text-red-400 leading-none">✕</button>
+                              </div>
+                            </div>
+
+                            {/* 색상 선택 */}
+                            {colorPickerId === raid.id && (
+                              <div className="flex flex-wrap gap-1 p-2 bg-gray-800" onClick={e => e.stopPropagation()}>
+                                {RAID_COLORS.map(c => (
+                                  <button key={c} onClick={() => updateColor(raid.id, c)}
+                                    style={{ backgroundColor: c }}
+                                    className={`w-4 h-4 rounded-full ${(raid.color ?? '#6b7280') === c ? 'ring-1 ring-white' : 'opacity-60 hover:opacity-100'}`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+
+                            {/* 캐릭터 목록 */}
+                            <div className="px-1.5 py-1 flex flex-col gap-0.5">
+                              {dps.map(char => (
+                                <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8')}` }}>
+                                  <span className="text-xs font-medium truncate" style={{ color: raid.completed ? '#6b7280' : (char.member?.color ?? '#e2e8f0') }}>{char.name}</span>
+                                  {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8') }}>{Math.floor(Number(char.item_level)).toLocaleString()}</span>}
+                                  <span className={`text-xs shrink-0 ${raid.completed ? 'text-gray-600' : 'text-gray-400'}`}>{char.class}</span>
+                                </div>
+                              ))}
+                              {supports.length > 0 && dps.length > 0 && <div className={`border-t my-0.5 ${raid.completed ? 'border-gray-700' : 'border-gray-600'}`} />}
+                              {supports.map(char => (
+                                <div key={char.id} className="flex items-center gap-1 rounded px-1" style={{ borderLeft: `2px solid ${raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8')}` }}>
+                                  <span className="text-xs font-medium truncate" style={{ color: raid.completed ? '#6b7280' : (char.member?.color ?? '#e2e8f0') }}>{char.name}</span>
+                                  {char.item_level && <span className="text-xs shrink-0 opacity-70" style={{ color: raid.completed ? '#4b5563' : (char.member?.color ?? '#94a3b8') }}>{Math.floor(Number(char.item_level)).toLocaleString()}</span>}
+                                  <span className={`text-xs shrink-0 ${raid.completed ? 'text-gray-600' : 'text-gray-400'}`}>{char.class}</span>
+                                </div>
+                              ))}
+                              {characters.length === 0 && <p className="text-xs text-gray-700 px-1 py-0.5">인원 없음</p>}
+                            </div>
+
+                            {/* 별점 */}
+                            <div className="flex gap-0 px-2 pb-1" onClick={e => e.stopPropagation()}>
+                              {[1,2,3,4,5].map(star => (
+                                <button key={star} onClick={() => updateDifficulty(raid.id, star)} className="text-xs leading-none">
+                                  <span className={star <= (raid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-700'}>★</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-            )
-          })}
-          {raids.length === 0 && <p className="text-xs text-gray-600 text-center py-4 col-span-4">레이드가 없습니다</p>}
-        </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* ── 오른쪽: 인원 배정 패널 (고정 폭, 항상 표시) ── */}
