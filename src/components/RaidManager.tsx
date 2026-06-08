@@ -49,7 +49,7 @@ export default function RaidManager({ isDraft = false }: Props) {
       .insert({ name: form.name.trim(), size: 8, color: form.color, is_draft: isDraft })
       .select().single()
     if (error) { alert(error.message); return }
-    setRaids(prev => [...prev, data])
+    setRaids(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
     setSelectedRaidId(data.id)
     setForm({ name: '', color: RAID_COLORS[0] })
     setAdding(false)
