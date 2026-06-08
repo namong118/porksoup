@@ -201,8 +201,8 @@ export default function RaidManager({ isDraft = false }: Props) {
           </div>
         )}
 
-        {/* 레이드 카드 그리드 (2열) */}
-        <div className="grid grid-cols-2 gap-2 overflow-y-auto">
+        {/* 레이드 카드 그리드 (4열) */}
+        <div className="grid grid-cols-4 gap-2 overflow-y-auto">
           {raids.map(raid => {
             const charIds = raidCharacters[raid.id] ?? []
             const chars = charIds
@@ -287,6 +287,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                       <div key={char.id} className="flex items-center gap-1">
                         <span className={`w-1 h-1 rounded-full shrink-0 ${char.role === 'support' ? 'bg-green-500' : 'bg-orange-500'}`} />
                         <span className="text-xs truncate leading-tight" style={{ color: char.member?.color ?? '#9ca3af' }}>{char.name}</span>
+                        <span className="text-xs text-gray-600 shrink-0 leading-tight">{char.class}</span>
                       </div>
                     ))}
                   </div>
@@ -294,7 +295,7 @@ export default function RaidManager({ isDraft = false }: Props) {
               </div>
             )
           })}
-          {raids.length === 0 && <p className="text-xs text-gray-600 text-center py-4 col-span-2">레이드가 없습니다</p>}
+          {raids.length === 0 && <p className="text-xs text-gray-600 text-center py-4 col-span-4">레이드가 없습니다</p>}
         </div>
       </div>
 
