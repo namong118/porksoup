@@ -23,7 +23,7 @@ export default function RaidManager({ isDraft = false }: Props) {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('raids').select('*').eq('is_draft', isDraft).order('sort_order').order('name'),
+      supabase.from('raids').select('*').eq('is_draft', isDraft).order('name'),
       supabase.from('characters').select('*, member:members(*)').order('name'),
       supabase.from('raid_characters').select('*'),
       supabase.from('members').select('*').order('nickname'),
@@ -162,7 +162,6 @@ export default function RaidManager({ isDraft = false }: Props) {
     if (existing) existing.raids.push(r)
     else rawGroups.push({ color: c, raids: [r] })
   })
-  rawGroups.sort((a, b) => a.color.localeCompare(b.color))
   const colorGroups: { color: string; raids: Raid[] }[] =
     rawGroups.length <= MAX_COLS
       ? rawGroups
