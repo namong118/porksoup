@@ -275,7 +275,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                           onClick={() => setSelectedRaidId(raid.id)}
                           className={`rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all ${raid.completed ? 'opacity-80' : ''}`}
                           style={{
-                            backgroundColor: isSelected ? '#3d5268' : '#1f2937',
+                            backgroundColor: isSelected && !raid.completed ? '#3d5268' : '#1f2937',
                             boxShadow: isSelected ? `0 0 0 2px ${raidColor}, 0 0 12px ${raidColor}55` : 'none',
                           }}
                         >
