@@ -406,10 +406,10 @@ export default function RaidManager({ isDraft = false }: Props) {
                         } : { backgroundColor: otherCharAssigned ? 'transparent' : '#2d3748' }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="truncate font-medium" style={{ color: isAssigned ? (char.member?.color ?? '#e2e8f0') : otherCharAssigned ? '#6b7280' : '#e2e8f0' }}>
+                          <span className="truncate font-medium" style={{ color: isAssigned ? (char.member?.color ?? '#e2e8f0') : otherCharAssigned ? '#9ca3af' : '#e2e8f0' }}>
                             {char.name}
                           </span>
-                          <span className="shrink-0" style={{ color: isAssigned ? `${char.member?.color ?? '#94a3b8'}bb` : otherCharAssigned ? '#4b5563' : '#9ca3af' }}>{char.class}</span>
+                          <span className="shrink-0" style={{ color: isAssigned ? `${char.member?.color ?? '#94a3b8'}bb` : otherCharAssigned ? '#6b7280' : '#9ca3af' }}>{char.class}</span>
                         </div>
                         {isAssigned && <span className="text-green-400 shrink-0 ml-1">✓</span>}
                         {otherCharAssigned && <span className="text-gray-600 shrink-0 ml-1">↔</span>}
