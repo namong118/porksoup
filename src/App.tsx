@@ -186,7 +186,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className={`mx-auto p-4 ${tab === 'raidoverview' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' ? 'max-w-5xl' : 'max-w-2xl'}`}>
+      <main className={`mx-auto p-4 ${tab === 'raidoverview' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' ? 'max-w-4xl' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'raidoverview' && <RaidOverview />}
