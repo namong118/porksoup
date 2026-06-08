@@ -316,7 +316,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                             <div className="flex items-center shrink-0" onClick={e => e.stopPropagation()}>
                               {[1,2,3,4,5].map(star => (
                                 <button key={star} onClick={() => updateDifficulty(raid.id, star)} className="text-xs leading-none">
-                                  <span className={star <= (raid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+                                  <span className={star <= (raid.difficulty ?? 1) ? (raid.completed ? 'text-gray-600' : 'text-yellow-400') : 'text-gray-700'}>★</span>
                                 </button>
                               ))}
                             </div>
