@@ -13,6 +13,7 @@ import FunTools from './components/FunTools'
 import LoaLinks from './components/LoaLinks'
 import GoldGuide from './components/GoldGuide'
 import BusLounge from './components/BusLounge'
+import { usePresence } from './lib/usePresence'
 import type { Member } from './types'
 
 const COLOR_EMOJI: Record<string, string> = {
@@ -55,6 +56,7 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
 
 export default function App() {
   const [member, setMember] = useState<Member | null>(null)
+  const onlineMembers = usePresence(member)
   const [tab, setTab] = useState<Tab>('weeklyview')
   const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
   const [editingMsg, setEditingMsg] = useState(false)
@@ -86,7 +88,26 @@ export default function App() {
           borderBottomColor: `${member.color ?? '#94a3b8'}55`,
         }}
       >
-        <div />
+        <div className="flex items-center gap-1 pl-1">
+          {onlineMembers.map(m => (
+            <div
+              key={m.id}
+              title={m.nickname}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+              style={{
+                backgroundColor: `${m.color}30`,
+                color: m.color,
+                border: `1.5px solid ${m.color}80`,
+                boxShadow: m.id === member?.id ? `0 0 0 2px ${m.color}50` : undefined,
+              }}
+            >
+              {m.nickname[0]}
+            </div>
+          ))}
+          {onlineMembers.length > 0 && (
+            <span className="text-xs text-gray-600 ml-0.5">{onlineMembers.length}</span>
+          )}
+        </div>
         <div className="flex flex-col items-center">
           <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
           {editingMsg ? (
