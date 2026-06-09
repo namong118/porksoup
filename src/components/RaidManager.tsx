@@ -444,6 +444,9 @@ export default function RaidManager({ isDraft = false }: Props) {
                             {char.name}
                           </span>
                           <span className="shrink-0" style={{ color: isAssigned ? `${char.member?.color ?? '#94a3b8'}bb` : otherCharAssigned ? '#6b7280' : '#9ca3af' }}>{char.class}</span>
+                          {char.item_level && (
+                            <span className="shrink-0 text-gray-500">{Math.floor(Number(char.item_level)).toLocaleString()}</span>
+                          )}
                         </div>
                         {isAssigned && <span className="text-green-400 shrink-0 ml-1">✓</span>}
                         {otherCharAssigned && <span className="text-gray-600 shrink-0 ml-1">↔</span>}
