@@ -292,12 +292,6 @@ export default function RaidManager({ isDraft = false }: Props) {
                             {raid.is_new && (
                               <span className={`text-xs font-bold px-1 py-0.5 rounded shrink-0 leading-none ${raid.completed ? 'bg-gray-600 text-gray-400' : 'bg-red-500 text-white'}`}>NEW</span>
                             )}
-                            <span className="flex items-center shrink-0">
-                              {[1,2,3,4,5].map(star => (
-                                <span key={star} className={`text-xs leading-none ${star <= (raid.difficulty ?? 1) ? (raid.completed ? 'text-gray-600' : 'text-yellow-400') : 'text-gray-700'}`}>★</span>
-                              ))}
-                            </span>
-
                             {/* 완료·삭제 버튼 */}
                             <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
                               {!isDraft && (
@@ -372,18 +366,6 @@ export default function RaidManager({ isDraft = false }: Props) {
                     style={{ backgroundColor: c }}
                     className={`w-4 h-4 rounded-full transition-transform ${(selectedRaid.color ?? '#6b7280') === c ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'}`}
                   />
-                ))}
-              </div>
-              {/* 별점 */}
-              <div className="flex gap-0.5">
-                {[1,2,3,4,5].map(star => (
-                  <button
-                    key={star}
-                    onClick={() => updateDifficulty(selectedRaid.id, star)}
-                    className="text-base leading-none hover:scale-110 transition-transform"
-                  >
-                    <span className={star <= (selectedRaid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-600'}>★</span>
-                  </button>
                 ))}
               </div>
               {/* New 토글 */}
