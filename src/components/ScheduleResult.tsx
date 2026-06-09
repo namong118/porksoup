@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
 import { RAID_COLORS } from '../types'
@@ -339,14 +339,17 @@ export default function ScheduleResult() {
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
   const pastDays = showNext ? new Set<DayOfWeek>() : getPastDays(thisWeekStart)
   const weekField = (showNext ? 'next_day_of_week' : 'day_of_week') as 'day_of_week' | 'next_day_of_week'
+  const loadSeq = useRef(0)
 
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current
     setLoading(true)
     const [raidsRes, rcRes, schedRes] = await Promise.all([
       supabase.from('raids').select('*').eq('is_draft', false).order('sort_order').order('name'),
       supabase.from('raid_characters').select('*, character:characters(*, member:members(*))'),
       supabase.from('weekly_schedules').select('*').eq('week_start', weekStart),
     ])
+    if (seq !== loadSeq.current) return
 
     const raids: Raid[] = raidsRes.data ?? []
     const rcData = rcRes.data ?? []
@@ -391,7 +394,7 @@ export default function ScheduleResult() {
             })
           )
 
-      const assignedDay = raid.day_of_week as DayOfWeek | null
+      const assignedDay = (raid[weekField] ?? null) as DayOfWeek | null
       const conflictMembers: Member[] = assignedDay
         ? submittedIds
             .filter(mid => {
@@ -411,7 +414,7 @@ export default function ScheduleResult() {
 
     setResults(results)
     setLoading(false)
-  }, [weekStart])
+  }, [weekStart, weekField])
 
   useEffect(() => { load() }, [load])
 
