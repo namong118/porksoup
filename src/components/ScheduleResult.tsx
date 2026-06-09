@@ -4,6 +4,13 @@ import type { Raid, Character, Member, DayOfWeek } from '../types'
 import { RAID_COLORS } from '../types'
 import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate, getPastDays } from '../lib/weekUtils'
 
+function addWeeks(dateStr: string, weeks: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  date.setDate(date.getDate() + weeks * 7)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 interface RaidResult {
   raid: Raid
   characters: (Character & { member: Member })[]
@@ -320,8 +327,10 @@ export default function ScheduleResult() {
   const [maxStarsPerDay, setMaxStarsPerDay] = useState(15)
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
-  const weekStart = getWeekStart()
-  const pastDays = getPastDays(weekStart)
+  const [showNext, setShowNext] = useState(false)
+  const thisWeekStart = getWeekStart()
+  const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
+  const pastDays = showNext ? new Set<DayOfWeek>() : getPastDays(thisWeekStart)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -467,7 +476,7 @@ export default function ScheduleResult() {
   }
 
   async function resetAll() {
-    if (!confirm('이번 주 레이드 배정을 전부 초기화할까요?')) return
+    if (!confirm(showNext ? '다음 주 레이드 배정을 전부 초기화할까요?' : '이번 주 레이드 배정을 전부 초기화할까요?')) return
     setResetting(true)
     // 상태(results)에 의존하지 않고 DB에서 직접 비완료 레이드 전체 초기화
     await supabase
@@ -646,11 +655,26 @@ export default function ScheduleResult() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold">이번 주 레이드 일정</h2>
-        <span className="text-sm text-gray-400">
-          {formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}
-        </span>
+        <h2 className="text-lg font-bold">{showNext ? '다음 주 레이드 일정' : '이번 주 레이드 일정'}</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">{formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}</span>
+          <div className="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
+            <button
+              onClick={() => setShowNext(false)}
+              className={`px-2.5 py-1 transition-colors ${!showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >이번 주</button>
+            <button
+              onClick={() => setShowNext(true)}
+              className={`px-2.5 py-1 transition-colors ${showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >다음 주</button>
+          </div>
+        </div>
       </div>
+      {showNext && (
+        <div className="mb-3 px-3 py-2 bg-blue-900/30 border border-blue-700/50 rounded-xl text-xs text-blue-300">
+          다음 주 멤버 스케줄 기준으로 편성합니다. 자동 편성 결과는 즉시 DB에 반영됩니다.
+        </div>
+      )}
 
       <div className="bg-gray-700 rounded-xl px-3 py-2.5 mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
         {/* 상태 */}
