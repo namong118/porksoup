@@ -488,9 +488,12 @@ export default function ScheduleResult() {
   async function resetAll() {
     if (!confirm(showNext ? '다음 주 레이드 배정을 전부 초기화할까요?' : '이번 주 레이드 배정을 전부 초기화할까요?')) return
     setResetting(true)
-    const query = supabase.from('raids').update(showNext ? { next_day_of_week: null } : { day_of_week: null, time: null })
-    // 다음 주는 완료 여부 무관하게 전체 초기화, 이번 주는 미완료만
-    await (showNext ? query : query.eq('completed', false))
+    if (showNext) {
+      // 다음 주: 완료 여부 무관 전체 초기화 (필터 필요하므로 not null 조건 사용)
+      await supabase.from('raids').update({ next_day_of_week: null }).not('id', 'is', null)
+    } else {
+      await supabase.from('raids').update({ day_of_week: null, time: null }).eq('completed', false)
+    }
     setResetting(false)
     setApplied(false)
     load()
