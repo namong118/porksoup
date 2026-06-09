@@ -18,12 +18,13 @@ interface MemberSchedule {
   submitted: boolean
 }
 
-export default function AllSchedules() {
+export default function AllSchedules({ weekStart: propWeekStart }: { weekStart?: string } = {}) {
   const [schedules, setSchedules] = useState<MemberSchedule[]>([])
   const [loading, setLoading] = useState(true)
   const thisWeekStart = getWeekStart()
   const [showNext, setShowNext] = useState(false)
-  const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
+  const weekStart = propWeekStart ?? (showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart)
+  const controlled = !!propWeekStart  // prop으로 받으면 토글 숨김
 
   useEffect(() => {
     setLoading(true)
@@ -69,19 +70,21 @@ export default function AllSchedules() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold">{showNext ? '다음 주 멤버 스케줄' : '이번 주 멤버 스케줄'}</h2>
+        <h2 className="text-lg font-bold">{controlled ? '멤버 스케줄' : showNext ? '다음 주 멤버 스케줄' : '이번 주 멤버 스케줄'}</h2>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-400">{formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}</span>
-          <div className="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
-            <button
-              onClick={() => setShowNext(false)}
-              className={`px-2.5 py-1 transition-colors ${!showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
-            >이번 주</button>
-            <button
-              onClick={() => setShowNext(true)}
-              className={`px-2.5 py-1 transition-colors ${showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
-            >다음 주</button>
-          </div>
+          {!controlled && (
+            <div className="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
+              <button
+                onClick={() => setShowNext(false)}
+                className={`px-2.5 py-1 transition-colors ${!showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+              >이번 주</button>
+              <button
+                onClick={() => setShowNext(true)}
+                className={`px-2.5 py-1 transition-colors ${showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+              >다음 주</button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
 import { RAID_COLORS } from '../types'
 import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate, getPastDays } from '../lib/weekUtils'
+import AllSchedules from './AllSchedules'
 
 function addWeeks(dateStr: string, weeks: number): string {
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -663,7 +664,8 @@ export default function ScheduleResult() {
   })
 
   return (
-    <div>
+    <div className="flex gap-6 items-start">
+    <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold">{showNext ? '다음 주 레이드 일정' : '이번 주 레이드 일정'}</h2>
         <div className="flex items-center gap-2">
@@ -836,6 +838,10 @@ export default function ScheduleResult() {
           )
         })}
       </div>
+    </div>
+    <div className="w-96 shrink-0 sticky top-4">
+      <AllSchedules weekStart={weekStart} />
+    </div>
     </div>
   )
 }
