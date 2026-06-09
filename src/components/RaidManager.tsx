@@ -81,11 +81,6 @@ export default function RaidManager({ isDraft = false }: Props) {
     setRaids(prev => prev.map(r => ({ ...r, completed: false })))
   }
 
-  async function updateDifficulty(id: string, difficulty: number) {
-    await supabase.from('raids').update({ difficulty }).eq('id', id)
-    setRaids(prev => prev.map(r => r.id === id ? { ...r, difficulty } : r))
-  }
-
   async function renameRaid2(id: string, name: string) {
     await supabase.from('raids').update({ name }).eq('id', id)
     setRaids(prev => prev.map(r => r.id === id ? { ...r, name } : r))
