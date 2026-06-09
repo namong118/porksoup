@@ -11,8 +11,16 @@ const HOURS = Array.from({ length: 15 }, (_, i) => String(i + 10)) // '10'~'24'
 
 function cellKey(day: DayOfWeek, hour: string) { return `${day}-${hour}` }
 
+function addWeeks(dateStr: string, weeks: number): string {
+  const d = parseLocalDate(dateStr)
+  d.setDate(d.getDate() + weeks * 7)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default function WeeklySchedule({ member }: Props) {
-  const weekStart = getWeekStart()
+  const thisWeekStart = getWeekStart()
+  const [showNext, setShowNext] = useState(false)
+  const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
   const [selected, setSelected] = useState(new Set<string>())
   const [note, setNote] = useState('')
   const [saved, setSaved] = useState(false)
@@ -21,6 +29,10 @@ export default function WeeklySchedule({ member }: Props) {
   const [dragAction, setDragAction] = useState<'select' | 'deselect'>('select')
 
   useEffect(() => {
+    setLoading(true)
+    setSelected(new Set())
+    setNote('')
+    setSaved(false)
     supabase
       .from('weekly_schedules')
       .select('*')
@@ -41,7 +53,7 @@ export default function WeeklySchedule({ member }: Props) {
         }
         setLoading(false)
       })
-  }, [member.id, weekStart])
+  }, [member.id, weekStart, showNext])
 
   useEffect(() => {
     const stop = () => setDragging(false)
@@ -110,10 +122,20 @@ export default function WeeklySchedule({ member }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">이번 주 스케줄</h2>
-        <span className="text-sm text-gray-400">
-          {formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}
-        </span>
+        <h2 className="text-lg font-bold">{showNext ? '다음 주 스케줄' : '이번 주 스케줄'}</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">{formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}</span>
+          <div className="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
+            <button
+              onClick={() => setShowNext(false)}
+              className={`px-2.5 py-1 transition-colors ${!showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >이번 주</button>
+            <button
+              onClick={() => setShowNext(true)}
+              className={`px-2.5 py-1 transition-colors ${showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >다음 주</button>
+          </div>
+        </div>
       </div>
 
       <p className="text-sm text-gray-400 mb-3">드래그해서 가능한 요일·시간을 선택하세요</p>

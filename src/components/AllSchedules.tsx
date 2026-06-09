@@ -3,6 +3,13 @@ import { supabase } from '../lib/supabase'
 import type { Member, DayOfWeek } from '../types'
 import { getWeekStart, WEEK_DAYS, parseLocalDate } from '../lib/weekUtils'
 
+function addWeeks(dateStr: string, weeks: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  date.setDate(date.getDate() + weeks * 7)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 interface MemberSchedule {
   member: Member
   available_days: DayOfWeek[]
@@ -14,9 +21,12 @@ interface MemberSchedule {
 export default function AllSchedules() {
   const [schedules, setSchedules] = useState<MemberSchedule[]>([])
   const [loading, setLoading] = useState(true)
-  const weekStart = getWeekStart()
+  const thisWeekStart = getWeekStart()
+  const [showNext, setShowNext] = useState(false)
+  const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
 
   useEffect(() => {
+    setLoading(true)
     async function load() {
       const [membersRes, schedRes] = await Promise.all([
         supabase.from('members').select('*').order('nickname'),
@@ -59,10 +69,20 @@ export default function AllSchedules() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold">멤버 스케줄</h2>
-        <span className="text-sm text-gray-400">
-          {formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}
-        </span>
+        <h2 className="text-lg font-bold">{showNext ? '다음 주 멤버 스케줄' : '이번 주 멤버 스케줄'}</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-400">{formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}</span>
+          <div className="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
+            <button
+              onClick={() => setShowNext(false)}
+              className={`px-2.5 py-1 transition-colors ${!showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >이번 주</button>
+            <button
+              onClick={() => setShowNext(true)}
+              className={`px-2.5 py-1 transition-colors ${showNext ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >다음 주</button>
+          </div>
+        </div>
       </div>
 
       <div className="bg-gray-700 rounded-xl px-4 py-2.5 mb-4 flex items-center justify-between">
