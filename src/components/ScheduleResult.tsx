@@ -21,16 +21,17 @@ interface RaidResult {
 }
 
 
-function UnscheduledChip({ raidResult, onDayChange, pastDays }: {
+function UnscheduledChip({ raidResult, onDayChange, pastDays, weekField }: {
   raidResult: RaidResult
   onDayChange: (raidId: string, day: DayOfWeek | null) => void
   pastDays: Set<DayOfWeek>
+  weekField: 'day_of_week' | 'next_day_of_week'
 }) {
   const { raid, commonDays } = raidResult
   const [open, setOpen] = useState(false)
 
   async function assignDay(day: DayOfWeek) {
-    await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
+    await supabase.from('raids').update({ [weekField]: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setOpen(false)
   }
@@ -130,6 +131,8 @@ function RaidCard({
   onDragEnd,
   isDragOver,
   isDragging,
+  weekField,
+  isNextWeek,
 }: {
   raidResult: RaidResult
   currentDay: DayOfWeek | null
@@ -147,6 +150,8 @@ function RaidCard({
   onDragEnd: () => void
   isDragOver: boolean
   isDragging: boolean
+  weekField: 'day_of_week' | 'next_day_of_week'
+  isNextWeek: boolean
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers, conflictMembers } = raidResult
   const [editing, setEditing] = useState(false)
@@ -155,7 +160,7 @@ function RaidCard({
   const submittedCount = totalMembers - missingCount
 
   async function changeDay(day: DayOfWeek | null) {
-    await supabase.from('raids').update({ day_of_week: day }).eq('id', raid.id)
+    await supabase.from('raids').update({ [weekField]: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setEditing(false)
   }
@@ -224,10 +229,12 @@ function RaidCard({
           className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-1 rounded bg-gray-700 hover:bg-gray-600">
           요일 변경
         </button>
-        <button onClick={complete}
-          className="text-xs text-green-400 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/50 hover:bg-green-800 ml-auto font-medium">
-          ✓ 완료
-        </button>
+        {!isNextWeek && (
+          <button onClick={complete}
+            className="text-xs text-green-400 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/50 hover:bg-green-800 ml-auto font-medium">
+            ✓ 완료
+          </button>
+        )}
       </div>
 
       {splitting && (
@@ -331,6 +338,7 @@ export default function ScheduleResult() {
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
   const pastDays = showNext ? new Set<DayOfWeek>() : getPastDays(thisWeekStart)
+  const weekField = (showNext ? 'next_day_of_week' : 'day_of_week') as 'day_of_week' | 'next_day_of_week'
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -409,7 +417,7 @@ export default function ScheduleResult() {
 
   function handleDayChange(raidId: string, day: DayOfWeek | null) {
     setResults(prev => prev.map(r =>
-      r.raid.id === raidId ? { ...r, raid: { ...r.raid, day_of_week: day } } : r
+      r.raid.id === raidId ? { ...r, raid: { ...r.raid, [weekField]: day } } : r
     ))
     setApplied(false)
   }
@@ -419,15 +427,15 @@ export default function ScheduleResult() {
       setDragId(null); setOverId(null); return
     }
     const draggedResult = results.find(r => r.raid.id === dragId)
-    if (!draggedResult || draggedResult.raid.day_of_week !== targetResult.raid.day_of_week) {
+    if (!draggedResult || draggedResult.raid[weekField] !== targetResult.raid[weekField]) {
       setDragId(null); setOverId(null); return
     }
-    const day = draggedResult.raid.day_of_week as DayOfWeek
+    const day = draggedResult.raid[weekField] as DayOfWeek
     const targetTime = targetResult.raid.time ?? null
 
     // 해당 요일 레이드 순서대로 정렬
     const dayRaids = results
-      .filter(r => r.raid.day_of_week === day)
+      .filter(r => r.raid[weekField] === day)
       .sort((a, b) => (a.raid.sort_order ?? 0) - (b.raid.sort_order ?? 0))
 
     // 드래그 대상 빼고 타겟 위치에 삽입
@@ -481,7 +489,7 @@ export default function ScheduleResult() {
     // 상태(results)에 의존하지 않고 DB에서 직접 비완료 레이드 전체 초기화
     await supabase
       .from('raids')
-      .update({ day_of_week: null, time: null })
+      .update(showNext ? { next_day_of_week: null } : { day_of_week: null, time: null })
       .eq('completed', false)
     setResetting(false)
     setApplied(false)
@@ -590,30 +598,32 @@ export default function ScheduleResult() {
     // 1단계: 완료되지 않은 모든 레이드의 요일 초기화
     await Promise.all(
       results
-        .filter(r => !r.raid.completed && r.raid.day_of_week)
-        .map(r => supabase.from('raids').update({ day_of_week: null }).eq('id', r.raid.id))
+        .filter(r => !r.raid.completed && r.raid[weekField])
+        .map(r => supabase.from('raids').update({ [weekField]: null }).eq('id', r.raid.id))
     )
 
     // 2단계: 새로 편성된 레이드만 배정
     await Promise.all(
       finalUpdates.map(({ id, day }) =>
-        supabase.from('raids').update({ day_of_week: day }).eq('id', id)
+        supabase.from('raids').update({ [weekField]: day }).eq('id', id)
       )
     )
 
-    // 안전장치: 혹시 지난 날에 배정된 경우 재차 초기화
-    const allRaidsRes = await supabase.from('raids').select('id, day_of_week')
-    if (allRaidsRes.data) {
-      const wrongDays = allRaidsRes.data.filter(
-        (r: { id: string; day_of_week: string | null }) =>
-          r.day_of_week && currentPastDays.has(r.day_of_week as DayOfWeek)
-      )
-      if (wrongDays.length > 0) {
-        await Promise.all(
-          wrongDays.map((r: { id: string }) =>
-            supabase.from('raids').update({ day_of_week: null }).eq('id', r.id)
-          )
+    // 안전장치: 혹시 지난 날에 배정된 경우 재차 초기화 (이번 주만)
+    if (!showNext) {
+      const allRaidsRes = await supabase.from('raids').select('id, day_of_week')
+      if (allRaidsRes.data) {
+        const wrongDays = allRaidsRes.data.filter(
+          (r: { id: string; day_of_week: string | null }) =>
+            r.day_of_week && currentPastDays.has(r.day_of_week as DayOfWeek)
         )
+        if (wrongDays.length > 0) {
+          await Promise.all(
+            wrongDays.map((r: { id: string }) =>
+              supabase.from('raids').update({ day_of_week: null }).eq('id', r.id)
+            )
+          )
+        }
       }
     }
 
@@ -638,8 +648,9 @@ export default function ScheduleResult() {
 
   results.forEach(r => {
     if (r.raid.completed) return  // 완료된 레이드는 캘린더에서 제외
-    if (r.raid.day_of_week) {
-      raidsByDay[r.raid.day_of_week as DayOfWeek].push(r)
+    const assignedDay = r.raid[weekField]
+    if (assignedDay) {
+      raidsByDay[assignedDay as DayOfWeek].push(r)
     } else {
       unscheduled.push(r)
     }
@@ -738,6 +749,7 @@ export default function ScheduleResult() {
                 raidResult={r}
                 onDayChange={handleDayChange}
                 pastDays={pastDays}
+                weekField={weekField}
               />
             ))}
           </div>
@@ -803,7 +815,7 @@ export default function ScheduleResult() {
                               <RaidCard
                                 key={r.raid.id}
                                 raidResult={r}
-                                currentDay={r.raid.day_of_week as DayOfWeek}
+                                currentDay={r.raid[weekField] as DayOfWeek | null}
                                 onDayChange={handleDayChange}
                                 onMoveUp={() => handleMove(groupRaids, i, 'up')}
                                 onMoveDown={() => handleMove(groupRaids, i, 'down')}
@@ -818,6 +830,8 @@ export default function ScheduleResult() {
                                 onDragEnd={() => { setDragId(null); setOverId(null) }}
                                 isDragOver={overId === r.raid.id && dragId !== r.raid.id}
                                 isDragging={dragId === r.raid.id}
+                                weekField={weekField}
+                                isNextWeek={showNext}
                               />
                             ))}
                           </div>

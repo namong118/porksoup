@@ -40,6 +40,7 @@ export interface Raid {
   name: string
   size: number
   day_of_week: DayOfWeek | null
+  next_day_of_week: DayOfWeek | null
   time: string | null
   sort_order: number
   color: string
