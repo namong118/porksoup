@@ -93,6 +93,11 @@ export default function RaidManager({ isDraft = false }: Props) {
     setEditingRaidId(null)
   }
 
+  async function renameRaid2(id: string, name: string) {
+    await supabase.from('raids').update({ name }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, name } : r))
+  }
+
   async function importRaids(fromDraft: boolean) {
     const fromLabel = fromDraft ? '낙서장' : '레이드 관리'
     const toLabel = fromDraft ? '레이드 관리' : '낙서장'
@@ -380,18 +385,55 @@ export default function RaidManager({ isDraft = false }: Props) {
         )}
       </div>
 
-      {/* ── 오른쪽: 인원 배정 패널 (고정 폭, 항상 표시) ── */}
-      <div className="bg-gray-700 rounded-xl flex flex-col" style={{ width: 220, flexShrink: 0 }}>
-        <div className="px-3 py-2 border-b border-gray-600">
+      {/* ── 오른쪽: 편집 + 인원 배정 패널 ── */}
+      <div className="flex flex-col gap-2" style={{ width: 220, flexShrink: 0 }}>
+
+        {/* 레이드 편집 패널 */}
+        <div className="bg-gray-700 rounded-xl p-3 flex flex-col gap-2.5">
           {selectedRaid ? (
-            <span className="font-bold text-xs" style={{ color: selectedRaid.color ?? '#e2e8f0' }}>
-              {selectedRaid.name}
-            </span>
+            <>
+              {/* 이름 */}
+              <input
+                key={selectedRaid.id}
+                defaultValue={selectedRaid.name}
+                onBlur={e => {
+                  const v = e.target.value.trim()
+                  if (v && v !== selectedRaid.name) renameRaid2(selectedRaid.id, v)
+                }}
+                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                className="bg-gray-600 rounded-lg px-2 py-1 text-xs font-bold outline-none focus:ring-1 ring-blue-500 w-full text-white"
+              />
+              {/* 색상 */}
+              <div className="flex flex-wrap gap-1">
+                {RAID_COLORS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => updateColor(selectedRaid.id, c)}
+                    style={{ backgroundColor: c }}
+                    className={`w-4 h-4 rounded-full transition-transform ${(selectedRaid.color ?? '#6b7280') === c ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'}`}
+                  />
+                ))}
+              </div>
+              {/* 별점 */}
+              <div className="flex gap-0.5">
+                {[1,2,3,4,5].map(star => (
+                  <button
+                    key={star}
+                    onClick={() => updateDifficulty(selectedRaid.id, star)}
+                    className="text-base leading-none hover:scale-110 transition-transform"
+                  >
+                    <span className={star <= (selectedRaid.difficulty ?? 1) ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+                  </button>
+                ))}
+              </div>
+            </>
           ) : (
-            <span className="text-xs text-gray-500">← 레이드 선택</span>
+            <p className="text-xs text-gray-500 text-center py-1">← 레이드 선택</p>
           )}
         </div>
 
+        {/* 인원 배정 패널 */}
+        <div className="bg-gray-700 rounded-xl flex flex-col flex-1 min-h-0">
         <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
           {/* 멤버 탭 */}
           <div className="flex flex-wrap gap-1">
@@ -446,6 +488,7 @@ export default function RaidManager({ isDraft = false }: Props) {
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
 
