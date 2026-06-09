@@ -185,11 +185,11 @@ function RaidCard({
       onDragOver={e => { e.preventDefault(); e.stopPropagation(); onDragOver() }}
       onDrop={e => { e.preventDefault(); e.stopPropagation(); onDrop() }}
       onDragEnd={onDragEnd}
-      className={`px-4 py-3 bg-gray-800 cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-inset ring-blue-400' : ''}`}
+      className={`px-3 py-2 bg-gray-800 cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-inset ring-blue-400' : ''}`}
       style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
     >
       {/* 1행: 순서 + 레이드명 + 인원 */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         {order !== undefined && (
           <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-600 text-xs font-bold text-gray-300 shrink-0">
             {order}
@@ -217,7 +217,7 @@ function RaidCard({
       </div>
 
       {/* 2행: 버튼 */}
-      <div className="flex items-center gap-1 mb-3">
+      <div className="flex items-center gap-1 mb-2">
         <button onClick={() => changeDay(null)}
           className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-700">
           ↩ 미배정
@@ -288,7 +288,7 @@ function RaidCard({
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-4 gap-1">
         {[...characters]
           .sort((a, b) => {
             if (a.role === b.role) return 0
@@ -297,7 +297,7 @@ function RaidCard({
           .map(char => (
           <div
             key={char.id}
-            className="flex flex-col px-2 py-1.5 rounded-lg"
+            className="flex flex-col px-2 py-1 rounded-lg"
             style={{
               backgroundColor: `${char.member?.color ?? '#94a3b8'}18`,
               borderLeft: `3px solid ${char.member?.color ?? '#94a3b8'}`,
