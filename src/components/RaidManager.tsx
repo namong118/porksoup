@@ -290,7 +290,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                               {raid.name}
                             </span>
                             {raid.is_new && (
-                              <span className="text-xs font-bold px-1 py-0.5 rounded bg-emerald-500 text-white shrink-0 leading-none">NEW</span>
+                              <span className="text-xs font-bold px-1 py-0.5 rounded bg-red-500 text-white shrink-0 leading-none">NEW</span>
                             )}
                             <span className="flex items-center shrink-0">
                               {[1,2,3,4,5].map(star => (
@@ -389,7 +389,7 @@ export default function RaidManager({ isDraft = false }: Props) {
               {/* New 토글 */}
               <button
                 onClick={() => toggleNew(selectedRaid.id, selectedRaid.is_new)}
-                className={`w-full py-1 rounded-lg text-xs font-bold transition-colors border ${selectedRaid.is_new ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-transparent border-gray-600 text-gray-500 hover:border-emerald-500 hover:text-emerald-400'}`}
+                className={`w-full py-1 rounded-lg text-xs font-bold transition-colors border ${selectedRaid.is_new ? 'bg-red-500 border-red-400 text-white' : 'bg-transparent border-gray-600 text-gray-500 hover:border-red-500 hover:text-red-400'}`}
               >{selectedRaid.is_new ? '✦ NEW 표시 중' : '+ NEW 표시'}</button>
             </>
           ) : (
