@@ -14,12 +14,9 @@ export default function RaidManager({ isDraft = false }: Props) {
   const [raidCharacters, setRaidCharacters] = useState<Record<string, string[]>>({})
   const [selectedRaidId, setSelectedRaidId] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<string | null>(null)
-  const [colorPickerId, setColorPickerId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ name: '', color: RAID_COLORS[0] })
   const [importing, setImporting] = useState(false)
-  const [editingRaidId, setEditingRaidId] = useState<string | null>(null)
-  const [editingName, setEditingName] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -83,14 +80,6 @@ export default function RaidManager({ isDraft = false }: Props) {
   async function updateDifficulty(id: string, difficulty: number) {
     await supabase.from('raids').update({ difficulty }).eq('id', id)
     setRaids(prev => prev.map(r => r.id === id ? { ...r, difficulty } : r))
-  }
-
-  async function renameRaid(id: string) {
-    const trimmed = editingName.trim()
-    if (!trimmed) { setEditingRaidId(null); return }
-    await supabase.from('raids').update({ name: trimmed }).eq('id', id)
-    setRaids(prev => prev.map(r => r.id === id ? { ...r, name: trimmed } : r))
-    setEditingRaidId(null)
   }
 
   async function renameRaid2(id: string, name: string) {
@@ -286,48 +275,29 @@ export default function RaidManager({ isDraft = false }: Props) {
                         >
                           {/* 카드 헤더 */}
                           <div
-                            className="px-2 py-1.5 flex items-center gap-1"
+                            className="px-2 py-1.5 flex items-center gap-1.5"
                             style={{
                               backgroundColor: isSelected ? `${raidColor}55` : `${raidColor}33`,
                               borderBottom: `2px solid ${raidColor}`,
                             }}
                           >
-                            {/* 색상 선택 버튼 — 이름 앞 */}
-                            <button
-                              onClick={e => { e.stopPropagation(); setColorPickerId(colorPickerId === raid.id ? null : raid.id) }}
-                              style={{ backgroundColor: raidColor }}
-                              className="w-3 h-3 rounded-full shrink-0 hover:ring-1 ring-white"
-                            />
+                            {/* 색상 표시 (클릭 불가) */}
+                            <span style={{ backgroundColor: raidColor }} className="w-2.5 h-2.5 rounded-full shrink-0" />
 
                             {/* 이름 */}
-                            {editingRaidId === raid.id ? (
-                              <input
-                                autoFocus value={editingName}
-                                onChange={e => setEditingName(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') renameRaid(raid.id); if (e.key === 'Escape') setEditingRaidId(null) }}
-                                onBlur={() => renameRaid(raid.id)}
-                                onClick={e => e.stopPropagation()}
-                                className="bg-transparent text-xs font-bold outline-none min-w-0 text-white flex-1"
-                              />
-                            ) : (
-                              <span
-                                className={`text-xs font-bold truncate ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}
-                                onDoubleClick={e => { e.stopPropagation(); setEditingRaidId(raid.id); setEditingName(raid.name) }}
-                                title="더블클릭해서 이름 수정"
-                              >{raid.name}</span>
-                            )}
+                            <span className={`text-xs font-bold truncate flex-1 ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}>
+                              {raid.name}
+                            </span>
 
-                            {/* 별점 — 이름 바로 뒤 */}
-                            <div className="flex items-center shrink-0" onClick={e => e.stopPropagation()}>
+                            {/* 별점 표시 */}
+                            <span className="flex items-center shrink-0">
                               {[1,2,3,4,5].map(star => (
-                                <button key={star} onClick={() => updateDifficulty(raid.id, star)} className="text-xs leading-none">
-                                  <span className={star <= (raid.difficulty ?? 1) ? (raid.completed ? 'text-gray-600' : 'text-yellow-400') : 'text-gray-700'}>★</span>
-                                </button>
+                                <span key={star} className={`text-xs leading-none ${star <= (raid.difficulty ?? 1) ? (raid.completed ? 'text-gray-600' : 'text-yellow-400') : 'text-gray-700'}`}>★</span>
                               ))}
-                            </div>
+                            </span>
 
                             {/* 완료·삭제 버튼 */}
-                            <div className="flex items-center gap-0.5 shrink-0 ml-auto" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
                               {!isDraft && (
                                 <button
                                   onClick={() => toggleCompleted(raid.id, raid.completed)}
@@ -337,18 +307,6 @@ export default function RaidManager({ isDraft = false }: Props) {
                               <button onClick={() => deleteRaid(raid.id)} className="text-xs text-gray-600 hover:text-red-400 leading-none">✕</button>
                             </div>
                           </div>
-
-                          {/* 색상 선택 팝업 */}
-                          {colorPickerId === raid.id && (
-                            <div className="flex flex-wrap gap-1 p-2 bg-gray-800" onClick={e => e.stopPropagation()}>
-                              {RAID_COLORS.map(c => (
-                                <button key={c} onClick={() => updateColor(raid.id, c)}
-                                  style={{ backgroundColor: c }}
-                                  className={`w-4 h-4 rounded-full ${(raid.color ?? '#6b7280') === c ? 'ring-1 ring-white' : 'opacity-60 hover:opacity-100'}`}
-                                />
-                              ))}
-                            </div>
-                          )}
 
                           {/* 캐릭터 목록 */}
                           <div className="px-1.5 py-1 flex flex-col gap-0.5">
