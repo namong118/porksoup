@@ -330,8 +330,7 @@ export default function ScheduleResult() {
   const [applied, setApplied] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [maxPerDay, setMaxPerDay] = useState(6)
-  const [minPerDay, setMinPerDay] = useState(4)
-  const [maxStarsPerDay, setMaxStarsPerDay] = useState(15)
+  const minPerDay = 1
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
   const [showNext, setShowNext] = useState(false)
@@ -537,8 +536,6 @@ export default function ScheduleResult() {
       })
 
     const dayCount: Record<string, number> = {}
-    const dayStars: Record<string, number> = {} // 요일별 누적 별 합계
-    const MAX_STARS = maxStarsPerDay
 
     // 완료된 레이드가 이미 차지한 자리를 미리 반영 (다음 주는 제외)
     if (!showNext) {
@@ -547,7 +544,6 @@ export default function ScheduleResult() {
         .forEach(r => {
           const d = r.raid[weekField]!
           dayCount[d] = (dayCount[d] ?? 0) + 1
-          dayStars[d] = (dayStars[d] ?? 0) + (r.raid.difficulty ?? 1)
         })
     }
     // 멤버별로 어느 날 가는지 추적
@@ -556,29 +552,26 @@ export default function ScheduleResult() {
 
     for (const { raid, commonDays, characters } of toSchedule) {
       const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
-      const raidDiff = raid.difficulty ?? 1
       const available = commonDays.filter(d =>
         validDays.has(d) &&
-        (dayCount[d] ?? 0) < MAX &&
-        (dayStars[d] ?? 0) + raidDiff <= MAX_STARS
+        (dayCount[d] ?? 0) < MAX
       )
       if (available.length === 0) continue
 
       // 각 후보 요일 점수 계산:
-      // 1순위: 이 레이드 멤버 중 이미 그날 가는 사람 수 (많을수록 좋음)
-      // 2순위: 그날 배정된 레이드 수 (집중 배치)
+      // 1순위: 그날 배정된 레이드 수 가장 적은 요일 우선 (균등 배분)
+      // 2순위: 이 레이드 멤버 중 이미 그날 가는 사람 수 (많을수록 좋음)
       const scored = available.map(day => {
         const memberOverlap = raidMemberIds.filter(mid => memberDays[mid]?.has(day)).length
         const raidCount = dayCount[day] ?? 0
         return { day, memberOverlap, raidCount }
       }).sort((a, b) => {
-        if (b.memberOverlap !== a.memberOverlap) return b.memberOverlap - a.memberOverlap
-        return b.raidCount - a.raidCount
+        if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount  // 적은 요일 우선
+        return b.memberOverlap - a.memberOverlap  // 멤버 겹침 많은 요일 우선
       })
 
       const bestDay = scored[0].day
       dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
-      dayStars[bestDay] = (dayStars[bestDay] ?? 0) + raidDiff
 
       // 해당 날에 가는 멤버 기록
       raidMemberIds.forEach(mid => {
@@ -715,23 +708,12 @@ export default function ScheduleResult() {
 
         <div className="w-px h-4 bg-gray-500 shrink-0" />
 
-        {/* 최소~최대 */}
-        <span className="text-xs text-gray-500 shrink-0">레이드</span>
-        <input type="number" min={1} max={maxPerDay} value={minPerDay}
-          onChange={e => setMinPerDay(Math.max(1, Number(e.target.value)))}
+        {/* 하루 최대 */}
+        <span className="text-xs text-gray-500 shrink-0">하루 최대</span>
+        <input type="number" min={1} max={20} value={maxPerDay}
+          onChange={e => setMaxPerDay(Math.max(1, Number(e.target.value)))}
           className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500 shrink-0" />
-        <span className="text-xs text-gray-500 shrink-0">~</span>
-        <input type="number" min={minPerDay} max={20} value={maxPerDay}
-          onChange={e => setMaxPerDay(Math.max(minPerDay, Number(e.target.value)))}
-          className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500 shrink-0" />
-
-        <div className="w-px h-4 bg-gray-500 shrink-0" />
-
-        {/* 별 합계 */}
-        <span className="text-xs text-yellow-500 shrink-0">★</span>
-        <input type="number" min={1} max={99} value={maxStarsPerDay}
-          onChange={e => setMaxStarsPerDay(Math.max(1, Number(e.target.value)))}
-          className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-yellow-500 shrink-0" />
+        <span className="text-xs text-gray-500 shrink-0">개</span>
 
         {/* 자동 편성 버튼 */}
         <button
