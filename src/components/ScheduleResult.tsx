@@ -488,11 +488,9 @@ export default function ScheduleResult() {
   async function resetAll() {
     if (!confirm(showNext ? '다음 주 레이드 배정을 전부 초기화할까요?' : '이번 주 레이드 배정을 전부 초기화할까요?')) return
     setResetting(true)
-    // 상태(results)에 의존하지 않고 DB에서 직접 비완료 레이드 전체 초기화
-    await supabase
-      .from('raids')
-      .update(showNext ? { next_day_of_week: null } : { day_of_week: null, time: null })
-      .eq('completed', false)
+    const query = supabase.from('raids').update(showNext ? { next_day_of_week: null } : { day_of_week: null, time: null })
+    // 다음 주는 완료 여부 무관하게 전체 초기화, 이번 주는 미완료만
+    await (showNext ? query : query.eq('completed', false))
     setResetting(false)
     setApplied(false)
     load()
@@ -593,10 +591,10 @@ export default function ScheduleResult() {
       dayMaxCount[u.day] = (dayMaxCount[u.day] ?? 0) + 1
       return dayMaxCount[u.day] <= MAX
     })
-    // 1단계: 완료되지 않은 모든 레이드의 요일 초기화
+    // 1단계: 레이드 요일 초기화 (다음 주는 완료 포함 전체, 이번 주는 미완료만)
     await Promise.all(
       results
-        .filter(r => !r.raid.completed && r.raid[weekField])
+        .filter(r => (showNext || !r.raid.completed) && r.raid[weekField])
         .map(r => supabase.from('raids').update({ [weekField]: null }).eq('id', r.raid.id))
     )
 
