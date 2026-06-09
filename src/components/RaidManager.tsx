@@ -290,7 +290,7 @@ export default function RaidManager({ isDraft = false }: Props) {
                               {raid.name}
                             </span>
                             {raid.is_new && (
-                              <span className="text-xs font-bold px-1 py-0.5 rounded bg-red-500 text-white shrink-0 leading-none">NEW</span>
+                              <span className="text-xs font-bold px-1 py-0.5 rounded ${raid.completed ? 'bg-gray-600 text-gray-400' : 'bg-red-500 text-white'} shrink-0 leading-none">NEW</span>
                             )}
                             <span className="flex items-center shrink-0">
                               {[1,2,3,4,5].map(star => (
