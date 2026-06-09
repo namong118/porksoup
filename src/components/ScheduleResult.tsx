@@ -642,7 +642,7 @@ export default function ScheduleResult() {
   weekEndDate.setDate(weekEndDate.getDate() + 6)
   const formatDate = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`
 
-  const autoSchedulable = results.filter(r => r.commonDays.length > 0).length
+  const autoSchedulable = results.filter(r => !r.raid.completed && r.commonDays.length > 0).length
 
   const raidsByDay: Record<DayOfWeek, RaidResult[]> = {
     '월': [], '화': [], '수': [], '목': [], '금': [], '토': [], '일': []
@@ -693,8 +693,11 @@ export default function ScheduleResult() {
       <div className="bg-gray-700 rounded-xl px-3 py-2.5 mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
         {/* 상태 */}
         <span className="text-xs text-gray-400 shrink-0">
-          <span className="text-green-400 font-medium">{autoSchedulable}</span>편성
-          {unscheduled.length > 0 && <> · <span className="text-yellow-400">{unscheduled.length}</span>미배정</>}
+          {Object.values(raidsByDay).flat().length > 0 && (
+            <><span className="text-green-400 font-medium">{Object.values(raidsByDay).flat().length}</span>편성 · </>
+          )}
+          <span className="text-yellow-400 font-medium">{unscheduled.length}</span>미배정
+          {autoSchedulable > 0 && <span className="text-gray-500"> ({autoSchedulable}개 편성가능)</span>}
         </span>
 
         <div className="w-px h-4 bg-gray-500 shrink-0" />
