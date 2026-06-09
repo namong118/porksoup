@@ -206,15 +206,15 @@ function RaidCard({
         <span className="font-semibold text-sm shrink-0">{raid.name}</span>
         <button onClick={() => changeDay(null)}
           className="text-xs text-gray-500 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
-          ↩
+          ↩ 미배정
         </button>
         <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
           className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
-          ✂
+          ✂ 분리
         </button>
         <button onClick={() => setEditing(v => !v)}
           className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-1.5 py-0.5 rounded bg-gray-700 hover:bg-gray-600 shrink-0">
-          요일
+          요일 변경
         </button>
         {conflictMembers.length > 0 && (
           <span
@@ -229,7 +229,7 @@ function RaidCard({
         {!isNextWeek && (
           <button onClick={complete}
             className="text-xs text-green-400 hover:text-green-200 transition-colors px-1.5 py-0.5 rounded bg-green-900/50 hover:bg-green-800 shrink-0 font-medium">
-            ✓
+            ✓ 완료
           </button>
         )}
       </div>
