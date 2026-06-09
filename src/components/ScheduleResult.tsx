@@ -839,7 +839,7 @@ export default function ScheduleResult() {
         })}
       </div>
     </div>
-    <div className="w-96 shrink-0 sticky top-4">
+    <div className="w-[480px] shrink-0 sticky top-4">
       <AllSchedules weekStart={weekStart} />
     </div>
     </div>
