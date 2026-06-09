@@ -297,23 +297,16 @@ function RaidCard({
           .map(char => (
           <div
             key={char.id}
-            className="flex flex-col px-2 py-1 rounded-lg"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg min-w-0"
             style={{
               backgroundColor: `${char.member?.color ?? '#94a3b8'}18`,
               borderLeft: `3px solid ${char.member?.color ?? '#94a3b8'}`,
             }}
           >
-            <div className="flex items-baseline gap-1 min-w-0">
-                <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>
-                  {char.name}
-                </span>
-                {char.item_level && (
-                  <span className="text-xs opacity-70 shrink-0" style={{ color: char.member?.color ?? '#94a3b8' }}>
-                    {Math.floor(Number(char.item_level)).toLocaleString()}
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-gray-300 truncate">{char.class}</span>
+            <span className="text-xs font-medium truncate" style={{ color: char.member?.color ?? '#e2e8f0' }}>
+              {char.name}
+            </span>
+            <span className="text-xs text-gray-500 truncate shrink-0">{char.class}</span>
           </div>
         ))}
         {characters.length === 0 && (
