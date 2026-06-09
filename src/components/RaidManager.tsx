@@ -422,7 +422,7 @@ export default function RaidManager({ isDraft = false }: Props) {
               ) : (
                 allCharacters
                   .filter(c => c.member_id === selectedMember)
-                  .sort((a, b) => a.role === b.role ? 0 : a.role === 'support' ? 1 : -1)
+                  .sort((a, b) => Number(b.item_level ?? 0) - Number(a.item_level ?? 0))
                   .map(char => {
                     const isAssigned = assignedIds.includes(char.id)
                     const otherCharAssigned = !isAssigned && assignedIds.some(id =>
