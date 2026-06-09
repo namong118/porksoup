@@ -14,6 +14,7 @@ import LoaLinks from './components/LoaLinks'
 import GoldGuide from './components/GoldGuide'
 import BusLounge from './components/BusLounge'
 import { usePresence } from './lib/usePresence'
+import { runWeeklyResetIfNeeded } from './lib/weeklyReset'
 import type { Member } from './types'
 
 const COLOR_EMOJI: Record<string, string> = {
@@ -63,6 +64,7 @@ export default function App() {
   const [msgDraft, setMsgDraft] = useState('')
 
   useEffect(() => {
+    runWeeklyResetIfNeeded()
     supabase.from('settings').select('value').eq('key', 'header_message').single()
       .then(({ data }) => { if (data?.value) setHeaderMsg(data.value) })
   }, [])
