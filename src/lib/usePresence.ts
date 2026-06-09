@@ -24,7 +24,12 @@ export function usePresence(member: Member | null) {
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<OnlineMember>()
-        const members = Object.values(state).flat()
+        const seen = new Set<string>()
+        const members = Object.values(state).flat().filter(m => {
+          if (seen.has(m.id)) return false
+          seen.add(m.id)
+          return true
+        })
         setOnlineMembers(members)
       })
       .subscribe(async (status) => {
