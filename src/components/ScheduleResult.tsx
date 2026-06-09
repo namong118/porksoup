@@ -515,8 +515,8 @@ export default function ScheduleResult() {
       })
     )
 
-    // 완료된 레이드 제외
-    const activeResults = results.filter(r => !r.raid.completed)
+    // 완료된 레이드 제외 (다음 주는 전부 미완료 취급)
+    const activeResults = results.filter(r => showNext || !r.raid.completed)
 
     // 각 요일에 갈 수 있는 레이드 수 파악
     const dayPotential: Partial<Record<DayOfWeek, number>> = {}
@@ -540,14 +540,16 @@ export default function ScheduleResult() {
     const dayStars: Record<string, number> = {} // 요일별 누적 별 합계
     const MAX_STARS = maxStarsPerDay
 
-    // 완료된 레이드가 이미 차지한 자리를 미리 반영
-    results
-      .filter(r => r.raid.completed && r.raid.day_of_week)
-      .forEach(r => {
-        const d = r.raid.day_of_week!
-        dayCount[d] = (dayCount[d] ?? 0) + 1
-        dayStars[d] = (dayStars[d] ?? 0) + (r.raid.difficulty ?? 1)
-      })
+    // 완료된 레이드가 이미 차지한 자리를 미리 반영 (다음 주는 제외)
+    if (!showNext) {
+      results
+        .filter(r => r.raid.completed && r.raid[weekField])
+        .forEach(r => {
+          const d = r.raid[weekField]!
+          dayCount[d] = (dayCount[d] ?? 0) + 1
+          dayStars[d] = (dayStars[d] ?? 0) + (r.raid.difficulty ?? 1)
+        })
+    }
     // 멤버별로 어느 날 가는지 추적
     const memberDays: Record<string, Set<string>> = {}
     const updates: { id: string; day: string }[] = []
@@ -650,7 +652,7 @@ export default function ScheduleResult() {
   const unscheduled: RaidResult[] = []
 
   results.forEach(r => {
-    if (r.raid.completed) return  // 완료된 레이드는 캘린더에서 제외
+    if (r.raid.completed && !showNext) return  // 완료된 레이드는 이번 주 캘린더에서만 제외
     const assignedDay = r.raid[weekField]
     if (assignedDay) {
       raidsByDay[assignedDay as DayOfWeek].push(r)
