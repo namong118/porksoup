@@ -280,15 +280,10 @@ export default function RaidManager({ isDraft = false }: Props) {
                               borderBottom: `2px solid ${raidColor}`,
                             }}
                           >
-                            {/* 색상 표시 (클릭 불가) */}
-                            <span style={{ backgroundColor: raidColor }} className="w-2.5 h-2.5 rounded-full shrink-0" />
-
-                            {/* 이름 */}
+                            {/* 이름 + 별점 */}
                             <span className={`text-xs font-bold truncate flex-1 ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}>
                               {raid.name}
                             </span>
-
-                            {/* 별점 표시 */}
                             <span className="flex items-center shrink-0">
                               {[1,2,3,4,5].map(star => (
                                 <span key={star} className={`text-xs leading-none ${star <= (raid.difficulty ?? 1) ? (raid.completed ? 'text-gray-600' : 'text-yellow-400') : 'text-gray-700'}`}>★</span>
