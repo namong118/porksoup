@@ -188,8 +188,8 @@ function RaidCard({
       className={`px-3 py-2 bg-gray-800 cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-inset ring-blue-400' : ''}`}
       style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
     >
-      {/* 1행: 순서 + 레이드명 + 인원 */}
-      <div className="flex items-center gap-2 mb-2">
+      {/* 1행: 순서 + 레이드명 + 버튼 + 인원 */}
+      <div className="flex items-center gap-1.5 mb-2">
         {order !== undefined && (
           <span className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-600 text-xs font-bold text-gray-300 shrink-0">
             {order}
@@ -203,37 +203,33 @@ function RaidCard({
             className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
               ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▼</button>
         </div>
-        <span className="font-semibold text-sm">{raid.name}</span>
+        <span className="font-semibold text-sm shrink-0">{raid.name}</span>
+        <button onClick={() => changeDay(null)}
+          className="text-xs text-gray-500 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
+          ↩
+        </button>
+        <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
+          className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
+          ✂
+        </button>
+        <button onClick={() => setEditing(v => !v)}
+          className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-1.5 py-0.5 rounded bg-gray-700 hover:bg-gray-600 shrink-0">
+          요일
+        </button>
         {conflictMembers.length > 0 && (
           <span
-            className="flex items-center gap-1 bg-red-900/60 border border-red-700 text-red-300 text-xs px-1.5 py-0.5 rounded-full"
+            className="flex items-center gap-1 bg-red-900/60 border border-red-700 text-red-300 text-xs px-1.5 py-0.5 rounded-full shrink-0"
             title={`불참 불가: ${conflictMembers.map(m => m.nickname).join(', ')}`}
           >
             <span>❗</span>
             <span>{conflictMembers.map(m => m.nickname).join(', ')}</span>
           </span>
         )}
-        <span className="text-xs text-gray-500 ml-auto">{submittedCount}/{totalMembers}명</span>
-      </div>
-
-      {/* 2행: 버튼 */}
-      <div className="flex items-center gap-1 mb-2">
-        <button onClick={() => changeDay(null)}
-          className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-700">
-          ↩ 미배정
-        </button>
-        <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
-          className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-2 py-1 rounded hover:bg-gray-700">
-          ✂ 분리
-        </button>
-        <button onClick={() => setEditing(v => !v)}
-          className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-2 py-1 rounded bg-gray-700 hover:bg-gray-600">
-          요일 변경
-        </button>
+        <span className="text-xs text-gray-500 ml-auto shrink-0">{submittedCount}/{totalMembers}명</span>
         {!isNextWeek && (
           <button onClick={complete}
-            className="text-xs text-green-400 hover:text-green-200 transition-colors px-2 py-1 rounded bg-green-900/50 hover:bg-green-800 ml-auto font-medium">
-            ✓ 완료
+            className="text-xs text-green-400 hover:text-green-200 transition-colors px-1.5 py-0.5 rounded bg-green-900/50 hover:bg-green-800 shrink-0 font-medium">
+            ✓
           </button>
         )}
       </div>
