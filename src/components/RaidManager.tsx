@@ -63,7 +63,6 @@ export default function RaidManager({ isDraft = false }: Props) {
   async function updateColor(id: string, color: string) {
     await supabase.from('raids').update({ color }).eq('id', id)
     setRaids(prev => prev.map(r => r.id === id ? { ...r, color } : r))
-    setColorPickerId(null)
   }
 
   async function toggleCompleted(id: string, current: boolean) {
