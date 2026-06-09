@@ -394,7 +394,7 @@ export default function ScheduleResult() {
             })
           )
 
-      const assignedDay = (showNext ? (raid.next_day_of_week ?? raid.day_of_week) : raid.day_of_week) as DayOfWeek | null
+      const assignedDay = (raid[weekField] ?? null) as DayOfWeek | null
       const conflictMembers: Member[] = assignedDay
         ? submittedIds
             .filter(mid => {
@@ -414,7 +414,7 @@ export default function ScheduleResult() {
 
     setResults(results)
     setLoading(false)
-  }, [weekStart, weekField, showNext])
+  }, [weekStart, weekField])
 
   useEffect(() => { load() }, [load])
 
@@ -651,9 +651,7 @@ export default function ScheduleResult() {
 
   results.forEach(r => {
     if (r.raid.completed) return  // 완료된 레이드는 캘린더에서 제외
-    const assignedDay = showNext
-      ? (r.raid.next_day_of_week ?? r.raid.day_of_week)
-      : r.raid.day_of_week
+    const assignedDay = r.raid[weekField]
     if (assignedDay) {
       raidsByDay[assignedDay as DayOfWeek].push(r)
     } else {
@@ -820,7 +818,7 @@ export default function ScheduleResult() {
                               <RaidCard
                                 key={r.raid.id}
                                 raidResult={r}
-                                currentDay={(showNext ? (r.raid.next_day_of_week ?? r.raid.day_of_week) : r.raid.day_of_week) as DayOfWeek | null}
+                                currentDay={r.raid[weekField] as DayOfWeek | null}
                                 onDayChange={handleDayChange}
                                 onMoveUp={() => handleMove(groupRaids, i, 'up')}
                                 onMoveDown={() => handleMove(groupRaids, i, 'down')}
