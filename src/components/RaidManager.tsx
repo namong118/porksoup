@@ -70,6 +70,11 @@ export default function RaidManager({ isDraft = false }: Props) {
     setRaids(prev => prev.map(r => r.id === id ? { ...r, completed: !current } : r))
   }
 
+  async function toggleNew(id: string, current: boolean) {
+    await supabase.from('raids').update({ is_new: !current }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, is_new: !current } : r))
+  }
+
   async function resetAllCompleted() {
     if (!confirm('모든 레이드를 미완료 처리할까요?')) return
     await supabase.from('raids').update({ completed: false }).eq('is_draft', false)
@@ -280,10 +285,13 @@ export default function RaidManager({ isDraft = false }: Props) {
                               borderBottom: `2px solid ${raidColor}`,
                             }}
                           >
-                            {/* 이름 + 별점 */}
+                            {/* 이름 + NEW 배지 */}
                             <span className={`text-xs font-bold truncate flex-1 ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}>
                               {raid.name}
                             </span>
+                            {raid.is_new && (
+                              <span className="text-xs font-bold px-1 py-0.5 rounded bg-emerald-500 text-white shrink-0 leading-none">NEW</span>
+                            )}
                             <span className="flex items-center shrink-0">
                               {[1,2,3,4,5].map(star => (
                                 <span key={star} className={`text-xs leading-none ${star <= (raid.difficulty ?? 1) ? (raid.completed ? 'text-gray-600' : 'text-yellow-400') : 'text-gray-700'}`}>★</span>
@@ -378,6 +386,11 @@ export default function RaidManager({ isDraft = false }: Props) {
                   </button>
                 ))}
               </div>
+              {/* New 토글 */}
+              <button
+                onClick={() => toggleNew(selectedRaid.id, selectedRaid.is_new)}
+                className={`w-full py-1 rounded-lg text-xs font-bold transition-colors border ${selectedRaid.is_new ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-transparent border-gray-600 text-gray-500 hover:border-emerald-500 hover:text-emerald-400'}`}
+              >{selectedRaid.is_new ? '✦ NEW 표시 중' : '+ NEW 표시'}</button>
             </>
           ) : (
             <p className="text-xs text-gray-500 text-center py-1">← 레이드 선택</p>

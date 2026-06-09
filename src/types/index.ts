@@ -46,6 +46,7 @@ export interface Raid {
   completed: boolean
   difficulty: number
   is_draft: boolean
+  is_new: boolean
   created_at: string
 }
 

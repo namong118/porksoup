@@ -82,6 +82,9 @@ export default function RaidOverview() {
                           style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
                         >
                           <span className={`text-xs font-bold truncate ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}>{raid.name}</span>
+                          {raid.is_new && (
+                            <span className="text-xs font-bold px-1 py-0.5 rounded bg-emerald-500 text-white shrink-0 leading-none">NEW</span>
+                          )}
                         </div>
                         <div className="px-1.5 py-1 flex flex-col gap-0.5">
                           {dps.map(char => (
