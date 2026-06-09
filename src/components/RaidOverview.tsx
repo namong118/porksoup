@@ -83,7 +83,7 @@ export default function RaidOverview() {
                         >
                           <span className={`text-xs font-bold truncate ${raid.completed ? 'text-gray-500 line-through' : 'text-white'}`}>{raid.name}</span>
                           {raid.is_new && (
-                            <span className="text-xs font-bold px-1 py-0.5 rounded ${raid.completed ? 'bg-gray-600 text-gray-400' : 'bg-red-500 text-white'} shrink-0 leading-none">NEW</span>
+                            <span className={`text-xs font-bold px-1 py-0.5 rounded shrink-0 leading-none ${raid.completed ? 'bg-gray-600 text-gray-400' : 'bg-red-500 text-white'}`}>NEW</span>
                           )}
                         </div>
                         <div className="px-1.5 py-1 flex flex-col gap-0.5">
