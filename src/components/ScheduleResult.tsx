@@ -329,7 +329,6 @@ export default function ScheduleResult() {
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
-  const [scheduleMap, setScheduleMap] = useState<Record<string, DayOfWeek[]>>({})
   const [focusMemberIds, setFocusMemberIds] = useState<string[]>([])
   const [showNext, setShowNext] = useState(false)
   const thisWeekStart = getWeekStart()
@@ -353,13 +352,12 @@ export default function ScheduleResult() {
     const rcData = rcRes.data ?? []
     const schedules = schedRes.data ?? []
 
-    const newScheduleMap: Record<string, DayOfWeek[]> = {}
+    const scheduleMap: Record<string, DayOfWeek[]> = {}
     const timesMap: Record<string, Record<string, string[]>> = {}
     schedules.forEach((s: any) => {
-      newScheduleMap[s.member_id] = s.available_days ?? []
+      scheduleMap[s.member_id] = s.available_days ?? []
       timesMap[s.member_id] = s.available_times ?? {}
     })
-    const scheduleMap = newScheduleMap
 
     // 레이드 시간에서 시(hour) 추출
     function getHour(time: string | null): string | null {
@@ -413,7 +411,6 @@ export default function ScheduleResult() {
 
     setResults(results)
     setMembers(membersRes.data ?? [])
-    setScheduleMap(newScheduleMap)
     setLoading(false)
   }, [weekStart, weekField])
 
