@@ -328,6 +328,9 @@ export default function ScheduleResult() {
   const minPerDay = 1
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
+  const [members, setMembers] = useState<Member[]>([])
+  const [scheduleMap, setScheduleMap] = useState<Record<string, DayOfWeek[]>>({})
+  const [focusMemberId, setFocusMemberId] = useState<string | null>(null)
   const [showNext, setShowNext] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
@@ -338,10 +341,11 @@ export default function ScheduleResult() {
   const load = useCallback(async () => {
     const seq = ++loadSeq.current
     setLoading(true)
-    const [raidsRes, rcRes, schedRes] = await Promise.all([
+    const [raidsRes, rcRes, schedRes, membersRes] = await Promise.all([
       supabase.from('raids').select('*').eq('is_draft', false).order('sort_order').order('name'),
       supabase.from('raid_characters').select('*, character:characters(*, member:members(*))'),
       supabase.from('weekly_schedules').select('*').eq('week_start', weekStart),
+      supabase.from('members').select('*').order('nickname'),
     ])
     if (seq !== loadSeq.current) return
 
@@ -349,12 +353,13 @@ export default function ScheduleResult() {
     const rcData = rcRes.data ?? []
     const schedules = schedRes.data ?? []
 
-    const scheduleMap: Record<string, DayOfWeek[]> = {}
+    const newScheduleMap: Record<string, DayOfWeek[]> = {}
     const timesMap: Record<string, Record<string, string[]>> = {}
     schedules.forEach((s: any) => {
-      scheduleMap[s.member_id] = s.available_days ?? []
+      newScheduleMap[s.member_id] = s.available_days ?? []
       timesMap[s.member_id] = s.available_times ?? {}
     })
+    const scheduleMap = newScheduleMap
 
     // 레이드 시간에서 시(hour) 추출
     function getHour(time: string | null): string | null {
@@ -407,6 +412,8 @@ export default function ScheduleResult() {
     })
 
     setResults(results)
+    setMembers(membersRes.data ?? [])
+    setScheduleMap(newScheduleMap)
     setLoading(false)
   }, [weekStart, weekField])
 
@@ -554,14 +561,17 @@ export default function ScheduleResult() {
       )
       if (available.length === 0) continue
 
-      // 각 후보 요일 점수 계산:
-      // 1순위: 그날 배정된 레이드 수 가장 적은 요일 우선 (균등 배분)
-      // 2순위: 이 레이드 멤버 중 이미 그날 가는 사람 수 (많을수록 좋음)
+      // 각 후보 요일 점수 계산
+      // 집중 멤버 설정 시: 그 멤버가 가능한 날 최우선
+      // 기본: 레이드 수 적은 날 우선 (균등 배분), 멤버 겹침 많은 날 우선
+      const focusDays = focusMemberId ? (scheduleMap[focusMemberId] ?? []) : null
       const scored = available.map(day => {
         const memberOverlap = raidMemberIds.filter(mid => memberDays[mid]?.has(day)).length
         const raidCount = dayCount[day] ?? 0
-        return { day, memberOverlap, raidCount }
+        const isFocusDay = focusDays ? focusDays.includes(day) : true
+        return { day, memberOverlap, raidCount, isFocusDay }
       }).sort((a, b) => {
+        if (a.isFocusDay !== b.isFocusDay) return a.isFocusDay ? -1 : 1  // 집중 멤버 가능 날 우선
         if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount  // 적은 요일 우선
         return b.memberOverlap - a.memberOverlap  // 멤버 겹침 많은 요일 우선
       })
@@ -711,6 +721,21 @@ export default function ScheduleResult() {
           onChange={e => setMaxPerDay(Math.max(1, Number(e.target.value)))}
           className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500 shrink-0" />
         <span className="text-xs text-gray-500 shrink-0">개</span>
+
+        <div className="w-px h-4 bg-gray-500 shrink-0" />
+
+        {/* 집중 멤버 */}
+        <span className="text-xs text-gray-500 shrink-0">집중</span>
+        <select
+          value={focusMemberId ?? ''}
+          onChange={e => setFocusMemberId(e.target.value || null)}
+          className="bg-gray-600 rounded px-1 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500 shrink-0 max-w-[80px]"
+        >
+          <option value="">균등</option>
+          {members.map(m => (
+            <option key={m.id} value={m.id}>{m.nickname}</option>
+          ))}
+        </select>
 
         {/* 자동 편성 버튼 */}
         <button
