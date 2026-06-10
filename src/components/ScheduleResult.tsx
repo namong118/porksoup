@@ -331,6 +331,7 @@ export default function ScheduleResult() {
   const [members, setMembers] = useState<Member[]>([])
   const [focusMemberIds, setFocusMemberIds] = useState<string[]>([])
   const [dayTimes, setDayTimes] = useState<Partial<Record<DayOfWeek, string>>>({})
+  const [memberTimesMap, setMemberTimesMap] = useState<Record<string, Record<string, string[]>>>({})
   const [showNext, setShowNext] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
@@ -412,6 +413,7 @@ export default function ScheduleResult() {
 
     setResults(results)
     setMembers(membersRes.data ?? [])
+    setMemberTimesMap(timesMap)
     setLoading(false)
   }, [weekStart, weekField])
 
@@ -557,9 +559,19 @@ export default function ScheduleResult() {
     const dayFocusPotential: Record<string, number> = {}
     if (focusMemberIds.length > 0) {
       WEEK_DAYS.forEach(day => {
+        const dayTime = dayTimes[day as DayOfWeek]
+        const hour = dayTime ? String(parseInt(dayTime.split(':')[0])) : null
         dayFocusPotential[day] = toSchedule.filter(r => {
           const mids = [...new Set(r.characters.map(c => c.member_id))]
-          return mids.some(mid => focusMemberSet.has(mid)) && r.commonDays.includes(day)
+          if (!mids.some(mid => focusMemberSet.has(mid))) return false
+          if (!r.commonDays.includes(day)) return false
+          if (hour) {
+            return mids.every(mid => {
+              const hours: string[] = memberTimesMap[mid]?.[day] ?? []
+              return hours.length === 0 || hours.includes(hour)
+            })
+          }
+          return true
         }).length
       })
     }
@@ -569,10 +581,19 @@ export default function ScheduleResult() {
       // 이 레이드에 참여하는 집중 멤버
       const raidFocusMembers = raidMemberIds.filter(mid => focusMemberSet.has(mid))
 
-      const available = commonDays.filter(d =>
-        validDays.has(d) &&
-        (dayCount[d] ?? 0) < MAX
-      )
+      const available = commonDays.filter(d => {
+        if (!validDays.has(d) || (dayCount[d] ?? 0) >= MAX) return false
+        // dayTimes가 설정된 요일은 해당 시간에 모든 멤버가 가능한지 재확인
+        const dayTime = dayTimes[d as DayOfWeek]
+        if (dayTime) {
+          const hour = String(parseInt(dayTime.split(':')[0]))
+          return raidMemberIds.every(mid => {
+            const hours: string[] = memberTimesMap[mid]?.[d] ?? []
+            return hours.length === 0 || hours.includes(hour)
+          })
+        }
+        return true
+      })
       if (available.length === 0) continue
 
       const scored = available.map(day => {
