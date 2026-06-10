@@ -574,9 +574,16 @@ export default function ScheduleResult() {
         const isFocusDay = focusDays ? focusDays.includes(day) : true
         return { day, memberOverlap, raidCount, isFocusDay }
       }).sort((a, b) => {
-        if (a.isFocusDay !== b.isFocusDay) return a.isFocusDay ? -1 : 1
-        if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount
-        return b.memberOverlap - a.memberOverlap
+        if (focusDays) {
+          // 집중 모드: 포커스 날 최우선, 포커스 날 중엔 레이드 이미 많은 날 우선 (하루에 몰아넣기)
+          if (a.isFocusDay !== b.isFocusDay) return a.isFocusDay ? -1 : 1
+          if (a.isFocusDay && b.isFocusDay) return b.raidCount - a.raidCount
+          return a.raidCount - b.raidCount  // 비포커스 날은 균등
+        } else {
+          // 균등 모드
+          if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount
+          return b.memberOverlap - a.memberOverlap
+        }
       })
 
       const bestDay = scored[0].day
