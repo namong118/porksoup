@@ -841,7 +841,7 @@ export default function ScheduleResult() {
                 // 시간대별 그룹핑
                 const timeGroups: Record<string, RaidResult[]> = {}
                 dayRaids.forEach(r => {
-                  const key = r.raid.time ?? '20:10'
+                  const key = r.raid.time ?? ''
                   if (!timeGroups[key]) timeGroups[key] = []
                   timeGroups[key].push(r)
                 })
