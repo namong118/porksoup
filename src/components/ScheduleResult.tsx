@@ -80,7 +80,7 @@ function TimeSlotHeader({ time, count, onSave }: {
   const [value, setValue] = useState(time)
 
   async function save() {
-    await onSave(value)
+    await onSave(value.trim() || '20:10')
     setEditing(false)
   }
 
