@@ -330,6 +330,7 @@ export default function ScheduleResult() {
   const [overId, setOverId] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [focusMemberIds, setFocusMemberIds] = useState<string[]>([])
+  const [dayTimes, setDayTimes] = useState<Partial<Record<DayOfWeek, string>>>({})
   const [showNext, setShowNext] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
@@ -627,10 +628,13 @@ export default function ScheduleResult() {
         .map(r => supabase.from('raids').update({ [weekField]: null }).eq('id', r.raid.id))
     )
 
-    // 2단계: 새로 편성된 레이드만 배정
+    // 2단계: 새로 편성된 레이드만 배정 (요일별 시작시간 적용)
     await Promise.all(
       finalUpdates.map(({ id, day }) =>
-        supabase.from('raids').update({ [weekField]: day }).eq('id', id)
+        supabase.from('raids').update({
+          [weekField]: day,
+          ...(dayTimes[day as DayOfWeek] ? { time: dayTimes[day as DayOfWeek] } : {}),
+        }).eq('id', id)
       )
     )
 
@@ -750,6 +754,27 @@ export default function ScheduleResult() {
           )}
         </div>
       )}
+
+      {/* 요일별 시작시간 */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="text-xs text-gray-500 shrink-0">시작시간</span>
+        {WEEK_DAYS.map(day => (
+          <div key={day} className="flex items-center gap-1">
+            <span className="text-xs text-gray-500">{day}</span>
+            <input
+              type="text"
+              value={dayTimes[day] ?? ''}
+              onChange={e => setDayTimes(prev => ({ ...prev, [day]: e.target.value }))}
+              onBlur={e => {
+                const v = e.target.value.trim()
+                setDayTimes(prev => ({ ...prev, [day]: v || undefined }))
+              }}
+              placeholder="미정"
+              className="w-14 bg-gray-700 border border-gray-600 rounded px-1.5 py-0.5 text-xs text-center outline-none focus:ring-1 ring-blue-500 placeholder-gray-600"
+            />
+          </div>
+        ))}
+      </div>
 
       <div className="bg-gray-700 rounded-xl px-3 py-2.5 mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
         {/* 상태 */}
