@@ -552,33 +552,31 @@ export default function ScheduleResult() {
     // 멤버별로 어느 날 가는지 추적
     const memberDays: Record<string, Set<string>> = {}
     const updates: { id: string; day: string }[] = []
+    const focusMemberSet = new Set(focusMemberIds)
 
     for (const { raid, commonDays, characters } of toSchedule) {
       const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
+      // 이 레이드에 참여하는 집중 멤버
+      const raidFocusMembers = raidMemberIds.filter(mid => focusMemberSet.has(mid))
+
       const available = commonDays.filter(d =>
         validDays.has(d) &&
         (dayCount[d] ?? 0) < MAX
       )
       if (available.length === 0) continue
 
-      // 각 후보 요일 점수 계산
-      // 집중 멤버 설정 시: 그 멤버가 가능한 날 최우선
-      // 기본: 레이드 수 적은 날 우선 (균등 배분), 멤버 겹침 많은 날 우선
-      // 집중 멤버가 모두 가능한 날 = 교집합
-      const focusDays = focusMemberIds.length > 0
-        ? WEEK_DAYS.filter(d => focusMemberIds.every(mid => (scheduleMap[mid] ?? []).includes(d)))
-        : null
       const scored = available.map(day => {
         const memberOverlap = raidMemberIds.filter(mid => memberDays[mid]?.has(day)).length
         const raidCount = dayCount[day] ?? 0
-        const isFocusDay = focusDays ? focusDays.includes(day) : true
-        return { day, memberOverlap, raidCount, isFocusDay }
+        // 이 레이드의 집중 멤버 중 이미 그날 일정이 잡힌 사람 수
+        const focusOnDay = raidFocusMembers.filter(mid => memberDays[mid]?.has(day)).length
+        return { day, memberOverlap, raidCount, focusOnDay }
       }).sort((a, b) => {
-        if (focusDays) {
-          // 집중 모드: 포커스 날 최우선, 포커스 날 중엔 레이드 이미 많은 날 우선 (하루에 몰아넣기)
-          if (a.isFocusDay !== b.isFocusDay) return a.isFocusDay ? -1 : 1
-          if (a.isFocusDay && b.isFocusDay) return b.raidCount - a.raidCount
-          return a.raidCount - b.raidCount  // 비포커스 날은 균등
+        if (focusMemberIds.length > 0) {
+          // 집중 모드: 해당 레이드의 집중 멤버가 이미 가는 날 최우선 → 출석일 최소화
+          if (a.focusOnDay !== b.focusOnDay) return b.focusOnDay - a.focusOnDay
+          // 그 다음은 레이드 많은 날 우선 (몰아넣기)
+          return b.raidCount - a.raidCount
         } else {
           // 균등 모드
           if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount
