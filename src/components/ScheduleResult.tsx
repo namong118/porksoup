@@ -330,7 +330,7 @@ export default function ScheduleResult() {
   const [overId, setOverId] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [scheduleMap, setScheduleMap] = useState<Record<string, DayOfWeek[]>>({})
-  const [focusMemberId, setFocusMemberId] = useState<string | null>(null)
+  const [focusMemberIds, setFocusMemberIds] = useState<string[]>([])
   const [showNext, setShowNext] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
@@ -564,16 +564,19 @@ export default function ScheduleResult() {
       // 각 후보 요일 점수 계산
       // 집중 멤버 설정 시: 그 멤버가 가능한 날 최우선
       // 기본: 레이드 수 적은 날 우선 (균등 배분), 멤버 겹침 많은 날 우선
-      const focusDays = focusMemberId ? (scheduleMap[focusMemberId] ?? []) : null
+      // 집중 멤버가 모두 가능한 날 = 교집합
+      const focusDays = focusMemberIds.length > 0
+        ? WEEK_DAYS.filter(d => focusMemberIds.every(mid => (scheduleMap[mid] ?? []).includes(d)))
+        : null
       const scored = available.map(day => {
         const memberOverlap = raidMemberIds.filter(mid => memberDays[mid]?.has(day)).length
         const raidCount = dayCount[day] ?? 0
         const isFocusDay = focusDays ? focusDays.includes(day) : true
         return { day, memberOverlap, raidCount, isFocusDay }
       }).sort((a, b) => {
-        if (a.isFocusDay !== b.isFocusDay) return a.isFocusDay ? -1 : 1  // 집중 멤버 가능 날 우선
-        if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount  // 적은 요일 우선
-        return b.memberOverlap - a.memberOverlap  // 멤버 겹침 많은 요일 우선
+        if (a.isFocusDay !== b.isFocusDay) return a.isFocusDay ? -1 : 1
+        if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount
+        return b.memberOverlap - a.memberOverlap
       })
 
       const bestDay = scored[0].day
@@ -692,6 +695,44 @@ export default function ScheduleResult() {
         </div>
       )}
 
+      {/* 집중 멤버 선택 */}
+      {members.length > 0 && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className="text-xs text-gray-500 shrink-0">집중 멤버</span>
+          {members.map(m => {
+            const selected = focusMemberIds.includes(m.id)
+            return (
+              <button
+                key={m.id}
+                onClick={() => setFocusMemberIds(prev =>
+                  prev.includes(m.id) ? prev.filter(id => id !== m.id) : [...prev, m.id]
+                )}
+                className="px-2 py-0.5 rounded-full text-xs font-medium border transition-colors"
+                style={selected ? {
+                  backgroundColor: `${m.color}33`,
+                  borderColor: m.color,
+                  color: m.color,
+                } : {
+                  backgroundColor: 'transparent',
+                  borderColor: '#4b5563',
+                  color: '#6b7280',
+                }}
+              >
+                {m.nickname}
+              </button>
+            )
+          })}
+          {focusMemberIds.length > 0 && (
+            <button
+              onClick={() => setFocusMemberIds([])}
+              className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+            >
+              초기화
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="bg-gray-700 rounded-xl px-3 py-2.5 mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
         {/* 상태 */}
         <span className="text-xs text-gray-400 shrink-0">
@@ -721,21 +762,6 @@ export default function ScheduleResult() {
           onChange={e => setMaxPerDay(Math.max(1, Number(e.target.value)))}
           className="w-9 bg-gray-600 rounded px-1 py-0.5 text-center text-xs outline-none focus:ring-1 ring-blue-500 shrink-0" />
         <span className="text-xs text-gray-500 shrink-0">개</span>
-
-        <div className="w-px h-4 bg-gray-500 shrink-0" />
-
-        {/* 집중 멤버 */}
-        <span className="text-xs text-gray-500 shrink-0">집중</span>
-        <select
-          value={focusMemberId ?? ''}
-          onChange={e => setFocusMemberId(e.target.value || null)}
-          className="bg-gray-600 rounded px-1 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500 shrink-0 max-w-[80px]"
-        >
-          <option value="">균등</option>
-          {members.map(m => (
-            <option key={m.id} value={m.id}>{m.nickname}</option>
-          ))}
-        </select>
 
         {/* 자동 편성 버튼 */}
         <button
