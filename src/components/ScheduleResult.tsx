@@ -324,7 +324,7 @@ export default function ScheduleResult() {
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [resetting, setResetting] = useState(false)
-  const [maxPerDay, setMaxPerDay] = useState(6)
+  const [maxPerDay, setMaxPerDay] = useState(5)
   const minPerDay = 1
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
