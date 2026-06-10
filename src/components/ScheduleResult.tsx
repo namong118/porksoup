@@ -551,6 +551,18 @@ export default function ScheduleResult() {
     const updates: { id: string; day: string }[] = []
     const focusMemberSet = new Set(focusMemberIds)
 
+    // 집중 모드: 각 날에 집중 멤버가 참여 가능한 레이드 수를 미리 계산
+    // → 아직 아무것도 배정 안 됐을 때도 잠재력 높은 날을 첫 선택으로 유도
+    const dayFocusPotential: Record<string, number> = {}
+    if (focusMemberIds.length > 0) {
+      WEEK_DAYS.forEach(day => {
+        dayFocusPotential[day] = toSchedule.filter(r => {
+          const mids = [...new Set(r.characters.map(c => c.member_id))]
+          return mids.some(mid => focusMemberSet.has(mid)) && r.commonDays.includes(day)
+        }).length
+      })
+    }
+
     for (const { raid, commonDays, characters } of toSchedule) {
       const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
       // 이 레이드에 참여하는 집중 멤버
@@ -567,12 +579,16 @@ export default function ScheduleResult() {
         const raidCount = dayCount[day] ?? 0
         // 이 레이드의 집중 멤버 중 이미 그날 일정이 잡힌 사람 수
         const focusOnDay = raidFocusMembers.filter(mid => memberDays[mid]?.has(day)).length
-        return { day, memberOverlap, raidCount, focusOnDay }
+        // 이 날에 집중 멤버가 참여 가능한 전체 레이드 수 (잠재력)
+        const focusPotential = dayFocusPotential[day] ?? 0
+        return { day, memberOverlap, raidCount, focusOnDay, focusPotential }
       }).sort((a, b) => {
         if (focusMemberIds.length > 0) {
-          // 집중 모드: 해당 레이드의 집중 멤버가 이미 가는 날 최우선 → 출석일 최소화
+          // 1순위: 이미 집중 멤버가 가는 날
           if (a.focusOnDay !== b.focusOnDay) return b.focusOnDay - a.focusOnDay
-          // 그 다음은 레이드 많은 날 우선 (몰아넣기)
+          // 2순위: 집중 멤버가 가장 많이 참여할 수 있는 날 (잠재력)
+          if (a.focusPotential !== b.focusPotential) return b.focusPotential - a.focusPotential
+          // 3순위: 레이드 많은 날 (몰아넣기)
           return b.raidCount - a.raidCount
         } else {
           // 균등 모드
