@@ -58,7 +58,11 @@ export default function WeeklySchedule({ member }: Props) {
   useEffect(() => {
     const stop = () => setDragging(false)
     window.addEventListener('mouseup', stop)
-    return () => window.removeEventListener('mouseup', stop)
+    window.addEventListener('touchend', stop)
+    return () => {
+      window.removeEventListener('mouseup', stop)
+      window.removeEventListener('touchend', stop)
+    }
   }, [])
 
   function handleMouseDown(day: DayOfWeek, hour: string) {
@@ -141,7 +145,18 @@ export default function WeeklySchedule({ member }: Props) {
       <p className="text-sm text-gray-400 mb-3">드래그해서 가능한 요일·시간을 선택하세요</p>
 
       {/* 드래그 그리드 */}
-      <div className="rounded-xl overflow-hidden border border-gray-600 mb-4 select-none overflow-x-auto">
+      <div
+        className="rounded-xl overflow-hidden border border-gray-600 mb-4 select-none overflow-x-auto"
+        onTouchMove={e => {
+          if (!dragging) return
+          e.preventDefault()
+          const touch = e.touches[0]
+          const el = document.elementFromPoint(touch.clientX, touch.clientY)
+          const day = el?.getAttribute('data-day') as DayOfWeek | null
+          const hour = el?.getAttribute('data-hour')
+          if (day && hour) applyCell(cellKey(day, hour), dragAction)
+        }}
+      >
         <table className="w-full border-collapse" style={{ minWidth: '480px' }}>
           <thead>
             <tr className="bg-gray-700">
@@ -188,8 +203,11 @@ export default function WeeklySchedule({ member }: Props) {
                     return (
                       <td
                         key={hour}
+                        data-day={day}
+                        data-hour={hour}
                         onMouseDown={() => handleMouseDown(day, hour)}
                         onMouseEnter={() => handleMouseEnter(day, hour)}
+                        onTouchStart={e => { e.preventDefault(); handleMouseDown(day, hour) }}
                         className={`border-l border-gray-600 cursor-pointer transition-colors text-center
                           ${isOn ? 'bg-blue-600' : 'bg-gray-800 hover:bg-gray-700'}`}
                         style={{ width: '28px', height: '36px' }}

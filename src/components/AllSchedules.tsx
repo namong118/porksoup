@@ -98,7 +98,8 @@ export default function AllSchedules({ weekStart: propWeekStart }: { weekStart?:
       </div>
 
       {/* 멤버별 스케줄 */}
-      <div className="bg-gray-700 rounded-xl overflow-hidden">
+      <div className="overflow-x-auto">
+      <div className="bg-gray-700 rounded-xl overflow-hidden min-w-[360px]">
         <div className="grid grid-cols-[auto_1fr] border-b border-gray-600">
           <div className="px-4 py-2 text-xs text-gray-400 w-24">멤버</div>
           <div className="grid grid-cols-7">
@@ -171,6 +172,7 @@ export default function AllSchedules({ weekStart: propWeekStart }: { weekStart?:
             )}
           </div>
         ))}
+      </div>
       </div>
     </div>
   )
