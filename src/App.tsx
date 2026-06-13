@@ -84,7 +84,7 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <header
-        className="border-b px-4 py-3 grid grid-cols-3 items-center"
+        className="border-b px-3 sm:px-4 py-2 sm:py-3 grid grid-cols-3 items-center"
         style={{
           background: `linear-gradient(to right, #1f2937, ${member.color ?? '#94a3b8'}22)`,
           borderBottomColor: `${member.color ?? '#94a3b8'}55`,
@@ -111,7 +111,7 @@ export default function App() {
           )}
         </div>
         <div className="flex flex-col items-center">
-          <h1 className="font-bold text-lg">🐷 돼지국밥 레이드</h1>
+          <h1 className="font-bold text-sm sm:text-lg">🐷 돼지국밥 레이드</h1>
           {editingMsg ? (
             <div className="flex items-center gap-1 mt-0.5">
               <input
@@ -145,36 +145,59 @@ export default function App() {
       </header>
 
       <nav
-        className="bg-gray-800 border-b overflow-x-auto flex justify-center"
+        className="bg-gray-800 border-b"
         style={{ borderBottomColor: `${member.color ?? '#94a3b8'}40` }}
       >
-        <div className="flex items-stretch min-w-max mx-auto">
-          {/* 읽기 전용 그룹 */}
-          <div className="flex items-stretch px-2">
-            <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">보기</span>
-            {READ_TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
-                  ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
-                style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* 구분선 */}
-          <div className="w-px bg-gray-600 my-2" />
-
-          {/* 수정 가능 그룹 */}
-          <div className="flex items-stretch px-2">
-            <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">관리</span>
-            {EDIT_TABS.map(t => (
-              <div key={t.id} className="flex items-stretch">
-                {t.id === 'fun' && <div className="w-px bg-gray-600 my-2 mx-1" />}
+        {/* 모바일: 2줄 */}
+        <div className="sm:hidden flex flex-col">
+          <div
+            className="flex overflow-x-auto border-b border-gray-700"
+            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'pan-x', overflowY: 'hidden' }}
+          >
+            <div className="flex items-stretch px-2 min-w-max">
+              <span className="flex items-center text-xs text-gray-600 pr-1.5 whitespace-nowrap shrink-0">보기</span>
+              {READ_TABS.map(t => (
                 <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`py-2.5 px-2 text-xs whitespace-nowrap border-b-2 transition-colors shrink-0
+                    ${tab === t.id ? '' : 'border-transparent text-gray-400'}`}
+                  style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div
+            className="flex overflow-x-auto"
+            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'pan-x', overflowY: 'hidden' }}
+          >
+            <div className="flex items-stretch px-2 min-w-max">
+              <span className="flex items-center text-xs text-gray-600 pr-1.5 whitespace-nowrap shrink-0">관리</span>
+              {EDIT_TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`py-2.5 px-2 text-xs whitespace-nowrap border-b-2 transition-colors shrink-0
+                    ${tab === t.id ? '' : 'border-transparent text-gray-400'}`}
+                  style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 데스크톱: 기존 한 줄 */}
+        <div className="hidden sm:flex overflow-x-auto justify-center">
+          <div className="flex items-stretch min-w-max mx-auto">
+            <div className="flex items-stretch px-2">
+              <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">보기</span>
+              {READ_TABS.map(t => (
+                <button
+                  key={t.id}
                   onClick={() => setTab(t.id)}
                   className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
                     ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
@@ -182,13 +205,30 @@ export default function App() {
                 >
                   {t.label}
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="w-px bg-gray-600 my-2" />
+            <div className="flex items-stretch px-2">
+              <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">관리</span>
+              {EDIT_TABS.map(t => (
+                <div key={t.id} className="flex items-stretch">
+                  {t.id === 'fun' && <div className="w-px bg-gray-600 my-2 mx-1" />}
+                  <button
+                    onClick={() => setTab(t.id)}
+                    className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
+                      ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                    style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                  >
+                    {t.label}
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
 
-      <main className={`mx-auto p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' ? 'max-w-3xl' : 'max-w-2xl'}`}>
+      <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' ? 'max-w-3xl' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'raidoverview' && <RaidOverview />}
