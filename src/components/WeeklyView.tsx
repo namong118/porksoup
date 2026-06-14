@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
 import { WEEK_DAYS, getWeekStart, getDayOffset, parseLocalDate } from '../lib/weekUtils'
@@ -16,8 +16,9 @@ export default function WeeklyView({ member }: Props) {
   })
   const [loading, setLoading] = useState(true)
   const weekStart = getWeekStart()
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  async function markCompleted(id: string) {
+  function removeRaid(id: string) {
     setRaidsByDay(prev => {
       const next = { ...prev } as Record<DayOfWeek, RaidInfo[]>
       for (const day of Object.keys(next) as DayOfWeek[]) {
@@ -25,7 +26,12 @@ export default function WeeklyView({ member }: Props) {
       }
       return next
     })
+  }
+
+  async function markCompleted(id: string) {
+    removeRaid(id)
     await supabase.from('raids').update({ completed: true }).eq('id', id)
+    channelRef.current?.send({ type: 'broadcast', event: 'raid-completed', payload: { id } })
   }
 
   const load = useCallback(async () => {
@@ -62,20 +68,12 @@ export default function WeeklyView({ member }: Props) {
 
   useEffect(() => {
     const channel = supabase
-      .channel('raids-completion')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'raids' }, payload => {
-        const updated = payload.new as { id: string; completed: boolean }
-        if (updated.completed) {
-          setRaidsByDay(prev => {
-            const next = { ...prev } as Record<DayOfWeek, RaidInfo[]>
-            for (const day of Object.keys(next) as DayOfWeek[]) {
-              next[day] = next[day].filter(r => r.raid.id !== updated.id)
-            }
-            return next
-          })
-        }
+      .channel('raid-updates')
+      .on('broadcast', { event: 'raid-completed' }, ({ payload }) => {
+        removeRaid((payload as { id: string }).id)
       })
       .subscribe()
+    channelRef.current = channel
     return () => { supabase.removeChannel(channel) }
   }, [])
 
