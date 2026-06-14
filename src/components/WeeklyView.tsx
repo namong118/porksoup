@@ -60,6 +60,25 @@ export default function WeeklyView({ member }: Props) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('raids-completion')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'raids' }, payload => {
+        const updated = payload.new as { id: string; completed: boolean }
+        if (updated.completed) {
+          setRaidsByDay(prev => {
+            const next = { ...prev } as Record<DayOfWeek, RaidInfo[]>
+            for (const day of Object.keys(next) as DayOfWeek[]) {
+              next[day] = next[day].filter(r => r.raid.id !== updated.id)
+            }
+            return next
+          })
+        }
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
   const weekStartDate = parseLocalDate(weekStart)
