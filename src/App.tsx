@@ -64,6 +64,7 @@ export default function App() {
   const [msgDraft, setMsgDraft] = useState('')
   const [bannerImages, setBannerImages] = useState<(string | null)[]>([null, null, null])
   const [bannerUploading, setBannerUploading] = useState([false, false, false])
+  const [expandedBanner, setExpandedBanner] = useState<string | null>(null)
   const bannerInputRef0 = useRef<HTMLInputElement>(null)
   const bannerInputRef1 = useRef<HTMLInputElement>(null)
   const bannerInputRef2 = useRef<HTMLInputElement>(null)
@@ -190,18 +191,21 @@ export default function App() {
         {[0, 1, 2].map(i => (
           <div
             key={i}
-            className="relative group cursor-pointer flex-1 overflow-hidden"
-            style={{ maxHeight: '120px', borderLeft: i > 0 ? '1px solid #374151' : undefined }}
-            onClick={() => bannerInputRefs[i].current?.click()}
+            className="relative group flex-1 overflow-hidden"
+            style={{ maxHeight: '120px', borderLeft: i > 0 ? '1px solid #374151' : undefined, cursor: bannerImages[i] ? 'zoom-in' : 'pointer' }}
+            onClick={() => bannerImages[i] ? setExpandedBanner(bannerImages[i]) : bannerInputRefs[i].current?.click()}
           >
             {bannerImages[i]
               ? <img src={bannerImages[i]!} alt={`banner${i + 1}`} className="w-full object-cover" style={{ maxHeight: '120px' }} />
               : <div className="flex items-center justify-center h-16 text-xs text-gray-700">{i + 1}</div>
             }
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
-              <span className="text-white text-xs bg-black/60 px-2 py-1 rounded-lg">
+              <button
+                onClick={e => { e.stopPropagation(); bannerInputRefs[i].current?.click() }}
+                className="text-white text-xs bg-black/60 px-2 py-1 rounded-lg hover:bg-black/80"
+              >
                 {bannerUploading[i] ? '업로드 중...' : '🖼️ 변경'}
-              </span>
+              </button>
               {bannerImages[i] && (
                 <button
                   onClick={e => deleteBanner(i, e)}
@@ -321,6 +325,19 @@ export default function App() {
         {tab === 'loalinks' && <LoaLinks />}
         {tab === 'buslounge' && <BusLounge />}
       </main>
+
+      {expandedBanner && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 cursor-zoom-out"
+          onClick={() => setExpandedBanner(null)}
+        >
+          <img
+            src={expandedBanner}
+            alt="banner expanded"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   )
 }
