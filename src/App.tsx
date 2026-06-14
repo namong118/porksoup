@@ -62,39 +62,46 @@ export default function App() {
   const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
   const [editingMsg, setEditingMsg] = useState(false)
   const [msgDraft, setMsgDraft] = useState('')
-  const [bannerImage, setBannerImage] = useState<string | null>(null)
-  const [bannerUploading, setBannerUploading] = useState(false)
-  const bannerInputRef = useRef<HTMLInputElement>(null)
+  const [bannerImages, setBannerImages] = useState<(string | null)[]>([null, null, null])
+  const [bannerUploading, setBannerUploading] = useState([false, false, false])
+  const bannerInputRef0 = useRef<HTMLInputElement>(null)
+  const bannerInputRef1 = useRef<HTMLInputElement>(null)
+  const bannerInputRef2 = useRef<HTMLInputElement>(null)
+  const bannerInputRefs = [bannerInputRef0, bannerInputRef1, bannerInputRef2]
 
   useEffect(() => {
     runWeeklyResetIfNeeded()
     supabase.from('settings').select('value').eq('key', 'header_message').single()
       .then(({ data }) => { if (data?.value) setHeaderMsg(data.value) })
-    supabase.from('settings').select('value').eq('key', 'banner_image').single()
-      .then(({ data }) => { if (data?.value) setBannerImage(data.value) })
+    Promise.all(
+      [1, 2, 3].map(i =>
+        supabase.from('settings').select('value').eq('key', `banner_image_${i}`).single()
+          .then(({ data }) => data?.value ?? null)
+      )
+    ).then(images => setBannerImages(images))
   }, [])
 
-  async function uploadBanner(file: File) {
-    setBannerUploading(true)
+  async function uploadBanner(file: File, index: number) {
+    setBannerUploading(prev => { const n = [...prev]; n[index] = true; return n })
     const ext = file.name.split('.').pop() ?? 'jpg'
-    const filename = `banner_${Date.now()}.${ext}`
+    const filename = `banner_${index + 1}_${Date.now()}.${ext}`
     const { data, error } = await supabase.storage.from('banners').upload(filename, file)
     if (error) {
       alert(`업로드 실패: ${error.message}`)
-      setBannerUploading(false)
+      setBannerUploading(prev => { const n = [...prev]; n[index] = false; return n })
       return
     }
     if (data) {
       const { data: urlData } = supabase.storage.from('banners').getPublicUrl(data.path)
       const url = urlData.publicUrl
-      const { error: upsertError } = await supabase.from('settings').upsert({ key: 'banner_image', value: url }, { onConflict: 'key' })
+      const { error: upsertError } = await supabase.from('settings').upsert({ key: `banner_image_${index + 1}`, value: url }, { onConflict: 'key' })
       if (upsertError) {
         alert(`저장 실패: ${upsertError.message}`)
       } else {
-        setBannerImage(url)
+        setBannerImages(prev => { const n = [...prev]; n[index] = url; return n })
       }
     }
-    setBannerUploading(false)
+    setBannerUploading(prev => { const n = [...prev]; n[index] = false; return n })
   }
 
   async function saveMsg() {
@@ -172,28 +179,33 @@ export default function App() {
         </div>
       </header>
 
-      {/* 배너 이미지 - 데스크톱만 */}
-      <div
-        className="hidden sm:block relative group cursor-pointer border-b border-gray-700 bg-gray-900 overflow-hidden"
-        style={{ maxHeight: '120px' }}
-        onClick={() => bannerInputRef.current?.click()}
-      >
-        {bannerImage
-          ? <img src={bannerImage} alt="banner" className="w-full object-cover" style={{ maxHeight: '120px' }} />
-          : <div className="flex items-center justify-center py-6 text-xs text-gray-600">배너 이미지를 업로드하세요</div>
-        }
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-          <span className="text-white text-xs bg-black/60 px-3 py-1.5 rounded-lg">
-            {bannerUploading ? '업로드 중...' : '🖼️ 이미지 변경'}
-          </span>
-        </div>
-        <input
-          ref={bannerInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => { if (e.target.files?.[0]) uploadBanner(e.target.files[0]) }}
-        />
+      {/* 배너 이미지 3분할 - 데스크톱만 */}
+      <div className="hidden sm:flex border-b border-gray-700 bg-gray-900">
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className="relative group cursor-pointer flex-1 overflow-hidden"
+            style={{ maxHeight: '120px', borderLeft: i > 0 ? '1px solid #374151' : undefined }}
+            onClick={() => bannerInputRefs[i].current?.click()}
+          >
+            {bannerImages[i]
+              ? <img src={bannerImages[i]!} alt={`banner${i + 1}`} className="w-full object-cover" style={{ maxHeight: '120px' }} />
+              : <div className="flex items-center justify-center h-16 text-xs text-gray-700">{i + 1}</div>
+            }
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <span className="text-white text-xs bg-black/60 px-2 py-1 rounded-lg">
+                {bannerUploading[i] ? '업로드 중...' : '🖼️ 변경'}
+              </span>
+            </div>
+            <input
+              ref={bannerInputRefs[i]}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={e => { if (e.target.files?.[0]) uploadBanner(e.target.files[0], i) }}
+            />
+          </div>
+        ))}
       </div>
 
       <nav
