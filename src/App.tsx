@@ -62,12 +62,24 @@ export default function App() {
   const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
   const [editingMsg, setEditingMsg] = useState(false)
   const [msgDraft, setMsgDraft] = useState('')
+  const [newsBanner, setNewsBanner] = useState('')
+  const [editingNews, setEditingNews] = useState(false)
+  const [newsDraft, setNewsDraft] = useState('')
 
   useEffect(() => {
     runWeeklyResetIfNeeded()
     supabase.from('settings').select('value').eq('key', 'header_message').single()
       .then(({ data }) => { if (data?.value) setHeaderMsg(data.value) })
+    supabase.from('settings').select('value').eq('key', 'news_banner').single()
+      .then(({ data }) => { if (data?.value) setNewsBanner(data.value) })
   }, [])
+
+  async function saveNews() {
+    const trimmed = newsDraft.trim()
+    await supabase.from('settings').upsert({ key: 'news_banner', value: trimmed }, { onConflict: 'key' })
+    setNewsBanner(trimmed)
+    setEditingNews(false)
+  }
 
   async function saveMsg() {
     const trimmed = msgDraft.trim()
@@ -143,6 +155,35 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {/* 뉴스 배너 - 데스크톱만 */}
+      <div className="hidden sm:block bg-gray-900 border-b border-gray-700 px-4 py-1.5">
+        {editingNews ? (
+          <div className="flex items-center gap-2 max-w-3xl mx-auto">
+            <span className="text-xs text-yellow-400 shrink-0">📢</span>
+            <input
+              autoFocus
+              value={newsDraft}
+              onChange={e => setNewsDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') saveNews(); if (e.key === 'Escape') setEditingNews(false) }}
+              className="flex-1 bg-gray-700 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500"
+              placeholder="이번 주 소식을 입력하세요..."
+            />
+            <button onClick={saveNews} className="text-blue-400 text-xs hover:text-blue-300 shrink-0">저장</button>
+            <button onClick={() => setEditingNews(false)} className="text-gray-600 text-xs hover:text-gray-400 shrink-0">취소</button>
+          </div>
+        ) : (
+          <div
+            onClick={() => { setNewsDraft(newsBanner); setEditingNews(true) }}
+            className="flex items-center gap-2 max-w-3xl mx-auto cursor-pointer group"
+          >
+            <span className="text-xs text-yellow-400 shrink-0">📢</span>
+            <span className="text-xs text-gray-400 group-hover:text-gray-300 truncate">
+              {newsBanner || '이번 주 소식을 입력하세요 (클릭하여 편집)'}
+            </span>
+          </div>
+        )}
+      </div>
 
       <nav
         className="bg-gray-800 border-b"
