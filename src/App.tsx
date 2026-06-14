@@ -79,11 +79,20 @@ export default function App() {
     const ext = file.name.split('.').pop() ?? 'jpg'
     const filename = `banner_${Date.now()}.${ext}`
     const { data, error } = await supabase.storage.from('banners').upload(filename, file)
-    if (!error && data) {
+    if (error) {
+      alert(`업로드 실패: ${error.message}`)
+      setBannerUploading(false)
+      return
+    }
+    if (data) {
       const { data: urlData } = supabase.storage.from('banners').getPublicUrl(data.path)
       const url = urlData.publicUrl
-      await supabase.from('settings').upsert({ key: 'banner_image', value: url }, { onConflict: 'key' })
-      setBannerImage(url)
+      const { error: upsertError } = await supabase.from('settings').upsert({ key: 'banner_image', value: url }, { onConflict: 'key' })
+      if (upsertError) {
+        alert(`저장 실패: ${upsertError.message}`)
+      } else {
+        setBannerImage(url)
+      }
     }
     setBannerUploading(false)
   }
