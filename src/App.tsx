@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from './lib/supabase'
 import MemberSelect from './components/MemberSelect'
 import CharacterManager from './components/CharacterManager'
@@ -62,23 +62,30 @@ export default function App() {
   const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
   const [editingMsg, setEditingMsg] = useState(false)
   const [msgDraft, setMsgDraft] = useState('')
-  const [newsBanner, setNewsBanner] = useState('')
-  const [editingNews, setEditingNews] = useState(false)
-  const [newsDraft, setNewsDraft] = useState('')
+  const [bannerImage, setBannerImage] = useState<string | null>(null)
+  const [bannerUploading, setBannerUploading] = useState(false)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     runWeeklyResetIfNeeded()
     supabase.from('settings').select('value').eq('key', 'header_message').single()
       .then(({ data }) => { if (data?.value) setHeaderMsg(data.value) })
-    supabase.from('settings').select('value').eq('key', 'news_banner').single()
-      .then(({ data }) => { if (data?.value) setNewsBanner(data.value) })
+    supabase.from('settings').select('value').eq('key', 'banner_image').single()
+      .then(({ data }) => { if (data?.value) setBannerImage(data.value) })
   }, [])
 
-  async function saveNews() {
-    const trimmed = newsDraft.trim()
-    await supabase.from('settings').upsert({ key: 'news_banner', value: trimmed }, { onConflict: 'key' })
-    setNewsBanner(trimmed)
-    setEditingNews(false)
+  async function uploadBanner(file: File) {
+    setBannerUploading(true)
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const filename = `banner_${Date.now()}.${ext}`
+    const { data, error } = await supabase.storage.from('banners').upload(filename, file)
+    if (!error && data) {
+      const { data: urlData } = supabase.storage.from('banners').getPublicUrl(data.path)
+      const url = urlData.publicUrl
+      await supabase.from('settings').upsert({ key: 'banner_image', value: url }, { onConflict: 'key' })
+      setBannerImage(url)
+    }
+    setBannerUploading(false)
   }
 
   async function saveMsg() {
@@ -156,33 +163,28 @@ export default function App() {
         </div>
       </header>
 
-      {/* 뉴스 배너 - 데스크톱만 */}
-      <div className="hidden sm:block bg-gray-900 border-b border-gray-700 px-4 py-1.5">
-        {editingNews ? (
-          <div className="flex items-center gap-2 max-w-3xl mx-auto">
-            <span className="text-xs text-yellow-400 shrink-0">📢</span>
-            <input
-              autoFocus
-              value={newsDraft}
-              onChange={e => setNewsDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') saveNews(); if (e.key === 'Escape') setEditingNews(false) }}
-              className="flex-1 bg-gray-700 rounded px-2 py-0.5 text-xs outline-none focus:ring-1 ring-blue-500"
-              placeholder="이번 주 소식을 입력하세요..."
-            />
-            <button onClick={saveNews} className="text-blue-400 text-xs hover:text-blue-300 shrink-0">저장</button>
-            <button onClick={() => setEditingNews(false)} className="text-gray-600 text-xs hover:text-gray-400 shrink-0">취소</button>
-          </div>
-        ) : (
-          <div
-            onClick={() => { setNewsDraft(newsBanner); setEditingNews(true) }}
-            className="flex items-center gap-2 max-w-3xl mx-auto cursor-pointer group"
-          >
-            <span className="text-xs text-yellow-400 shrink-0">📢</span>
-            <span className="text-xs text-gray-400 group-hover:text-gray-300 truncate">
-              {newsBanner || '이번 주 소식을 입력하세요 (클릭하여 편집)'}
-            </span>
-          </div>
-        )}
+      {/* 배너 이미지 - 데스크톱만 */}
+      <div
+        className="hidden sm:block relative group cursor-pointer border-b border-gray-700 bg-gray-900 overflow-hidden"
+        style={{ maxHeight: '120px' }}
+        onClick={() => bannerInputRef.current?.click()}
+      >
+        {bannerImage
+          ? <img src={bannerImage} alt="banner" className="w-full object-cover" style={{ maxHeight: '120px' }} />
+          : <div className="flex items-center justify-center py-6 text-xs text-gray-600">배너 이미지를 업로드하세요</div>
+        }
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+          <span className="text-white text-xs bg-black/60 px-3 py-1.5 rounded-lg">
+            {bannerUploading ? '업로드 중...' : '🖼️ 이미지 변경'}
+          </span>
+        </div>
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={e => { if (e.target.files?.[0]) uploadBanner(e.target.files[0]) }}
+        />
       </div>
 
       <nav
