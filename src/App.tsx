@@ -178,11 +178,9 @@ export default function App() {
         <div className="flex justify-end items-center gap-2">
           <button
             onClick={() => setBannerVisible(v => !v)}
-            className="hidden sm:flex text-xs text-gray-500 hover:text-gray-300 transition-colors"
-            title={bannerVisible ? '배너 숨기기' : '배너 보이기'}
+            className="hidden sm:flex items-center text-xs bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg transition-colors text-gray-300"
           >
-            {bannerVisible ? '🖼️' : '🖼️'}
-            <span className="ml-1">{bannerVisible ? 'ON' : 'OFF'}</span>
+            {bannerVisible ? '배너 가리기' : '배너 보이기'}
           </button>
           <button
             onClick={() => setMember(null)}
