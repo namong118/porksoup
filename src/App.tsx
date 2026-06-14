@@ -65,6 +65,7 @@ export default function App() {
   const [bannerImages, setBannerImages] = useState<(string | null)[]>([null, null, null])
   const [bannerUploading, setBannerUploading] = useState([false, false, false])
   const [expandedBanner, setExpandedBanner] = useState<string | null>(null)
+  const [bannerVisible, setBannerVisible] = useState(true)
   const bannerInputRef0 = useRef<HTMLInputElement>(null)
   const bannerInputRef1 = useRef<HTMLInputElement>(null)
   const bannerInputRef2 = useRef<HTMLInputElement>(null)
@@ -174,7 +175,15 @@ export default function App() {
             >{headerMsg}</p>
           )}
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end items-center gap-2">
+          <button
+            onClick={() => setBannerVisible(v => !v)}
+            className="hidden sm:flex text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            title={bannerVisible ? '배너 숨기기' : '배너 보이기'}
+          >
+            {bannerVisible ? '🖼️' : '🖼️'}
+            <span className="ml-1">{bannerVisible ? 'ON' : 'OFF'}</span>
+          </button>
           <button
             onClick={() => setMember(null)}
             className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
@@ -187,7 +196,7 @@ export default function App() {
       </header>
 
       {/* 배너 이미지 3분할 - 데스크톱만 */}
-      <div className="hidden sm:flex border-b border-gray-700 bg-gray-900">
+      <div className={`${bannerVisible ? 'sm:flex' : ''} hidden border-b border-gray-700 bg-gray-900`}>
         {[0, 1, 2].map(i => (
           <div
             key={i}
