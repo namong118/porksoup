@@ -199,17 +199,17 @@ export default function App() {
               ? <img src={bannerImages[i]!} alt={`banner${i + 1}`} className="w-full object-cover" style={{ maxHeight: '120px' }} />
               : <div className="flex items-center justify-center h-16 text-xs text-gray-700">{i + 1}</div>
             }
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+            <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
               <button
                 onClick={e => { e.stopPropagation(); bannerInputRefs[i].current?.click() }}
-                className="text-white text-xs bg-black/60 px-2 py-1 rounded-lg hover:bg-black/80"
+                className="text-white text-xs bg-black/70 px-2 py-1 rounded-md hover:bg-black/90"
               >
-                {bannerUploading[i] ? '업로드 중...' : '🖼️ 변경'}
+                {bannerUploading[i] ? '...' : '🖼️ 변경'}
               </button>
               {bannerImages[i] && (
                 <button
                   onClick={e => deleteBanner(i, e)}
-                  className="text-red-400 text-xs bg-black/60 px-2 py-1 rounded-lg hover:text-red-300"
+                  className="text-red-400 text-xs bg-black/70 px-2 py-1 rounded-md hover:text-red-300"
                 >
                   🗑️ 삭제
                 </button>
