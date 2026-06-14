@@ -76,7 +76,7 @@ export default function App() {
     Promise.all(
       [1, 2, 3].map(i =>
         supabase.from('settings').select('value').eq('key', `banner_image_${i}`).single()
-          .then(({ data }) => data?.value ?? null)
+          .then(({ data }) => data?.value || null)
       )
     ).then(images => setBannerImages(images))
   }, [])
@@ -102,6 +102,12 @@ export default function App() {
       }
     }
     setBannerUploading(prev => { const n = [...prev]; n[index] = false; return n })
+  }
+
+  async function deleteBanner(index: number, e: React.MouseEvent) {
+    e.stopPropagation()
+    await supabase.from('settings').upsert({ key: `banner_image_${index + 1}`, value: '' }, { onConflict: 'key' })
+    setBannerImages(prev => { const n = [...prev]; n[index] = null; return n })
   }
 
   async function saveMsg() {
@@ -192,10 +198,18 @@ export default function App() {
               ? <img src={bannerImages[i]!} alt={`banner${i + 1}`} className="w-full object-cover" style={{ maxHeight: '120px' }} />
               : <div className="flex items-center justify-center h-16 text-xs text-gray-700">{i + 1}</div>
             }
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
               <span className="text-white text-xs bg-black/60 px-2 py-1 rounded-lg">
                 {bannerUploading[i] ? '업로드 중...' : '🖼️ 변경'}
               </span>
+              {bannerImages[i] && (
+                <button
+                  onClick={e => deleteBanner(i, e)}
+                  className="text-red-400 text-xs bg-black/60 px-2 py-1 rounded-lg hover:text-red-300"
+                >
+                  🗑️ 삭제
+                </button>
+              )}
             </div>
             <input
               ref={bannerInputRefs[i]}
