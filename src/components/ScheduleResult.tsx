@@ -331,7 +331,6 @@ export default function ScheduleResult() {
   const [members, setMembers] = useState<Member[]>([])
   const [focusMemberIds, setFocusMemberIds] = useState<string[]>([])
   const [dayTimes, setDayTimes] = useState<Partial<Record<DayOfWeek, string>>>({})
-  const [memberTimesMap, setMemberTimesMap] = useState<Record<string, Record<string, string[]>>>({})
   const [showNext, setShowNext] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
@@ -406,7 +405,6 @@ export default function ScheduleResult() {
 
     setResults(results)
     setMembers(membersRes.data ?? [])
-    setMemberTimesMap(timesMap)
     setLoading(false)
   }, [weekStart, weekField])
 
@@ -499,6 +497,26 @@ export default function ScheduleResult() {
     const MIN = minPerDay
     const MAX = maxPerDay
 
+    // 최신 멤버 스케줄 fetch (stale state 방지)
+    const freshSchedRes = await supabase.from('weekly_schedules').select('*').eq('week_start', weekStart)
+    const freshSchedules = freshSchedRes.data ?? []
+    const freshScheduleMap: Record<string, DayOfWeek[]> = {}
+    const freshTimesMap: Record<string, Record<string, string[]>> = {}
+    freshSchedules.forEach((s: any) => {
+      freshScheduleMap[s.member_id] = s.available_days ?? []
+      freshTimesMap[s.member_id] = s.available_times ?? {}
+    })
+
+    // commonDays를 최신 스케줄 기준으로 재계산
+    const freshResults = results.map(r => {
+      const memberIds = [...new Set(r.characters.map(c => c.member_id))]
+      const submittedIds = memberIds.filter(mid => freshScheduleMap[mid] !== undefined)
+      const freshCommonDays: DayOfWeek[] = submittedIds.length === 0
+        ? []
+        : WEEK_DAYS.filter(day => submittedIds.every(mid => freshScheduleMap[mid].includes(day)))
+      return { ...r, commonDays: freshCommonDays }
+    })
+
     // 지난 날 직접 계산 (클로저 의존 없이)
     const now = new Date()
     const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -511,7 +529,7 @@ export default function ScheduleResult() {
     )
 
     // 완료된 레이드 제외 (다음 주는 전부 미완료 취급)
-    const activeResults = results.filter(r => showNext || !r.raid.completed)
+    const activeResults = freshResults.filter(r => showNext || !r.raid.completed)
 
     // 각 요일에 갈 수 있는 레이드 수 파악
     const dayPotential: Partial<Record<DayOfWeek, number>> = {}
@@ -535,7 +553,7 @@ export default function ScheduleResult() {
 
     // 완료된 레이드가 이미 차지한 자리를 미리 반영 (다음 주는 제외)
     if (!showNext) {
-      results
+      freshResults
         .filter(r => r.raid.completed && r.raid[weekField])
         .forEach(r => {
           const d = r.raid[weekField]!
@@ -560,7 +578,7 @@ export default function ScheduleResult() {
           if (!r.commonDays.includes(day)) return false
           if (hour) {
             return mids.every(mid => {
-              const hours: string[] = memberTimesMap[mid]?.[day] ?? []
+              const hours: string[] = freshTimesMap[mid]?.[day] ?? []
               return hours.length === 0 || hours.includes(hour)
             })
           }
@@ -581,7 +599,7 @@ export default function ScheduleResult() {
         if (dayTime) {
           const hour = String(parseInt(dayTime.split(':')[0]))
           return raidMemberIds.every(mid => {
-            const hours: string[] = memberTimesMap[mid]?.[d] ?? []
+            const hours: string[] = freshTimesMap[mid]?.[d] ?? []
             return hours.length === 0 || hours.includes(hour)
           })
         }
