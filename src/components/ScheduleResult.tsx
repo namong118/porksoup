@@ -379,18 +379,11 @@ export default function ScheduleResult() {
 
       const raidHour = getHour(raid.time)
 
+      // commonDays: 제출한 멤버 전원이 가능한 요일 (시간 무관 — 충돌은 conflictMembers에서 표시)
       const commonDays = submittedIds.length === 0
         ? []
         : WEEK_DAYS.filter(day =>
-            submittedIds.every(mid => {
-              if (!scheduleMap[mid].includes(day)) return false
-              // 레이드 시간이 정해진 경우, 해당 시간에 가능한지 체크
-              if (raidHour) {
-                const memberHours: string[] = timesMap[mid]?.[day] ?? []
-                if (memberHours.length > 0 && !memberHours.includes(raidHour)) return false
-              }
-              return true
-            })
+            submittedIds.every(mid => scheduleMap[mid].includes(day))
           )
 
       const assignedDay = (raid[weekField] ?? null) as DayOfWeek | null
