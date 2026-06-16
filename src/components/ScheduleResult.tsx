@@ -653,12 +653,12 @@ export default function ScheduleResult() {
       )
     }
 
-    // 2단계: 새로 편성된 레이드만 배정 (요일별 시작시간 적용)
+    // 2단계: 새로 편성된 레이드만 배정 (요일별 시작시간 적용, 없으면 null로 초기화)
     await Promise.all(
       finalUpdates.map(({ id, day }) =>
         supabase.from('raids').update({
           [weekField]: day,
-          ...(dayTimes[day as DayOfWeek] ? { time: dayTimes[day as DayOfWeek] } : {}),
+          time: dayTimes[day as DayOfWeek] ?? null,
         }).eq('id', id)
       )
     )
