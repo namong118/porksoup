@@ -642,17 +642,54 @@ export default function ScheduleResult() {
       updates.push({ id: raid.id, day: bestDay })
     }
 
-    // MIN 미만인 날 제거 + MAX 초과 하드 제한
+    // 2차 패스: 1차에서 MAX 초과로 배정 못 받은 레이드 강제 배정
+    const scheduledIds = new Set(updates.map(u => u.id))
+    const forcedUpdates: { id: string; day: string }[] = []
+    for (const { raid, commonDays, characters } of toSchedule) {
+      if (scheduledIds.has(raid.id)) continue
+      const raidMemberIds = [...new Set(characters.map(c => c.member_id))]
+      const validCommonDays = commonDays.filter(d => validDays.has(d))
+      if (validCommonDays.length === 0) continue
+
+      // 시간 조건 체크 (dayTimes 존재 시)
+      const timeFiltered = validCommonDays.filter(d => {
+        const dayTime = dayTimes[d as DayOfWeek]
+        if (!dayTime) return true
+        const hour = String(parseInt(dayTime.split(':')[0]))
+        return raidMemberIds.every(mid => {
+          const hours: string[] = freshTimesMap[mid]?.[d] ?? []
+          return hours.length === 0 || hours.includes(hour)
+        })
+      })
+
+      // 시간 조건이 통과되면 그 중에서, 아니면 모든 날 중에서 가장 적은 날 선택
+      const candidates = timeFiltered.length > 0 ? timeFiltered : validCommonDays
+      const bestDay = candidates.reduce((prev, curr) =>
+        (dayCount[curr] ?? 0) < (dayCount[prev] ?? 0) ? curr : prev
+      )
+      dayCount[bestDay] = (dayCount[bestDay] ?? 0) + 1
+      raidMemberIds.forEach(mid => {
+        if (!memberDays[mid]) memberDays[mid] = new Set()
+        memberDays[mid].add(bestDay)
+      })
+      scheduledIds.add(raid.id)
+      forcedUpdates.push({ id: raid.id, day: bestDay })
+    }
+
+    // MIN 미만인 날 제거 + MAX 초과 하드 제한 (1차 배정에만 적용)
     const dayFinal: Record<string, number> = {}
     updates.forEach(u => { dayFinal[u.day] = (dayFinal[u.day] ?? 0) + 1 })
     const midUpdates = updates.filter(u => dayFinal[u.day] >= MIN)
 
-    // MAX 초과 안전장치: 날짜별로 MAX개까지만 허용
+    // MAX 초과 안전장치: 날짜별로 MAX개까지만 허용 (2차 강제배정은 통과)
     const dayMaxCount: Record<string, number> = {}
-    const finalUpdates = midUpdates.filter(u => {
-      dayMaxCount[u.day] = (dayMaxCount[u.day] ?? 0) + 1
-      return dayMaxCount[u.day] <= MAX
-    })
+    const finalUpdates = [
+      ...midUpdates.filter(u => {
+        dayMaxCount[u.day] = (dayMaxCount[u.day] ?? 0) + 1
+        return dayMaxCount[u.day] <= MAX
+      }),
+      ...forcedUpdates,
+    ]
     // 1단계: 레이드 요일 초기화 (다음 주는 DB 전체 초기화, 이번 주는 미완료만)
     if (showNext) {
       await supabase.from('raids').update({ next_day_of_week: null }).eq('is_draft', false)
