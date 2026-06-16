@@ -642,12 +642,16 @@ export default function ScheduleResult() {
       dayMaxCount[u.day] = (dayMaxCount[u.day] ?? 0) + 1
       return dayMaxCount[u.day] <= MAX
     })
-    // 1단계: 레이드 요일 초기화 (다음 주는 완료 포함 전체, 이번 주는 미완료만)
-    await Promise.all(
-      results
-        .filter(r => (showNext || !r.raid.completed) && r.raid[weekField])
-        .map(r => supabase.from('raids').update({ [weekField]: null }).eq('id', r.raid.id))
-    )
+    // 1단계: 레이드 요일 초기화 (다음 주는 DB 전체 초기화, 이번 주는 미완료만)
+    if (showNext) {
+      await supabase.from('raids').update({ next_day_of_week: null }).eq('is_draft', false)
+    } else {
+      await Promise.all(
+        results
+          .filter(r => !r.raid.completed && r.raid.day_of_week)
+          .map(r => supabase.from('raids').update({ day_of_week: null }).eq('id', r.raid.id))
+      )
+    }
 
     // 2단계: 새로 편성된 레이드만 배정 (요일별 시작시간 적용)
     await Promise.all(
