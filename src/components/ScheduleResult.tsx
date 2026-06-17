@@ -639,6 +639,16 @@ export default function ScheduleResult() {
         memberDays[mid].add(bestDay)
       })
 
+      // 집중 모드: 이 레이드가 bestDay에 배정됐으므로 다른 날의 잠재력 감소
+      // (정적 계산 보정 → 남은 배정 가능 레이드 수를 실시간 반영)
+      if (raidFocusMembers.length > 0) {
+        commonDays.forEach(d => {
+          if (d !== bestDay) {
+            dayFocusPotential[d] = Math.max(0, (dayFocusPotential[d] ?? 0) - 1)
+          }
+        })
+      }
+
       updates.push({ id: raid.id, day: bestDay })
     }
 
