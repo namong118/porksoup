@@ -56,7 +56,7 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
 ]
 
 const EXTRA_TABS: { id: Tab; label: string }[] = [
-  { id: 'bannerview', label: '🖼️ 배너모아보기' },
+  { id: 'bannerview', label: '🖼️ 배너 모아보기' },
   { id: 'fun', label: '🎮 게임' },
 ]
 
