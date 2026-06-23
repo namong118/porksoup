@@ -107,7 +107,7 @@ export default function BannerGallery() {
             <div
               key={banner.id}
               className="relative group rounded-lg overflow-hidden bg-gray-800 cursor-zoom-in"
-              style={{ aspectRatio: '16/9' }}
+              style={{ aspectRatio: '16/6' }}
               onClick={() => setExpanded(banner.url)}
             >
               <img
@@ -127,7 +127,7 @@ export default function BannerGallery() {
           ))}
           <div
             className="border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition-colors"
-            style={{ aspectRatio: '16/9' }}
+            style={{ aspectRatio: '16/6' }}
             onClick={() => fileInputRef.current?.click()}
           >
             <span className="text-gray-600 text-sm hover:text-gray-400 transition-colors">+ 추가</span>
