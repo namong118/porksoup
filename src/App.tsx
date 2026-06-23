@@ -45,7 +45,6 @@ const READ_TABS: { id: Tab; label: string }[] = [
   { id: 'raidoverview', label: '📋 레이드 현황' },
   { id: 'goldguide', label: '💰 골드 가이드' },
   { id: 'loalinks', label: '🔗 각종 사이트' },
-  { id: 'bannerview', label: '🖼️ 배너모아보기' },
 ]
 
 const EDIT_TABS: { id: Tab; label: string }[] = [
@@ -54,6 +53,7 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
   { id: 'raids', label: '🛡️ 레이드 관리' },
   { id: 'draft', label: '📝 낙서장' },
   { id: 'characters', label: '⚔️ 내 캐릭터' },
+  { id: 'bannerview', label: '🖼️ 배너모아보기' },
   { id: 'fun', label: '🎮 게임' },
 ]
 
