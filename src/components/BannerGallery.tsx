@@ -31,13 +31,13 @@ export default function BannerGallery() {
   async function uploadBanner(file: File) {
     const ext = file.name.split('.').pop() ?? 'jpg'
     const filename = `gallery_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
-    const { data, error } = await supabase.storage.from('banners').upload(filename, file)
+    const { data, error } = await supabase.storage.from('gallery').upload(filename, file)
     if (error) {
       alert(`업로드 실패: ${error.message}`)
       return
     }
     if (data) {
-      const { data: urlData } = supabase.storage.from('banners').getPublicUrl(data.path)
+      const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(data.path)
       const { data: inserted } = await supabase
         .from('banner_gallery')
         .insert({ url: urlData.publicUrl })
@@ -61,9 +61,9 @@ export default function BannerGallery() {
   async function deleteBanner(id: string, url: string, e: React.MouseEvent) {
     e.stopPropagation()
     if (!confirm('이 배너를 삭제할까요?')) return
-    const parts = url.split('/banners/')
+    const parts = url.split('/gallery/')
     if (parts[1]) {
-      await supabase.storage.from('banners').remove([parts[1]])
+      await supabase.storage.from('gallery').remove([parts[1]])
     }
     await supabase.from('banner_gallery').delete().eq('id', id)
     setBanners(prev => prev.filter(b => b.id !== id))
