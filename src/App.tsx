@@ -88,8 +88,14 @@ export default function App() {
     ).then(images => setBannerImages(images))
   }, [])
 
+  function extractBannerFilename(url: string): string | null {
+    const parts = url.split('/banners/')
+    return parts[1] ?? null
+  }
+
   async function uploadBanner(file: File, index: number) {
     setBannerUploading(prev => { const n = [...prev]; n[index] = true; return n })
+    const oldUrl = bannerImages[index]
     const ext = file.name.split('.').pop() ?? 'jpg'
     const filename = `banner_${index + 1}_${Date.now()}.${ext}`
     const { data, error } = await supabase.storage.from('banners').upload(filename, file)
@@ -105,6 +111,10 @@ export default function App() {
       if (upsertError) {
         alert(`저장 실패: ${upsertError.message}`)
       } else {
+        if (oldUrl) {
+          const oldFilename = extractBannerFilename(oldUrl)
+          if (oldFilename) await supabase.storage.from('banners').remove([oldFilename])
+        }
         setBannerImages(prev => { const n = [...prev]; n[index] = url; return n })
       }
     }
@@ -113,6 +123,11 @@ export default function App() {
 
   async function deleteBanner(index: number, e: React.MouseEvent) {
     e.stopPropagation()
+    const oldUrl = bannerImages[index]
+    if (oldUrl) {
+      const oldFilename = extractBannerFilename(oldUrl)
+      if (oldFilename) await supabase.storage.from('banners').remove([oldFilename])
+    }
     await supabase.from('settings').upsert({ key: `banner_image_${index + 1}`, value: '' }, { onConflict: 'key' })
     setBannerImages(prev => { const n = [...prev]; n[index] = null; return n })
   }
