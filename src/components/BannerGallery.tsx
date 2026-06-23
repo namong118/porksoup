@@ -102,17 +102,18 @@ export default function BannerGallery() {
           <p className="text-gray-600 text-sm mt-1">클릭해서 첫 번째 배너를 추가해보세요!</p>
         </div>
       ) : (
-        <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {banners.map(banner => (
             <div
               key={banner.id}
-              className="relative group break-inside-avoid rounded-lg overflow-hidden bg-gray-800 cursor-zoom-in"
+              className="relative group rounded-lg overflow-hidden bg-gray-800 cursor-zoom-in"
+              style={{ aspectRatio: '16/9' }}
               onClick={() => setExpanded(banner.url)}
             >
               <img
                 src={banner.url}
                 alt=""
-                className="w-full object-cover block"
+                className="w-full h-full object-cover block"
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
@@ -125,8 +126,8 @@ export default function BannerGallery() {
             </div>
           ))}
           <div
-            className="break-inside-avoid border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition-colors"
-            style={{ minHeight: '100px' }}
+            className="border-2 border-dashed border-gray-700 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-500 transition-colors"
+            style={{ aspectRatio: '16/9' }}
             onClick={() => fileInputRef.current?.click()}
           >
             <span className="text-gray-600 text-sm hover:text-gray-400 transition-colors">+ 추가</span>
