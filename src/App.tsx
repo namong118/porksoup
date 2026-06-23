@@ -53,6 +53,9 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
   { id: 'raids', label: '🛡️ 레이드 관리' },
   { id: 'draft', label: '📝 낙서장' },
   { id: 'characters', label: '⚔️ 내 캐릭터' },
+]
+
+const EXTRA_TABS: { id: Tab; label: string }[] = [
   { id: 'bannerview', label: '🖼️ 배너모아보기' },
   { id: 'fun', label: '🎮 게임' },
 ]
@@ -277,6 +280,18 @@ export default function App() {
                   {t.label}
                 </button>
               ))}
+              <div className="w-px bg-gray-600 my-2 mx-1 shrink-0" />
+              {EXTRA_TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`py-2.5 px-2 text-xs whitespace-nowrap border-b-2 transition-colors shrink-0
+                    ${tab === t.id ? '' : 'border-transparent text-gray-400'}`}
+                  style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -302,17 +317,29 @@ export default function App() {
             <div className="flex items-stretch px-2">
               <span className="flex items-center text-xs text-gray-600 pr-2 whitespace-nowrap">관리</span>
               {EDIT_TABS.map(t => (
-                <div key={t.id} className="flex items-stretch">
-                  {t.id === 'fun' && <div className="w-px bg-gray-600 my-2 mx-1" />}
-                  <button
-                    onClick={() => setTab(t.id)}
-                    className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
-                      ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
-                    style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
-                  >
-                    {t.label}
-                  </button>
-                </div>
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
+                    ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                  style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="w-px bg-gray-600 my-2" />
+            <div className="flex items-stretch px-2">
+              {EXTRA_TABS.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
+                    ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
+                  style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
+                >
+                  {t.label}
+                </button>
               ))}
             </div>
           </div>
