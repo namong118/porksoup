@@ -12,7 +12,8 @@ import WeeklyView from './components/WeeklyView'
 import FunTools from './components/FunTools'
 import LoaLinks from './components/LoaLinks'
 import GoldGuide from './components/GoldGuide'
-import BusLounge from './components/BusLounge'
+import BannerGallery from './components/BannerGallery'
+import MyRaids from './components/MyRaids'
 import { usePresence } from './lib/usePresence'
 import { runWeeklyResetIfNeeded } from './lib/weeklyReset'
 import type { Member } from './types'
@@ -35,14 +36,16 @@ const COLOR_EMOJI: Record<string, string> = {
   '#f43f5e': '🍎',
 }
 
-type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide' | 'buslounge'
+type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'myraids' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide' | 'bannerview'
 
 const READ_TABS: { id: Tab; label: string }[] = [
   { id: 'weeklyview', label: '📅 이번 주 일정' },
+  { id: 'myraids', label: '⚔️ 내 레이드' },
   { id: 'allschedules', label: '👥 전체 스케줄' },
   { id: 'raidoverview', label: '📋 레이드 현황' },
   { id: 'goldguide', label: '💰 골드 가이드' },
   { id: 'loalinks', label: '🔗 각종 사이트' },
+  { id: 'bannerview', label: '🖼️ 배너모아보기' },
 ]
 
 const EDIT_TABS: { id: Tab; label: string }[] = [
@@ -52,7 +55,6 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
   { id: 'draft', label: '📝 낙서장' },
   { id: 'characters', label: '⚔️ 내 캐릭터' },
   { id: 'fun', label: '🎮 게임' },
-  { id: 'buslounge', label: '🚌 버스 라운지' },
 ]
 
 export default function App() {
@@ -317,8 +319,9 @@ export default function App() {
         </div>
       </nav>
 
-      <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' ? 'max-w-3xl' : 'max-w-2xl'}`}>
+      <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' || tab === 'myraids' ? 'max-w-3xl' : tab === 'bannerview' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
+        {tab === 'myraids' && <MyRaids member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'raidoverview' && <RaidOverview />}
         {tab === 'schedule' && <WeeklySchedule member={member} />}
@@ -330,7 +333,7 @@ export default function App() {
         {tab === 'fun' && <FunTools />}
         {tab === 'goldguide' && <GoldGuide />}
         {tab === 'loalinks' && <LoaLinks />}
-        {tab === 'buslounge' && <BusLounge />}
+        {tab === 'bannerview' && <BannerGallery />}
       </main>
 
       {expandedBanner && (

@@ -44,6 +44,13 @@ create table public.weekly_schedules (
   unique(member_id, week_start)
 );
 
+-- 배너 갤러리 테이블
+create table public.banner_gallery (
+  id uuid primary key default gen_random_uuid(),
+  url text not null,
+  created_at timestamptz default now()
+);
+
 -- RLS 비활성화 (소규모 그룹용 — 전체 공개)
 alter table public.members enable row level security;
 alter table public.characters enable row level security;
@@ -56,3 +63,6 @@ create policy "전체 허용" on public.characters for all using (true) with che
 create policy "전체 허용" on public.raids for all using (true) with check (true);
 create policy "전체 허용" on public.raid_characters for all using (true) with check (true);
 create policy "전체 허용" on public.weekly_schedules for all using (true) with check (true);
+
+alter table public.banner_gallery enable row level security;
+create policy "전체 허용" on public.banner_gallery for all using (true) with check (true);
