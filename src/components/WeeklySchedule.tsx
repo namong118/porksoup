@@ -24,6 +24,7 @@ export default function WeeklySchedule({ member }: Props) {
   const [selected, setSelected] = useState(new Set<string>())
   const [note, setNote] = useState('')
   const [saved, setSaved] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [dragging, setDragging] = useState(false)
   const [dragAction, setDragAction] = useState<'select' | 'deselect'>('select')
@@ -33,6 +34,7 @@ export default function WeeklySchedule({ member }: Props) {
     setSelected(new Set())
     setNote('')
     setSaved(false)
+    setIsSubmitted(false)
     supabase
       .from('weekly_schedules')
       .select('*')
@@ -50,6 +52,7 @@ export default function WeeklySchedule({ member }: Props) {
           })
           setSelected(init)
           setNote(data.note ?? '')
+          setIsSubmitted(true)
         }
         setLoading(false)
       })
@@ -111,7 +114,21 @@ export default function WeeklySchedule({ member }: Props) {
         available_times: availableTimes,
         note: note || null,
       }, { onConflict: 'member_id,week_start' })
-    if (!error) setSaved(true)
+    if (!error) { setSaved(true); setIsSubmitted(true) }
+  }
+
+  async function unsubmit() {
+    const { error } = await supabase
+      .from('weekly_schedules')
+      .delete()
+      .eq('member_id', member.id)
+      .eq('week_start', weekStart)
+    if (!error) {
+      setSelected(new Set())
+      setNote('')
+      setSaved(false)
+      setIsSubmitted(false)
+    }
   }
 
   const weekStartDate = parseLocalDate(weekStart)
@@ -251,6 +268,15 @@ export default function WeeklySchedule({ member }: Props) {
       >
         {saved ? '✓ 저장됨' : '저장하기'}
       </button>
+
+      {isSubmitted && (
+        <button
+          onClick={unsubmit}
+          className="w-full mt-2 py-2 rounded-xl text-sm font-medium text-red-400 border border-red-800 hover:bg-red-900/30 transition-colors"
+        >
+          미제출로 변경
+        </button>
+      )}
     </div>
   )
 }
