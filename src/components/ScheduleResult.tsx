@@ -546,7 +546,14 @@ export default function ScheduleResult() {
       .sort((a, b) => {
         const aValid = a.commonDays.filter(d => validDays.has(d)).length
         const bValid = b.commonDays.filter(d => validDays.has(d)).length
-        return aValid - bValid
+        if (aValid !== bValid) return aValid - bValid
+        // 집중 모드: 같은 제약 수준이면 집중 멤버 포함 레이드 먼저 처리
+        if (focusMemberIds.length > 0) {
+          const aFocus = a.characters.some(c => focusMemberSet.has(c.member_id))
+          const bFocus = b.characters.some(c => focusMemberSet.has(c.member_id))
+          if (aFocus !== bFocus) return aFocus ? -1 : 1
+        }
+        return 0
       })
 
     const dayCount: Record<string, number> = {}
@@ -616,13 +623,14 @@ export default function ScheduleResult() {
         const focusPotential = dayFocusPotential[day] ?? 0
         return { day, memberOverlap, raidCount, focusOnDay, focusPotential }
       }).sort((a, b) => {
-        if (focusMemberIds.length > 0) {
-          // 1순위: 이미 집중 멤버가 가는 날
+        if (focusMemberIds.length > 0 && raidFocusMembers.length > 0) {
+          // 집중 멤버 포함 레이드: 집중일에 몰아넣기
           if (a.focusOnDay !== b.focusOnDay) return b.focusOnDay - a.focusOnDay
-          // 2순위: 집중 멤버가 가장 많이 참여할 수 있는 날 (잠재력)
           if (a.focusPotential !== b.focusPotential) return b.focusPotential - a.focusPotential
-          // 3순위: 레이드 많은 날 (몰아넣기)
           return b.raidCount - a.raidCount
+        } else if (focusMemberIds.length > 0) {
+          // 집중 멤버 미포함 레이드: 분산 배치로 집중일 자리 보존
+          return a.raidCount - b.raidCount
         } else {
           // 균등 모드
           if (a.raidCount !== b.raidCount) return a.raidCount - b.raidCount
