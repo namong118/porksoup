@@ -135,7 +135,11 @@ export default function App() {
   async function saveMsg() {
     const trimmed = msgDraft.trim()
     if (!trimmed) { setEditingMsg(false); return }
-    await supabase.from('settings').upsert({ key: 'header_message', value: trimmed }, { onConflict: 'key' })
+    await Promise.all([
+      supabase.from('settings').upsert({ key: 'header_message', value: trimmed }, { onConflict: 'key' }),
+      supabase.from('settings').upsert({ key: 'header_message_updated_at', value: new Date().toISOString() }, { onConflict: 'key' }),
+      supabase.from('settings').upsert({ key: 'header_message_updated_by', value: member?.nickname ?? '알 수 없음' }, { onConflict: 'key' }),
+    ])
     setHeaderMsg(trimmed)
     setEditingMsg(false)
   }
