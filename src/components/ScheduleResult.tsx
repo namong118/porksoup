@@ -540,6 +540,8 @@ export default function ScheduleResult() {
     // MIN 이상 채울 수 있는 요일만 유효 (지난 날 제외)
     const validDays = new Set(WEEK_DAYS.filter(d => (dayPotential[d] ?? 0) >= MIN && !currentPastDays.has(d)))
 
+    const focusMemberSet = new Set(focusMemberIds)
+
     // 제약 많은 레이드(가능 요일 적은 것) 먼저 배정
     const toSchedule = activeResults
       .filter(r => r.commonDays.some(d => validDays.has(d)))
@@ -570,7 +572,6 @@ export default function ScheduleResult() {
     // 멤버별로 어느 날 가는지 추적
     const memberDays: Record<string, Set<string>> = {}
     const updates: { id: string; day: string }[] = []
-    const focusMemberSet = new Set(focusMemberIds)
 
     // 집중 모드: 각 날에 집중 멤버가 참여 가능한 레이드 수를 미리 계산
     // → 아직 아무것도 배정 안 됐을 때도 잠재력 높은 날을 첫 선택으로 유도
