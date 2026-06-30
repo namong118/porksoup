@@ -76,7 +76,7 @@ export default function RaidOverview() {
                     const raidColor = raid.completed ? '#4b5563' : (raid.color ?? '#6b7280')
 
                     return (
-                      <div key={raid.id} className={`rounded-lg overflow-hidden flex flex-col ${raid.completed ? 'bg-gray-800 opacity-85' : 'bg-gray-700'}`}>
+                      <div key={raid.id} className={`rounded-lg overflow-hidden flex flex-col ${raid.completed ? 'bg-gray-900 opacity-85' : 'bg-gray-800'}`}>
                         <div
                           className="px-2 py-1 flex items-center justify-between gap-1"
                           style={{ backgroundColor: `${raidColor}33`, borderBottom: `2px solid ${raidColor}` }}
