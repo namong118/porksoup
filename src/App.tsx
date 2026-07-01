@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import MemberSelect from './components/MemberSelect'
 import CharacterManager from './components/CharacterManager'
@@ -60,10 +60,22 @@ const EXTRA_TABS: { id: Tab; label: string }[] = [
   { id: 'fun', label: '🎮 게임' },
 ]
 
+function timeAgo(isoString: string): string {
+  const diff = (Date.now() - new Date(isoString).getTime()) / 1000
+  if (diff < 60) return '방금'
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`
+  return `${Math.floor(diff / 86400)}일 전`
+}
+
 export default function App() {
   const [member, setMember] = useState<Member | null>(null)
   const onlineMembers = usePresence(member)
   const [tab, setTab] = useState<Tab>('weeklyview')
+  const [raidEditNotice, setRaidEditNotice] = useState<{ nickname: string; color: string; expiresAt: number } | null>(null)
+  const [lastRaidEditor, setLastRaidEditor] = useState<{ nickname: string; color: string; at: string } | null>(null)
+  const memberRef = useRef<Member | null>(null)
+  useEffect(() => { memberRef.current = member }, [member])
   const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
   const [editingMsg, setEditingMsg] = useState(false)
   const [msgDraft, setMsgDraft] = useState('')
@@ -86,7 +98,36 @@ export default function App() {
           .then(({ data }) => data?.value || null)
       )
     ).then(images => setBannerImages(images))
+    Promise.all([
+      supabase.from('settings').select('value').eq('key', 'raids_last_modified_by').single(),
+      supabase.from('settings').select('value').eq('key', 'raids_last_modified_at').single(),
+      supabase.from('settings').select('value').eq('key', 'raids_last_modified_color').single(),
+    ]).then(([byRes, atRes, colorRes]) => {
+      if (byRes.data?.value && atRes.data?.value) {
+        setLastRaidEditor({ nickname: byRes.data.value, at: atRes.data.value, color: colorRes.data?.value ?? '#94a3b8' })
+      }
+    })
   }, [])
+
+  useEffect(() => {
+    const ch = supabase.channel('raid-edits-recv')
+    ch.on('broadcast', { event: 'edit' }, ({ payload }) => {
+      if (payload.memberId === memberRef.current?.id) return
+      setRaidEditNotice({ nickname: payload.nickname, color: payload.color, expiresAt: Date.now() + 3 * 60 * 1000 })
+      setLastRaidEditor({ nickname: payload.nickname, color: payload.color, at: new Date().toISOString() })
+    }).subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [])
+
+  useEffect(() => {
+    if (!raidEditNotice) return
+    const remaining = raidEditNotice.expiresAt - Date.now()
+    if (remaining <= 0) { setRaidEditNotice(null); return }
+    const t = setTimeout(() => setRaidEditNotice(null), remaining)
+    return () => clearTimeout(t)
+  }, [raidEditNotice])
+
+  const clearRaidEditNotice = useCallback(() => setRaidEditNotice(null), [])
 
   function extractBannerFilename(url: string): string | null {
     const parts = url.split('/banners/')
@@ -365,13 +406,33 @@ export default function App() {
         </div>
       </nav>
 
+      {(raidEditNotice || lastRaidEditor) && (
+        <div className="bg-gray-800/80 border-b border-gray-700 px-4 py-1.5 flex items-center gap-2">
+          {raidEditNotice ? (
+            <>
+              <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ backgroundColor: raidEditNotice.color }} />
+              <span className="text-xs font-medium" style={{ color: raidEditNotice.color }}>{raidEditNotice.nickname}</span>
+              <span className="text-xs text-gray-400">님이 일정 수정 중</span>
+              <button onClick={clearRaidEditNotice} className="ml-auto text-gray-600 hover:text-gray-400 text-xs">✕</button>
+            </>
+          ) : lastRaidEditor ? (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full shrink-0 opacity-50" style={{ backgroundColor: lastRaidEditor.color }} />
+              <span className="text-xs text-gray-500">마지막 수정:</span>
+              <span className="text-xs" style={{ color: lastRaidEditor.color }}>{lastRaidEditor.nickname}</span>
+              <span className="text-xs text-gray-600">{timeAgo(lastRaidEditor.at)}</span>
+            </>
+          ) : null}
+        </div>
+      )}
+
       <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' || tab === 'myraids' ? 'max-w-3xl' : tab === 'bannerview' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
         {tab === 'myraids' && <MyRaids member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'raidoverview' && <RaidOverview />}
         {tab === 'schedule' && <WeeklySchedule member={member} />}
-        {tab === 'result' && <ScheduleResult />}
+        {tab === 'result' && <ScheduleResult member={member} />}
         {tab === 'raids' && <RaidManager />}
         {tab === 'draft' && <RaidManager isDraft={true} />}
         {tab === 'settings' && <ClassManager />}

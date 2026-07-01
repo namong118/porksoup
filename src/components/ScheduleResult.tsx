@@ -318,7 +318,7 @@ function RaidCard({
   )
 }
 
-export default function ScheduleResult() {
+export default function ScheduleResult({ member }: { member?: Member | null }) {
   const [results, setResults] = useState<RaidResult[]>([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
@@ -337,6 +337,28 @@ export default function ScheduleResult() {
   const pastDays = showNext ? new Set<DayOfWeek>() : getPastDays(thisWeekStart)
   const weekField = (showNext ? 'next_day_of_week' : 'day_of_week') as 'day_of_week' | 'next_day_of_week'
   const loadSeq = useRef(0)
+  const editChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  useEffect(() => {
+    const ch = supabase.channel('raid-edits')
+    ch.subscribe()
+    editChannelRef.current = ch
+    return () => { supabase.removeChannel(ch); editChannelRef.current = null }
+  }, [])
+
+  async function broadcastEdit(raidName?: string) {
+    if (!member) return
+    editChannelRef.current?.send({
+      type: 'broadcast',
+      event: 'edit',
+      payload: { memberId: member.id, nickname: member.nickname, color: member.color ?? '#94a3b8', raidName },
+    })
+    await Promise.all([
+      supabase.from('settings').upsert({ key: 'raids_last_modified_by', value: member.nickname }, { onConflict: 'key' }),
+      supabase.from('settings').upsert({ key: 'raids_last_modified_at', value: new Date().toISOString() }, { onConflict: 'key' }),
+      supabase.from('settings').upsert({ key: 'raids_last_modified_color', value: member.color ?? '#94a3b8' }, { onConflict: 'key' }),
+    ])
+  }
 
   const load = useCallback(async () => {
     const seq = ++loadSeq.current
@@ -411,6 +433,8 @@ export default function ScheduleResult() {
   useEffect(() => { load() }, [load])
 
   function handleDayChange(raidId: string, day: DayOfWeek | null) {
+    const raidName = results.find(r => r.raid.id === raidId)?.raid.name
+    broadcastEdit(raidName)
     setResults(prev => prev.map(r =>
       r.raid.id === raidId ? { ...r, raid: { ...r.raid, [weekField]: day } } : r
     ))
@@ -748,6 +772,7 @@ export default function ScheduleResult() {
       }
     }
 
+    broadcastEdit()
     setApplied(true)
     setApplying(false)
     load()
