@@ -110,7 +110,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const ch = supabase.channel('raid-edits-recv')
+    const ch = supabase.channel('raid-edits')
     ch.on('broadcast', { event: 'edit' }, ({ payload }) => {
       if (payload.memberId === memberRef.current?.id) return
       setRaidEditNotice({ nickname: payload.nickname, color: payload.color, expiresAt: Date.now() + 3 * 60 * 1000 })
@@ -406,25 +406,25 @@ export default function App() {
         </div>
       </nav>
 
-      {(raidEditNotice || lastRaidEditor) && (
-        <div className="bg-gray-800/80 border-b border-gray-700 px-4 py-1.5 flex items-center gap-2">
-          {raidEditNotice ? (
-            <>
-              <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ backgroundColor: raidEditNotice.color }} />
-              <span className="text-xs font-medium" style={{ color: raidEditNotice.color }}>{raidEditNotice.nickname}</span>
-              <span className="text-xs text-gray-400">님이 일정 수정 중</span>
-              <button onClick={clearRaidEditNotice} className="ml-auto text-gray-600 hover:text-gray-400 text-xs">✕</button>
-            </>
-          ) : lastRaidEditor ? (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full shrink-0 opacity-50" style={{ backgroundColor: lastRaidEditor.color }} />
-              <span className="text-xs text-gray-500">마지막 수정:</span>
-              <span className="text-xs" style={{ color: lastRaidEditor.color }}>{lastRaidEditor.nickname}</span>
-              <span className="text-xs text-gray-600">{timeAgo(lastRaidEditor.at)}</span>
-            </>
-          ) : null}
-        </div>
-      )}
+      <div className="bg-gray-800/80 border-b border-gray-700 px-4 py-1.5 flex items-center gap-2 min-h-[30px]">
+        {raidEditNotice ? (
+          <>
+            <span className="w-2 h-2 rounded-full animate-pulse shrink-0" style={{ backgroundColor: raidEditNotice.color }} />
+            <span className="text-xs font-medium" style={{ color: raidEditNotice.color }}>{raidEditNotice.nickname}</span>
+            <span className="text-xs text-gray-400">님이 일정 수정 중</span>
+            <button onClick={clearRaidEditNotice} className="ml-auto text-gray-600 hover:text-gray-400 text-xs">✕</button>
+          </>
+        ) : lastRaidEditor ? (
+          <>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0 opacity-50" style={{ backgroundColor: lastRaidEditor.color }} />
+            <span className="text-xs text-gray-500">마지막 수정:</span>
+            <span className="text-xs" style={{ color: lastRaidEditor.color }}>{lastRaidEditor.nickname}</span>
+            <span className="text-xs text-gray-600">{timeAgo(lastRaidEditor.at)}</span>
+          </>
+        ) : (
+          <span className="text-xs text-gray-700">일정 수정 기록 없음</span>
+        )}
+      </div>
 
       <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' || tab === 'myraids' ? 'max-w-3xl' : tab === 'bannerview' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
