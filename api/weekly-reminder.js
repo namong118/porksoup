@@ -76,7 +76,11 @@ export default async function handler(req, res) {
   const discordRes = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({
+      content,
+      username: '돼지국밥 알림봇',
+      avatar_url: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f437.png',
+    }),
   })
   if (!discordRes.ok) {
     return res.status(500).json({ error: `디스코드 전송 실패: ${discordRes.status} ${await discordRes.text()}` })
