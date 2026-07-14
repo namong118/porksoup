@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
+// 당분간 스케줄 제출 알림에서 제외할 멤버 (항상 미제출이라 알림이 무의미한 경우)
+const EXCLUDED_NICKNAMES = ['오맹맹이', '굽네']
+
 function addDays(dateStr, days) {
   const [y, m, d] = dateStr.split('-').map(Number)
   const date = new Date(y, m - 1, d)
@@ -50,7 +53,9 @@ export default async function handler(req, res) {
   ])
 
   const submittedIds = new Set((schedules ?? []).map(s => s.member_id))
-  const missing = (members ?? []).filter(m => !submittedIds.has(m.id))
+  const missing = (members ?? [])
+    .filter(m => !submittedIds.has(m.id))
+    .filter(m => !EXCLUDED_NICKNAMES.includes(m.nickname))
 
   if (missing.length === 0) {
     if (!dryRun) await supabase.from('settings').upsert({ key: 'weekly_reminder_sent_for', value: nextWeekStart }, { onConflict: 'key' })
