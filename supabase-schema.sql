@@ -66,3 +66,10 @@ create policy "전체 허용" on public.weekly_schedules for all using (true) wi
 
 alter table public.banner_gallery enable row level security;
 create policy "전체 허용" on public.banner_gallery for all using (true) with check (true);
+
+-- 마이그레이션: 일정 관리 탭 수정 잠금 (관리자별 비밀번호)
+-- Supabase SQL Editor에서 한 번만 실행하세요.
+alter table public.members add column if not exists is_admin boolean not null default false;
+alter table public.members add column if not exists edit_password_hash text;
+
+update public.members set is_admin = true where nickname in ('나몽', '계란');

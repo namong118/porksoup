@@ -4,6 +4,7 @@ import type { Raid, Character, Member, DayOfWeek } from '../types'
 import { RAID_COLORS } from '../types'
 import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate, getPastDays } from '../lib/weekUtils'
 import AllSchedules from './AllSchedules'
+import ScheduleEditLock from './ScheduleEditLock'
 
 function addWeeks(dateStr: string, weeks: number): string {
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -22,16 +23,18 @@ interface RaidResult {
 }
 
 
-function UnscheduledChip({ raidResult, onDayChange, pastDays, weekField }: {
+function UnscheduledChip({ raidResult, onDayChange, pastDays, weekField, canEdit }: {
   raidResult: RaidResult
   onDayChange: (raidId: string, day: DayOfWeek | null) => void
   pastDays: Set<DayOfWeek>
   weekField: 'day_of_week' | 'next_day_of_week'
+  canEdit: boolean
 }) {
   const { raid, commonDays } = raidResult
   const [open, setOpen] = useState(false)
 
   async function assignDay(day: DayOfWeek) {
+    if (!canEdit) return
     await supabase.from('raids').update({ [weekField]: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setOpen(false)
@@ -40,14 +43,14 @@ function UnscheduledChip({ raidResult, onDayChange, pastDays, weekField }: {
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => canEdit && setOpen(v => !v)}
         style={{ borderColor: raid.color ?? '#6b7280', backgroundColor: `${raid.color ?? '#6b7280'}18` }}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium text-gray-200 hover:opacity-80 transition-opacity"
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium text-gray-200 transition-opacity ${canEdit ? 'hover:opacity-80' : 'cursor-default'}`}
       >
         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: raid.color ?? '#6b7280' }} />
         {raid.name}
       </button>
-      {open && (
+      {open && canEdit && (
         <div className="absolute top-full left-0 mt-1 z-10 bg-gray-700 rounded-xl p-2 shadow-xl border border-gray-600 min-w-max">
           <p className="text-xs text-gray-400 mb-1.5 px-1">요일 배정</p>
           <div className="flex flex-wrap gap-1">
@@ -71,15 +74,17 @@ function UnscheduledChip({ raidResult, onDayChange, pastDays, weekField }: {
   )
 }
 
-function TimeSlotHeader({ time, count, onSave }: {
+function TimeSlotHeader({ time, count, onSave, canEdit }: {
   time: string
   count: number
   onSave: (newTime: string) => Promise<void>
+  canEdit: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(time)
 
   async function save() {
+    if (!canEdit) return
     await onSave(value.trim() || '20:10')
     setEditing(false)
   }
@@ -99,7 +104,7 @@ function TimeSlotHeader({ time, count, onSave }: {
           <button onClick={save} className="text-blue-400 text-xs hover:text-blue-300">저장</button>
           <button onClick={() => setEditing(false)} className="text-gray-500 text-xs">취소</button>
         </div>
-      ) : (
+      ) : canEdit ? (
         <button
           onClick={() => { setValue(time); setEditing(true) }}
           className="flex items-center gap-2 group"
@@ -109,6 +114,10 @@ function TimeSlotHeader({ time, count, onSave }: {
           </span>
           <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors">✏️</span>
         </button>
+      ) : (
+        <span className="text-base font-bold text-blue-300">
+          {time ? `⏰ ${time}` : '⏰ 시간 미정'}
+        </span>
       )}
       <span className="text-xs text-gray-500 ml-auto">{count}개 레이드</span>
     </div>
@@ -134,6 +143,7 @@ function RaidCard({
   isDragging,
   weekField,
   isNextWeek,
+  canEdit,
 }: {
   raidResult: RaidResult
   currentDay: DayOfWeek | null
@@ -153,6 +163,7 @@ function RaidCard({
   isDragging: boolean
   weekField: 'day_of_week' | 'next_day_of_week'
   isNextWeek: boolean
+  canEdit: boolean
 }) {
   const { raid, characters, commonDays, missingCount, totalMembers, conflictMembers } = raidResult
   const [editing, setEditing] = useState(false)
@@ -161,18 +172,21 @@ function RaidCard({
   const submittedCount = totalMembers - missingCount
 
   async function changeDay(day: DayOfWeek | null) {
+    if (!canEdit) return
     await supabase.from('raids').update({ [weekField]: day }).eq('id', raid.id)
     onDayChange(raid.id, day)
     setEditing(false)
   }
 
   async function complete() {
+    if (!canEdit) return
     if (!confirm(`"${raid.name}" 완료 처리할까요?`)) return
     await supabase.from('raids').update({ completed: true }).eq('id', raid.id)
     onDayChange(raid.id, null)
   }
 
   async function saveSplitTime() {
+    if (!canEdit) return
     await supabase.from('raids').update({ time: splitTime || null }).eq('id', raid.id)
     setSplitting(false)
     onTimeChange()
@@ -180,12 +194,12 @@ function RaidCard({
 
   return (
     <div
-      draggable
-      onDragStart={e => { e.stopPropagation(); onDragStart() }}
-      onDragOver={e => { e.preventDefault(); e.stopPropagation(); onDragOver() }}
-      onDrop={e => { e.preventDefault(); e.stopPropagation(); onDrop() }}
+      draggable={canEdit}
+      onDragStart={e => { if (!canEdit) return; e.stopPropagation(); onDragStart() }}
+      onDragOver={e => { if (!canEdit) return; e.preventDefault(); e.stopPropagation(); onDragOver() }}
+      onDrop={e => { if (!canEdit) return; e.preventDefault(); e.stopPropagation(); onDrop() }}
       onDragEnd={onDragEnd}
-      className={`px-3 py-2 bg-gray-800 cursor-grab active:cursor-grabbing transition-opacity ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-inset ring-blue-400' : ''}`}
+      className={`px-3 py-2 bg-gray-800 transition-opacity ${canEdit ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-inset ring-blue-400' : ''}`}
       style={{ borderLeft: `3px solid ${raid.color ?? '#6b7280'}` }}
     >
       {/* 1행: 순서 + 레이드명 + 버튼 + 인원 */}
@@ -195,27 +209,33 @@ function RaidCard({
             {order}
           </span>
         )}
-        <div className="flex flex-col gap-0.5 shrink-0">
-          <button onClick={onMoveUp} disabled={!canMoveUp}
-            className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
-              ${canMoveUp ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▲</button>
-          <button onClick={onMoveDown} disabled={!canMoveDown}
-            className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
-              ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▼</button>
-        </div>
+        {canEdit && (
+          <div className="flex flex-col gap-0.5 shrink-0">
+            <button onClick={onMoveUp} disabled={!canMoveUp}
+              className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
+                ${canMoveUp ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▲</button>
+            <button onClick={onMoveDown} disabled={!canMoveDown}
+              className={`w-5 h-4 flex items-center justify-center rounded text-xs transition-colors
+                ${canMoveDown ? 'text-gray-400 hover:text-white hover:bg-gray-600' : 'text-gray-700 cursor-not-allowed'}`}>▼</button>
+          </div>
+        )}
         <span className="font-semibold text-sm shrink-0">{raid.name}</span>
-        <button onClick={() => changeDay(null)}
-          className="text-xs text-gray-500 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
-          ↩ 미배정
-        </button>
-        <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
-          className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
-          ✂ 분리
-        </button>
-        <button onClick={() => setEditing(v => !v)}
-          className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-1.5 py-0.5 rounded bg-gray-700 hover:bg-gray-600 shrink-0">
-          요일 변경
-        </button>
+        {canEdit && (
+          <>
+            <button onClick={() => changeDay(null)}
+              className="text-xs text-gray-500 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
+              ↩ 미배정
+            </button>
+            <button onClick={() => { setSplitting(v => !v); setSplitTime(raid.time ?? '') }}
+              className="text-xs text-gray-500 hover:text-yellow-400 transition-colors px-1.5 py-0.5 rounded hover:bg-gray-700 shrink-0">
+              ✂ 분리
+            </button>
+            <button onClick={() => setEditing(v => !v)}
+              className="text-xs text-gray-400 hover:text-blue-400 transition-colors px-1.5 py-0.5 rounded bg-gray-700 hover:bg-gray-600 shrink-0">
+              요일 변경
+            </button>
+          </>
+        )}
         {conflictMembers.length > 0 && (
           <span
             className="flex items-center gap-1 bg-red-900/60 border border-red-700 text-red-300 text-xs px-1.5 py-0.5 rounded-full shrink-0"
@@ -226,7 +246,7 @@ function RaidCard({
           </span>
         )}
         <span className="text-xs text-gray-500 ml-auto shrink-0">{submittedCount}/{totalMembers}명</span>
-        {!isNextWeek && (
+        {!isNextWeek && canEdit && (
           <button onClick={complete}
             className="text-xs text-green-400 hover:text-green-200 transition-colors px-1.5 py-0.5 rounded bg-green-900/50 hover:bg-green-800 shrink-0 font-medium">
             ✓ 완료
@@ -234,7 +254,7 @@ function RaidCard({
         )}
       </div>
 
-      {splitting && (
+      {splitting && canEdit && (
         <div className="mb-2 p-3 bg-gray-700 rounded-xl flex items-center gap-2">
           <span className="text-xs text-gray-300">이 레이드 시간:</span>
           <input
@@ -251,7 +271,7 @@ function RaidCard({
         </div>
       )}
 
-      {editing && (
+      {editing && canEdit && (
         <div className="mb-3 p-3 bg-gray-700 rounded-xl">
           <p className="text-xs text-gray-400 mb-2">이동할 요일 선택</p>
           <div className="flex flex-wrap gap-1.5">
@@ -332,6 +352,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   const [focusMemberIds, setFocusMemberIds] = useState<string[]>([])
   const [dayTimes, setDayTimes] = useState<Partial<Record<DayOfWeek, string>>>({})
   const [showNext, setShowNext] = useState(false)
+  const [canEdit, setCanEdit] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
   const pastDays = showNext ? new Set<DayOfWeek>() : getPastDays(thisWeekStart)
@@ -433,6 +454,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   useEffect(() => { load() }, [load])
 
   function handleDayChange(raidId: string, day: DayOfWeek | null) {
+    if (!canEdit) return
     const raidName = results.find(r => r.raid.id === raidId)?.raid.name
     broadcastEdit(raidName)
     setResults(prev => prev.map(r =>
@@ -442,6 +464,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   }
 
   async function handleDropOnRaid(targetResult: RaidResult) {
+    if (!canEdit) return
     if (!dragId || dragId === targetResult.raid.id) {
       setDragId(null); setOverId(null); return
     }
@@ -476,6 +499,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   }
 
   async function handleMove(dayRaids: RaidResult[], index: number, direction: 'up' | 'down') {
+    if (!canEdit) return
     const swapIndex = direction === 'up' ? index - 1 : index + 1
     if (swapIndex < 0 || swapIndex >= dayRaids.length) return
 
@@ -503,6 +527,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   }
 
   async function resetAll() {
+    if (!canEdit) return
     if (!confirm(showNext ? '다음 주 레이드 배정을 전부 초기화할까요?' : '이번 주 레이드 배정을 전부 초기화할까요?')) return
     setResetting(true)
     if (showNext) {
@@ -517,6 +542,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   }
 
   async function autoSchedule() {
+    if (!canEdit) return
     setApplying(true)
     const MIN = minPerDay
     const MAX = maxPerDay
@@ -813,7 +839,10 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
     <div className="flex gap-6 items-start">
     <div className="flex-1 min-w-0">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold">{showNext ? '다음 주 레이드 일정' : '이번 주 레이드 일정'}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold">{showNext ? '다음 주 레이드 일정' : '이번 주 레이드 일정'}</h2>
+          {!canEdit && <span className="text-xs text-gray-500 flex items-center gap-1">🔒 보기 전용</span>}
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-400">{formatDate(weekStartDate)} ~ {formatDate(weekEndDate)}</span>
           <div className="flex rounded-lg overflow-hidden border border-gray-600 text-xs">
@@ -828,6 +857,9 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
           </div>
         </div>
       </div>
+
+      <ScheduleEditLock member={member} onCanEditChange={setCanEdit} />
+
       {showNext && (
         <div className="mb-3 px-3 py-2 bg-blue-900/30 border border-blue-700/50 rounded-xl text-xs text-blue-300">
           다음 주 멤버 스케줄 기준으로 편성합니다. 자동 편성 결과는 즉시 DB에 반영됩니다.
@@ -835,7 +867,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
       )}
 
       {/* 집중 멤버 선택 */}
-      {members.length > 0 && (
+      {canEdit && members.length > 0 && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <span className="text-xs text-gray-500 shrink-0">집중 멤버</span>
           {members.map(m => {
@@ -873,25 +905,27 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
       )}
 
       {/* 요일별 시작시간 */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="text-xs text-gray-500 shrink-0">시작시간</span>
-        {WEEK_DAYS.map(day => (
-          <div key={day} className="flex items-center gap-1">
-            <span className="text-xs text-gray-500">{day}</span>
-            <input
-              type="text"
-              value={dayTimes[day] ?? ''}
-              onChange={e => setDayTimes(prev => ({ ...prev, [day]: e.target.value }))}
-              onBlur={e => {
-                const v = e.target.value.trim()
-                setDayTimes(prev => ({ ...prev, [day]: v || undefined }))
-              }}
-              placeholder="미정"
-              className="w-14 bg-gray-700 border border-gray-600 rounded px-1.5 py-0.5 text-xs text-center outline-none focus:ring-1 ring-blue-500 placeholder-gray-600"
-            />
-          </div>
-        ))}
-      </div>
+      {canEdit && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className="text-xs text-gray-500 shrink-0">시작시간</span>
+          {WEEK_DAYS.map(day => (
+            <div key={day} className="flex items-center gap-1">
+              <span className="text-xs text-gray-500">{day}</span>
+              <input
+                type="text"
+                value={dayTimes[day] ?? ''}
+                onChange={e => setDayTimes(prev => ({ ...prev, [day]: e.target.value }))}
+                onBlur={e => {
+                  const v = e.target.value.trim()
+                  setDayTimes(prev => ({ ...prev, [day]: v || undefined }))
+                }}
+                placeholder="미정"
+                className="w-14 bg-gray-700 border border-gray-600 rounded px-1.5 py-0.5 text-xs text-center outline-none focus:ring-1 ring-blue-500 placeholder-gray-600"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="bg-gray-700 rounded-xl px-3 py-2.5 mb-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
         {/* 상태 */}
@@ -903,6 +937,8 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
           {autoSchedulable > 0 && <span className="text-gray-500"> ({autoSchedulable}개 편성가능)</span>}
         </span>
 
+        {canEdit && (
+        <>
         <div className="w-px h-4 bg-gray-500 shrink-0" />
 
         {/* 초기화 */}
@@ -934,6 +970,8 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
         >
           {applying ? '...' : applied ? '✓ 완료' : '자동 편성'}
         </button>
+        </>
+        )}
       </div>
 
       {/* 미배정 레이드 - 컴팩트 칩 */}
@@ -948,6 +986,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
                 onDayChange={handleDayChange}
                 pastDays={pastDays}
                 weekField={weekField}
+                canEdit={canEdit}
               />
             ))}
           </div>
@@ -1000,7 +1039,9 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
                           <TimeSlotHeader
                             time={time}
                             count={groupRaids.length}
+                            canEdit={canEdit}
                             onSave={async (newTime) => {
+                              if (!canEdit) return
                               await Promise.all(raidIds.map(id =>
                                 supabase.from('raids').update({ time: newTime || null }).eq('id', id)
                               ))
@@ -1029,6 +1070,7 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
                                 isDragOver={overId === r.raid.id && dragId !== r.raid.id}
                                 isDragging={dragId === r.raid.id}
                                 weekField={weekField}
+                                canEdit={canEdit}
                                 isNextWeek={showNext}
                               />
                             ))}

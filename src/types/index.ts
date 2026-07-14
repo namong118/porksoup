@@ -7,6 +7,8 @@ export interface Member {
   nickname: string
   color: string
   created_at: string
+  is_admin?: boolean
+  edit_password_hash?: string | null
 }
 
 export const MEMBER_COLORS = [
