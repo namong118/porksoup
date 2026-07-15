@@ -13,6 +13,7 @@ import FunTools from './components/FunTools'
 import LoaLinks from './components/LoaLinks'
 import GoldGuide from './components/GoldGuide'
 import BannerGallery from './components/BannerGallery'
+import PoksupAlbum from './components/PoksupAlbum'
 import MyRaids from './components/MyRaids'
 import { usePresence } from './lib/usePresence'
 import { runWeeklyResetIfNeeded } from './lib/weeklyReset'
@@ -36,7 +37,7 @@ const COLOR_EMOJI: Record<string, string> = {
   '#f43f5e': '🍎',
 }
 
-type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'myraids' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide' | 'bannerview'
+type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'myraids' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide' | 'bannerview' | 'album'
 
 const READ_TABS: { id: Tab; label: string }[] = [
   { id: 'weeklyview', label: '📅 이번 주 일정' },
@@ -56,6 +57,7 @@ const EDIT_TABS: { id: Tab; label: string }[] = [
 ]
 
 const EXTRA_TABS: { id: Tab; label: string }[] = [
+  { id: 'album', label: '🗂️ 폭숲 앨범' },
   { id: 'bannerview', label: '🖼️ 배너 모아보기' },
   { id: 'fun', label: '🎮 게임' },
 ]
@@ -365,7 +367,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' || tab === 'myraids' ? 'max-w-3xl' : tab === 'bannerview' ? 'max-w-5xl' : 'max-w-2xl'}`}>
+      <main className={`mx-auto p-3 sm:p-4 ${tab === 'raidoverview' || tab === 'raids' || tab === 'draft' || tab === 'result' ? 'max-w-full' : tab === 'weeklyview' || tab === 'allschedules' || tab === 'myraids' ? 'max-w-3xl' : tab === 'bannerview' || tab === 'album' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         {tab === 'weeklyview' && <WeeklyView member={member} />}
         {tab === 'myraids' && <MyRaids member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
@@ -380,6 +382,7 @@ export default function App() {
         {tab === 'goldguide' && <GoldGuide />}
         {tab === 'loalinks' && <LoaLinks />}
         {tab === 'bannerview' && <BannerGallery />}
+        {tab === 'album' && <PoksupAlbum member={member} />}
       </main>
 
       {expandedBanner && (

@@ -73,3 +73,37 @@ alter table public.members add column if not exists is_admin boolean not null de
 alter table public.members add column if not exists edit_password_hash text;
 
 update public.members set is_admin = true where nickname in ('나몽', '계란');
+
+-- 마이그레이션: 폭숲 앨범 탭 (이미지 + 댓글 + 이모지 반응)
+-- Supabase SQL Editor에서 한 번만 실행하세요.
+create table public.doodle_images (
+  id uuid primary key default gen_random_uuid(),
+  url text not null,
+  member_id uuid references public.members(id) on delete cascade not null,
+  created_at timestamptz default now()
+);
+
+create table public.doodle_comments (
+  id uuid primary key default gen_random_uuid(),
+  image_id uuid references public.doodle_images(id) on delete cascade not null,
+  member_id uuid references public.members(id) on delete cascade not null,
+  content text not null,
+  created_at timestamptz default now()
+);
+
+create table public.doodle_reactions (
+  id uuid primary key default gen_random_uuid(),
+  image_id uuid references public.doodle_images(id) on delete cascade not null,
+  member_id uuid references public.members(id) on delete cascade not null,
+  emoji text not null,
+  created_at timestamptz default now(),
+  unique(image_id, member_id, emoji)
+);
+
+alter table public.doodle_images enable row level security;
+alter table public.doodle_comments enable row level security;
+alter table public.doodle_reactions enable row level security;
+
+create policy "전체 허용" on public.doodle_images for all using (true) with check (true);
+create policy "전체 허용" on public.doodle_comments for all using (true) with check (true);
+create policy "전체 허용" on public.doodle_reactions for all using (true) with check (true);
