@@ -52,6 +52,7 @@ export default function PoksupAlbum({ member }: Props) {
   const [reactions, setReactions] = useState<DoodleReaction[]>([])
   const [commentDraft, setCommentDraft] = useState('')
   const [detailLoading, setDetailLoading] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
 
   const loadImages = useCallback(async () => {
     setLoading(true)
@@ -100,11 +101,17 @@ export default function PoksupAlbum({ member }: Props) {
     if (parts[1]) await supabase.storage.from('gallery').remove([parts[1]])
     await supabase.from('doodle_images').delete().eq('id', img.id)
     setImages(prev => prev.filter(i => i.id !== img.id))
-    if (openImage?.id === img.id) setOpenImage(null)
+    if (openImage?.id === img.id) closeDetail()
+  }
+
+  function closeDetail() {
+    setOpenImage(null)
+    setZoomed(false)
   }
 
   async function openDetail(img: DoodleImage) {
     setOpenImage(img)
+    setZoomed(false)
     setDetailLoading(true)
     const [{ data: c }, { data: r }] = await Promise.all([
       supabase.from('doodle_comments').select('*, member:members(*)').eq('image_id', img.id).order('created_at'),
@@ -208,14 +215,19 @@ export default function PoksupAlbum({ member }: Props) {
       {openImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
-          onClick={() => setOpenImage(null)}
+          onClick={() => closeDetail()}
         >
           <div
             className="bg-gray-800 rounded-xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col sm:flex-row"
             onClick={e => e.stopPropagation()}
           >
             <div className="bg-black flex items-center justify-center sm:flex-1 min-h-0">
-              <img src={openImage.url} alt="" className="max-h-[45vh] sm:max-h-[90vh] w-full sm:w-auto object-contain" />
+              <img
+                src={openImage.url}
+                alt=""
+                onClick={() => setZoomed(true)}
+                className="max-h-[45vh] sm:max-h-[90vh] w-full sm:w-auto object-contain cursor-zoom-in"
+              />
             </div>
 
             <div className="w-full sm:w-80 flex flex-col min-h-0">
@@ -226,7 +238,7 @@ export default function PoksupAlbum({ member }: Props) {
                   </span>
                   <span className="text-xs text-gray-500 ml-2">{timeAgo(openImage.created_at)}</span>
                 </div>
-                <button onClick={() => setOpenImage(null)} className="text-gray-500 hover:text-gray-300 text-sm">✕</button>
+                <button onClick={() => closeDetail()} className="text-gray-500 hover:text-gray-300 text-sm">✕</button>
               </div>
 
               <div className="px-4 py-2.5 border-b border-gray-700 flex flex-wrap gap-1.5 shrink-0">
@@ -298,6 +310,19 @@ export default function PoksupAlbum({ member }: Props) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {zoomed && openImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 cursor-zoom-out"
+          onClick={() => setZoomed(false)}
+        >
+          <img
+            src={openImage.url}
+            alt=""
+            className="max-w-[95vw] max-h-[95vh] object-contain"
+          />
         </div>
       )}
     </div>
