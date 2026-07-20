@@ -12,6 +12,7 @@ import WeeklyView from './components/WeeklyView'
 import FunTools from './components/FunTools'
 import LoaLinks from './components/LoaLinks'
 import GoldGuide from './components/GoldGuide'
+import RiceCalculator from './components/RiceCalculator'
 import BannerGallery from './components/BannerGallery'
 import PoksupAlbum from './components/PoksupAlbum'
 import MyRaids from './components/MyRaids'
@@ -37,13 +38,14 @@ const COLOR_EMOJI: Record<string, string> = {
   '#f43f5e': '🍎',
 }
 
-type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'myraids' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide' | 'bannerview' | 'album'
+type Tab = 'schedule' | 'characters' | 'raids' | 'raidoverview' | 'allschedules' | 'result' | 'weeklyview' | 'myraids' | 'settings' | 'draft' | 'fun' | 'loalinks' | 'goldguide' | 'bannerview' | 'album' | 'ricecalc'
 
 const READ_TABS: { id: Tab; label: string }[] = [
   { id: 'weeklyview', label: '📅 이번 주 일정' },
   { id: 'myraids', label: '⚔️ 내 레이드' },
   { id: 'allschedules', label: '👥 전체 스케줄' },
   { id: 'raidoverview', label: '📋 레이드 현황' },
+  { id: 'ricecalc', label: '🍚 쌀산기' },
   { id: 'goldguide', label: '💰 골드 가이드' },
   { id: 'loalinks', label: '🔗 각종 사이트' },
 ]
@@ -372,6 +374,7 @@ export default function App() {
         {tab === 'myraids' && <MyRaids member={member} />}
         {tab === 'allschedules' && <AllSchedules />}
         {tab === 'raidoverview' && <RaidOverview />}
+        {tab === 'ricecalc' && <RiceCalculator />}
         {tab === 'schedule' && <WeeklySchedule member={member} />}
         {tab === 'result' && <ScheduleResult member={member} />}
         {tab === 'raids' && <RaidManager />}
