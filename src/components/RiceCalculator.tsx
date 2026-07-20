@@ -21,7 +21,7 @@ export default function RiceCalculator() {
 
   return (
     <div>
-      <h2 className="text-lg font-bold mb-4">🍚 쌀산기 계산기</h2>
+      <h2 className="text-lg font-bold mb-4">🍚 경매장 쌀 계산기</h2>
 
       <div className="bg-gray-700 rounded-xl p-4 mb-4 flex flex-col gap-3">
         <div>
