@@ -16,7 +16,9 @@ export default function RiceCalculator() {
     const breakeven = Math.floor(netPrice * (members - 1) / members)
     const saleBid = Math.round(breakeven / SALE_MARGIN)
     const takeHome = netPrice - saleBid
-    return { breakeven, saleBid, takeHome }
+    const directShare = Math.round(breakeven / (members - 1))
+    const saleShare = Math.round(saleBid / (members - 1))
+    return { breakeven, saleBid, takeHome, directShare, saleShare }
   }, [price, members])
 
   return (
@@ -58,9 +60,15 @@ export default function RiceCalculator() {
             <div className="px-4 py-2.5 bg-gray-600">
               <span className="font-bold text-white">직접 사용할 경우</span>
             </div>
-            <div className="px-4 py-3">
-              <p className="text-xs text-gray-400 mb-1">적정 입찰가</p>
-              <p className="text-xl font-bold text-yellow-400">{result.breakeven.toLocaleString()} G</p>
+            <div className="px-4 py-3 flex flex-col gap-2">
+              <div>
+                <p className="text-xs text-gray-400 mb-1">적정 입찰가</p>
+                <p className="text-xl font-bold text-yellow-400">{result.breakeven.toLocaleString()} G</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">분배금 (1인당)</p>
+                <p className="text-lg font-bold text-blue-300">{result.directShare.toLocaleString()} G</p>
+              </div>
             </div>
           </div>
 
@@ -76,6 +84,10 @@ export default function RiceCalculator() {
               <div>
                 <p className="text-xs text-gray-400 mb-1">내가 가져가는 금액</p>
                 <p className="text-lg font-bold text-green-400">{result.takeHome.toLocaleString()} G</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">분배금 (1인당)</p>
+                <p className="text-lg font-bold text-blue-300">{result.saleShare.toLocaleString()} G</p>
               </div>
             </div>
           </div>
