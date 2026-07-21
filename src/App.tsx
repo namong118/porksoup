@@ -17,6 +17,7 @@ import BannerGallery from './components/BannerGallery'
 import PoksupAlbum from './components/PoksupAlbum'
 import MyRaids from './components/MyRaids'
 import { usePresence } from './lib/usePresence'
+import { useAlbumNewUpload } from './lib/useAlbumNewUpload'
 import { runWeeklyResetIfNeeded } from './lib/weeklyReset'
 import type { Member } from './types'
 
@@ -67,6 +68,7 @@ const EXTRA_TABS: { id: Tab; label: string }[] = [
 export default function App() {
   const [member, setMember] = useState<Member | null>(null)
   const onlineMembers = usePresence(member)
+  const { hasNew: hasNewAlbumUpload, markSeen: markAlbumSeen } = useAlbumNewUpload()
   const [tab, setTab] = useState<Tab>('weeklyview')
   const [headerMsg, setHeaderMsg] = useState('열심히 일하고 회식합시다!')
   const [editingMsg, setEditingMsg] = useState(false)
@@ -146,6 +148,11 @@ export default function App() {
     ])
     setHeaderMsg(trimmed)
     setEditingMsg(false)
+  }
+
+  function selectTab(id: Tab) {
+    setTab(id)
+    if (id === 'album') markAlbumSeen()
   }
 
   if (!member) {
@@ -276,7 +283,7 @@ export default function App() {
               {READ_TABS.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={`py-2.5 px-2 text-xs whitespace-nowrap border-b-2 transition-colors shrink-0
                     ${tab === t.id ? '' : 'border-transparent text-gray-400'}`}
                   style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
@@ -295,7 +302,7 @@ export default function App() {
               {EDIT_TABS.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={`py-2.5 px-2 text-xs whitespace-nowrap border-b-2 transition-colors shrink-0
                     ${tab === t.id ? '' : 'border-transparent text-gray-400'}`}
                   style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
@@ -307,12 +314,15 @@ export default function App() {
               {EXTRA_TABS.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={`py-2.5 px-2 text-xs whitespace-nowrap border-b-2 transition-colors shrink-0
                     ${tab === t.id ? '' : 'border-transparent text-gray-400'}`}
                   style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
                 >
                   {t.label}
+                  {t.id === 'album' && hasNewAlbumUpload && (
+                    <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-red-500 align-middle" />
+                  )}
                 </button>
               ))}
             </div>
@@ -327,7 +337,7 @@ export default function App() {
               {READ_TABS.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
                     ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
                   style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
@@ -342,7 +352,7 @@ export default function App() {
               {EDIT_TABS.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
                     ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
                   style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
@@ -356,12 +366,15 @@ export default function App() {
               {EXTRA_TABS.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => selectTab(t.id)}
                   className={`py-3 px-3 text-sm whitespace-nowrap border-b-2 transition-colors
                     ${tab === t.id ? '' : 'border-transparent text-gray-400 hover:text-gray-200'}`}
                   style={tab === t.id ? { borderBottomColor: member.color ?? '#94a3b8', color: member.color ?? '#94a3b8' } : {}}
                 >
                   {t.label}
+                  {t.id === 'album' && hasNewAlbumUpload && (
+                    <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-red-500 align-middle" />
+                  )}
                 </button>
               ))}
             </div>
