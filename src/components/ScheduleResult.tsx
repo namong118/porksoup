@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, DayOfWeek } from '../types'
 import { RAID_COLORS } from '../types'
 import { getWeekStart, WEEK_DAYS, getDayOffset, parseLocalDate, getPastDays } from '../lib/weekUtils'
+import { saveScheduleBackup, restoreScheduleBackup, getScheduleBackupInfo } from '../lib/scheduleBackup'
 import AllSchedules from './AllSchedules'
 import ScheduleEditLock from './ScheduleEditLock'
 
@@ -353,6 +354,9 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
   const [dayTimes, setDayTimes] = useState<Partial<Record<DayOfWeek, string>>>({})
   const [showNext, setShowNext] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
+  const [backupInfo, setBackupInfo] = useState<{ weekStart: string; savedAt: string } | null>(null)
+  const [backingUp, setBackingUp] = useState(false)
+  const [restoring, setRestoring] = useState(false)
   const thisWeekStart = getWeekStart()
   const weekStart = showNext ? addWeeks(thisWeekStart, 1) : thisWeekStart
   const pastDays = showNext ? new Set<DayOfWeek>() : getPastDays(thisWeekStart)
@@ -431,6 +435,27 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => { getScheduleBackupInfo().then(setBackupInfo) }, [])
+
+  async function handleBackup() {
+    if (!canEdit || showNext) return
+    setBackingUp(true)
+    await saveScheduleBackup(thisWeekStart)
+    setBackupInfo(await getScheduleBackupInfo())
+    setBackingUp(false)
+  }
+
+  async function handleRestore() {
+    if (!canEdit || showNext || !backupInfo) return
+    const savedAtLabel = new Date(backupInfo.savedAt).toLocaleString('ko-KR')
+    if (!confirm(`${savedAtLabel}에 백업된 이번 주 일정으로 되돌릴까요?`)) return
+    setRestoring(true)
+    await restoreScheduleBackup()
+    setRestoring(false)
+    setApplied(false)
+    load()
+  }
+
   function handleDayChange(raidId: string, day: DayOfWeek | null) {
     if (!canEdit) return
     setResults(prev => prev.map(r =>
@@ -506,6 +531,10 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
     if (!canEdit) return
     if (!confirm(showNext ? '다음 주 레이드 배정을 전부 초기화할까요?' : '이번 주 레이드 배정을 전부 초기화할까요?')) return
     setResetting(true)
+    if (!showNext) {
+      await saveScheduleBackup(thisWeekStart)
+      setBackupInfo(await getScheduleBackupInfo())
+    }
     if (showNext) {
       // 다음 주: 완료 여부 무관 전체 초기화 (필터 필요하므로 not null 조건 사용)
       await supabase.from('raids').update({ next_day_of_week: null }).not('id', 'is', null)
@@ -924,6 +953,28 @@ export default function ScheduleResult({ member }: { member?: Member | null }) {
         >
           🗑
         </button>
+
+        {!showNext && (
+          <>
+            <div className="w-px h-4 bg-gray-500 shrink-0" />
+            <button
+              onClick={handleBackup}
+              disabled={backingUp}
+              title="현재 이번 주 일정을 백업해둡니다"
+              className="text-xs px-2 py-1 rounded bg-gray-800 hover:bg-gray-600 text-gray-300 disabled:opacity-40 transition-colors shrink-0"
+            >
+              💾 백업
+            </button>
+            <button
+              onClick={handleRestore}
+              disabled={restoring || !backupInfo}
+              title={backupInfo ? `${new Date(backupInfo.savedAt).toLocaleString('ko-KR')} 백업으로 복원` : '백업 없음'}
+              className="text-xs px-2 py-1 rounded bg-gray-800 hover:bg-gray-600 text-gray-300 disabled:opacity-40 transition-colors shrink-0"
+            >
+              ↩️ 복원
+            </button>
+          </>
+        )}
 
         <div className="w-px h-4 bg-gray-500 shrink-0" />
 

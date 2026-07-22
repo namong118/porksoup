@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { getWeekStart } from './weekUtils'
+import { saveScheduleBackup } from './scheduleBackup'
 
 export async function runWeeklyResetIfNeeded() {
   const weekStart = getWeekStart()
@@ -12,16 +13,18 @@ export async function runWeeklyResetIfNeeded() {
 
   if (setting?.value === weekStart) return
 
+  await saveScheduleBackup(setting?.value ?? weekStart)
+
   const { data: raids } = await supabase
     .from('raids')
-    .select('id, next_day_of_week')
+    .select('id, day_of_week, next_day_of_week')
     .eq('is_draft', false)
 
   if (raids && raids.length > 0) {
     await Promise.all(
-      raids.map((raid: { id: string; next_day_of_week: string | null }) =>
+      raids.map((raid: { id: string; day_of_week: string | null; next_day_of_week: string | null }) =>
         supabase.from('raids').update({
-          day_of_week: raid.next_day_of_week ?? null,
+          day_of_week: raid.next_day_of_week ?? raid.day_of_week ?? null,
           next_day_of_week: null,
           completed: false,
         }).eq('id', raid.id)
