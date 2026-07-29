@@ -21,6 +21,8 @@ import { useAlbumNewUpload } from './lib/useAlbumNewUpload'
 import { runWeeklyResetIfNeeded } from './lib/weeklyReset'
 import type { Member } from './types'
 
+const MEMBER_ID_KEY = 'porksoup_member_id'
+
 const COLOR_EMOJI: Record<string, string> = {
   '#94a3b8': '🌫️',
   '#ef4444': '🍎',
@@ -67,6 +69,7 @@ const EXTRA_TABS: { id: Tab; label: string }[] = [
 
 export default function App() {
   const [member, setMember] = useState<Member | null>(null)
+  const [memberLoading, setMemberLoading] = useState(true)
   const onlineMembers = usePresence(member)
   const { hasNew: hasNewAlbumUpload, markSeen: markAlbumSeen } = useAlbumNewUpload()
   const [tab, setTab] = useState<Tab>('weeklyview')
@@ -81,6 +84,26 @@ export default function App() {
   const bannerInputRef1 = useRef<HTMLInputElement>(null)
   const bannerInputRef2 = useRef<HTMLInputElement>(null)
   const bannerInputRefs = [bannerInputRef0, bannerInputRef1, bannerInputRef2]
+
+  useEffect(() => {
+    const savedId = localStorage.getItem(MEMBER_ID_KEY)
+    if (!savedId) { setMemberLoading(false); return }
+    supabase.from('members').select('*').eq('id', savedId).single().then(({ data }) => {
+      if (data) setMember(data)
+      else localStorage.removeItem(MEMBER_ID_KEY)
+      setMemberLoading(false)
+    })
+  }, [])
+
+  function selectMember(m: Member) {
+    localStorage.setItem(MEMBER_ID_KEY, m.id)
+    setMember(m)
+  }
+
+  function switchMember() {
+    localStorage.removeItem(MEMBER_ID_KEY)
+    setMember(null)
+  }
 
   useEffect(() => {
     runWeeklyResetIfNeeded()
@@ -155,8 +178,12 @@ export default function App() {
     if (id === 'album') markAlbumSeen()
   }
 
+  if (memberLoading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중...</div>
+  }
+
   if (!member) {
-    return <MemberSelect currentMember={member} onSelect={setMember} />
+    return <MemberSelect currentMember={member} onSelect={selectMember} />
   }
 
   return (
@@ -218,7 +245,7 @@ export default function App() {
             {bannerVisible ? '배너 가리기' : '배너 보이기'}
           </button>
           <button
-            onClick={() => setMember(null)}
+            onClick={switchMember}
             className="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <span>{COLOR_EMOJI[member.color ?? '#94a3b8'] ?? '🌫️'}</span>
