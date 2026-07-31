@@ -216,7 +216,10 @@ export default function App() {
           )}
         </div>
         <div className="flex flex-col items-center">
-          <h1 className="font-bold text-sm sm:text-lg">🐷 돼지국밥 레이드</h1>
+          <h1 className="font-bold text-sm sm:text-lg flex items-center gap-1.5">
+            <img src="/favicon.png" alt="" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full" />
+            돼지국밥 레이드
+          </h1>
           {editingMsg ? (
             <div className="flex items-center gap-1 mt-0.5">
               <input
