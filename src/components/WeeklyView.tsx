@@ -15,6 +15,7 @@ export default function WeeklyView({ member }: Props) {
     '수': [], '목': [], '금': [], '토': [], '일': [], '월': [], '화': []
   })
   const [loading, setLoading] = useState(true)
+  const [lastCompleted, setLastCompleted] = useState<{ id: string; name: string } | null>(null)
   const weekStart = getWeekStart()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -28,10 +29,20 @@ export default function WeeklyView({ member }: Props) {
     })
   }
 
-  async function markCompleted(id: string) {
-    removeRaid(id)
-    await supabase.from('raids').update({ completed: true }).eq('id', id)
-    channelRef.current?.send({ type: 'broadcast', event: 'raid-completed', payload: { id } })
+  async function markCompleted(raid: Raid) {
+    removeRaid(raid.id)
+    setLastCompleted({ id: raid.id, name: raid.name })
+    await supabase.from('raids').update({ completed: true }).eq('id', raid.id)
+    channelRef.current?.send({ type: 'broadcast', event: 'raid-completed', payload: { id: raid.id } })
+  }
+
+  async function undoLastCompleted() {
+    if (!lastCompleted) return
+    const { id } = lastCompleted
+    setLastCompleted(null)
+    await supabase.from('raids').update({ completed: false }).eq('id', id)
+    channelRef.current?.send({ type: 'broadcast', event: 'raid-uncompleted', payload: { id } })
+    await load()
   }
 
   const load = useCallback(async () => {
@@ -72,6 +83,9 @@ export default function WeeklyView({ member }: Props) {
       .on('broadcast', { event: 'raid-completed' }, ({ payload }) => {
         removeRaid((payload as { id: string }).id)
       })
+      .on('broadcast', { event: 'raid-uncompleted' }, () => {
+        load()
+      })
       .subscribe()
     channelRef.current = channel
     return () => { supabase.removeChannel(channel) }
@@ -94,6 +108,18 @@ export default function WeeklyView({ member }: Props) {
           {formatDate(weekStartDate)} ~ {formatDate(weekEndDate)} · {totalRaids}개 레이드
         </span>
       </div>
+
+      {lastCompleted && (
+        <div className="mb-4 px-4 py-2.5 rounded-xl bg-green-900/30 border border-green-700/50 flex items-center gap-2">
+          <span className="text-sm text-green-300 flex-1">✓ <strong>{lastCompleted.name}</strong> 완료 처리됨</span>
+          <button
+            onClick={undoLastCompleted}
+            className="text-xs font-bold text-green-300 hover:text-white hover:bg-green-700/50 transition-colors px-3 py-1.5 rounded-lg border border-green-600/50"
+          >
+            ↩ 되돌리기
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {WEEK_DAYS.map(day => {
@@ -149,7 +175,7 @@ export default function WeeklyView({ member }: Props) {
                                 <span className="text-xs font-bold text-gray-500">{i + 1}</span>
                                 <span className="font-bold text-sm flex-1" style={{ color: raid.color ?? '#6b7280' }}>{raid.name}</span>
                                 <button
-                                  onClick={() => markCompleted(raid.id)}
+                                  onClick={() => markCompleted(raid)}
                                   className="text-xs text-gray-600 hover:text-green-400 hover:bg-green-900/30 transition-colors px-1.5 py-0.5 rounded"
                                   title="완료 처리"
                                 >
