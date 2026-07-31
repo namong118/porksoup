@@ -83,7 +83,7 @@ export default function MemberSelect({ currentMember, onSelect }: Props) {
     <div className="min-h-screen flex items-center justify-center">
       <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-md shadow-2xl">
         <h1 className="text-2xl font-bold text-center mb-2 flex items-center justify-center gap-2">
-          <img src="/favicon.png" alt="" className="w-8 h-8 rounded-full" />
+          <img src="/favicon.png" alt="" className="w-8 h-8 rounded-xl" />
           돼지국밥 레이드
         </h1>
         <p className="text-gray-400 text-center text-sm mb-6">닉네임을 선택하세요</p>
