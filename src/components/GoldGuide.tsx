@@ -93,47 +93,6 @@ export default function GoldGuide() {
 
   if (loading) return <div className="text-center py-8 text-gray-500">불러오는 중...</div>
 
-  const FormPanel = () => (
-    <div className="bg-gray-700 rounded-xl p-4 mb-4 flex flex-col gap-3">
-      <p className="text-sm font-medium text-indigo-300">{editTarget ? '항목 수정' : '항목 추가'}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <p className="text-xs text-gray-400 mb-1">최소 아이템레벨</p>
-          <input value={form.min_ilvl} onChange={e => setForm(f => ({ ...f, min_ilvl: e.target.value }))}
-            placeholder="1750" className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
-        </div>
-        <div>
-          <p className="text-xs text-gray-400 mb-1">레이드명</p>
-          <input value={form.raid_name} onChange={e => setForm(f => ({ ...f, raid_name: e.target.value }))}
-            placeholder="세르카" className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
-        </div>
-        <div>
-          <p className="text-xs text-gray-400 mb-1">난이도</p>
-          <input value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
-            placeholder="노말/하드/나메" className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
-        </div>
-        <div />
-        <div>
-          <p className="text-xs text-gray-400 mb-1">유통골드</p>
-          <input type="number" value={form.tradeable_gold} onChange={e => setForm(f => ({ ...f, tradeable_gold: e.target.value }))}
-            className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
-        </div>
-        <div>
-          <p className="text-xs text-gray-400 mb-1">귀속골드</p>
-          <input type="number" value={form.bound_gold} onChange={e => setForm(f => ({ ...f, bound_gold: e.target.value }))}
-            className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <button onClick={saveEntry} className="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-sm font-medium">저장</button>
-        {editTarget && (
-          <button onClick={() => deleteEntry(editTarget.id)} className="bg-red-900 hover:bg-red-800 px-4 py-2 rounded-lg text-sm text-red-300">삭제</button>
-        )}
-        <button onClick={() => { setEditTarget(null); setAdding(false) }} className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg text-sm">취소</button>
-      </div>
-    </div>
-  )
-
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -149,7 +108,46 @@ export default function GoldGuide() {
         </div>
       </div>
 
-      {(adding || editTarget) && <FormPanel />}
+      {(adding || editTarget) && (
+        <div className="bg-gray-700 rounded-xl p-4 mb-4 flex flex-col gap-3">
+          <p className="text-sm font-medium text-indigo-300">{editTarget ? '항목 수정' : '항목 추가'}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">최소 아이템레벨</p>
+              <input value={form.min_ilvl} onChange={e => setForm(f => ({ ...f, min_ilvl: e.target.value }))}
+                placeholder="1750" className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">레이드명</p>
+              <input value={form.raid_name} onChange={e => setForm(f => ({ ...f, raid_name: e.target.value }))}
+                placeholder="세르카" className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">난이도</p>
+              <input value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
+                placeholder="노말/하드/나메" className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
+            </div>
+            <div />
+            <div>
+              <p className="text-xs text-gray-400 mb-1">유통골드</p>
+              <input type="number" value={form.tradeable_gold} onChange={e => setForm(f => ({ ...f, tradeable_gold: e.target.value }))}
+                className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">귀속골드</p>
+              <input type="number" value={form.bound_gold} onChange={e => setForm(f => ({ ...f, bound_gold: e.target.value }))}
+                className="w-full bg-gray-600 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-indigo-500" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={saveEntry} className="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2 rounded-lg text-sm font-medium">저장</button>
+            {editTarget && (
+              <button onClick={() => deleteEntry(editTarget.id)} className="bg-red-900 hover:bg-red-800 px-4 py-2 rounded-lg text-sm text-red-300">삭제</button>
+            )}
+            <button onClick={() => { setEditTarget(null); setAdding(false) }} className="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg text-sm">취소</button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-4">
         {ilvlTiers.map(ilvl => {
