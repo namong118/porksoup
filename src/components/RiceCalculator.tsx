@@ -6,8 +6,17 @@ const SALE_MARGIN = 1.1
 export default function RiceCalculator() {
   const [priceInput, setPriceInput] = useState('')
   const [members, setMembers] = useState<4 | 8>(4)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   const price = Number(priceInput) || 0
+
+  async function copyBid(key: string, value: number) {
+    try {
+      await navigator.clipboard.writeText(String(value))
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(prev => (prev === key ? null : prev)), 1200)
+    } catch {}
+  }
 
   const result = useMemo(() => {
     if (price <= 0) return null
@@ -56,21 +65,7 @@ export default function RiceCalculator() {
 
       {result ? (
         <div className="flex flex-col gap-3">
-          <div className="bg-gray-700 rounded-2xl overflow-hidden">
-            <div className="px-4 py-2.5 bg-gray-600">
-              <span className="font-bold text-white">직접 사용할 경우</span>
-            </div>
-            <div className="px-4 py-3 flex flex-col gap-2">
-              <div>
-                <p className="text-xs text-gray-400 mb-1">적정 입찰가</p>
-                <p className="text-xl font-bold text-yellow-400">{result.breakeven.toLocaleString()} G</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 mb-1">분배금 (1인당)</p>
-                <p className="text-lg font-bold text-blue-300">{result.directShare.toLocaleString()} G</p>
-              </div>
-            </div>
-          </div>
+          <p className="text-xs text-gray-500 -mt-1">💡 적정 입찰가를 클릭하면 숫자가 복사돼요 — 게임 입찰창에 바로 붙여넣으세요</p>
 
           <div className="bg-gray-700 rounded-2xl overflow-hidden">
             <div className="px-4 py-2.5 bg-gray-600">
@@ -79,7 +74,14 @@ export default function RiceCalculator() {
             <div className="px-4 py-3 flex flex-col gap-2">
               <div>
                 <p className="text-xs text-gray-400 mb-1">적정 입찰가</p>
-                <p className="text-xl font-bold text-yellow-400">{result.saleBid.toLocaleString()} G</p>
+                <p
+                  onClick={() => copyBid('saleBid', result.saleBid)}
+                  title="클릭하여 복사하기"
+                  className="text-xl font-bold text-yellow-400 cursor-pointer hover:underline inline-flex items-center gap-2"
+                >
+                  {result.saleBid.toLocaleString()} G
+                  {copiedKey === 'saleBid' && <span className="text-xs text-green-400 font-normal">복사됨!</span>}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">내가 가져가는 금액</p>
@@ -88,6 +90,29 @@ export default function RiceCalculator() {
               <div>
                 <p className="text-xs text-gray-400 mb-1">분배금 (1인당)</p>
                 <p className="text-lg font-bold text-blue-300">{result.saleShare.toLocaleString()} G</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-700 rounded-2xl overflow-hidden">
+            <div className="px-4 py-2.5 bg-gray-600">
+              <span className="font-bold text-white">직접 사용할 경우</span>
+            </div>
+            <div className="px-4 py-3 flex flex-col gap-2">
+              <div>
+                <p className="text-xs text-gray-400 mb-1">적정 입찰가</p>
+                <p
+                  onClick={() => copyBid('breakeven', result.breakeven)}
+                  title="클릭하여 복사하기"
+                  className="text-xl font-bold text-yellow-400 cursor-pointer hover:underline inline-flex items-center gap-2"
+                >
+                  {result.breakeven.toLocaleString()} G
+                  {copiedKey === 'breakeven' && <span className="text-xs text-green-400 font-normal">복사됨!</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 mb-1">분배금 (1인당)</p>
+                <p className="text-lg font-bold text-blue-300">{result.directShare.toLocaleString()} G</p>
               </div>
             </div>
           </div>
