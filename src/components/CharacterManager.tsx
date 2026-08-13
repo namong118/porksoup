@@ -20,6 +20,7 @@ interface Props {
 }
 
 const SUPPORT_CLASSES = new Set(CLASSES.filter(c => c.role === 'support').map(c => c.name))
+const GOLD_RAID_ORDER = GOLD_RAID_GROUPS.flatMap(g => g.tiers.map(t => `${g.name} ${t}`))
 
 export default function CharacterManager({ member }: Props) {
   const [allMembers, setAllMembers] = useState<Member[]>([])
@@ -65,9 +66,8 @@ const [fetching, setFetching] = useState(false)
     })
   }, [])
 
-  function findGoldReward(raidName: string, difficulty: string, itemLevel: number | null | undefined): GoldGuideEntry | null {
-    if (itemLevel == null) return null
-    const candidates = goldGuide.filter(e => e.raid_name === raidName && e.difficulty === difficulty && e.min_ilvl <= itemLevel)
+  function findGoldReward(raidName: string, difficulty: string): GoldGuideEntry | null {
+    const candidates = goldGuide.filter(e => e.raid_name === raidName && e.difficulty === difficulty)
     if (candidates.length === 0) return null
     return candidates.reduce((best, e) => (e.min_ilvl > best.min_ilvl ? e : best))
   }
@@ -470,14 +470,18 @@ const [fetching, setFetching] = useState(false)
       ) : (
         <div className="flex flex-col gap-2">
           {characters.map(c => {
-            const goldCount = goldRaidMap[c.id]?.size ?? 0
+            const goldSet = goldRaidMap[c.id]
+            const goldCount = goldSet?.size ?? 0
+            const goldNames = goldSet
+              ? [...goldSet].sort((a, b) => GOLD_RAID_ORDER.indexOf(a) - GOLD_RAID_ORDER.indexOf(b))
+              : []
             return (
               <div
                 key={c.id}
                 onClick={() => openGoldPanel(c)}
                 className="bg-gray-700 hover:bg-gray-600 rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer transition-colors"
               >
-                <div>
+                <div className="min-w-0 flex-1 truncate">
                   <span className="font-medium">{c.name}</span>
                   <span className="text-sm text-gray-400 ml-2">{c.class}</span>
                   {c.item_level && (
@@ -489,6 +493,11 @@ const [fetching, setFetching] = useState(false)
                   <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-yellow-900/50 text-yellow-400">
                     💰 {goldCount}/{GOLD_RAID_MAX}
                   </span>
+                  {goldNames.length > 0 && (
+                    <span className="text-xs text-yellow-500/70 ml-2">
+                      {goldNames.join(' · ')}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); deleteCharacter(c.id) }}
@@ -530,7 +539,7 @@ const [fetching, setFetching] = useState(false)
                       const raidName = `${group.name} ${tier}`
                       const selected = goldRaidMap[goldPanelChar.id]?.has(raidName) ?? false
                       const disabled = !selected && (goldRaidMap[goldPanelChar.id]?.size ?? 0) >= GOLD_RAID_MAX
-                      const reward = findGoldReward(group.name, tier, goldPanelChar.item_level)
+                      const reward = findGoldReward(group.name, tier)
                       return (
                         <label
                           key={raidName}
