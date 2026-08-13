@@ -16,6 +16,7 @@ export default function WeeklyView({ member }: Props) {
   })
   const [loading, setLoading] = useState(true)
   const [lastCompleted, setLastCompleted] = useState<{ id: string; name: string } | null>(null)
+  const [goldRaidMap, setGoldRaidMap] = useState<Record<string, Set<string>>>({})
   const weekStart = getWeekStart()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -46,13 +47,21 @@ export default function WeeklyView({ member }: Props) {
   }
 
   const load = useCallback(async () => {
-    const [raidsRes, rcRes] = await Promise.all([
+    const [raidsRes, rcRes, cgrRes] = await Promise.all([
       supabase.from('raids').select('*').eq('is_draft', false).order('sort_order').order('name'),
       supabase.from('raid_characters').select('*, character:characters(*, member:members(*))'),
+      supabase.from('character_gold_raids').select('*'),
     ])
 
     const raids: Raid[] = raidsRes.data ?? []
     const rcData = rcRes.data ?? []
+
+    const goldMap: Record<string, Set<string>> = {}
+    for (const row of cgrRes.data ?? []) {
+      if (!goldMap[row.character_id]) goldMap[row.character_id] = new Set()
+      goldMap[row.character_id].add(row.raid_name)
+    }
+    setGoldRaidMap(goldMap)
 
     const byDay: Record<DayOfWeek, RaidInfo[]> = {
       '수': [], '목': [], '금': [], '토': [], '일': [], '월': [], '화': []
@@ -202,6 +211,9 @@ export default function WeeklyView({ member }: Props) {
                                       <span className={`text-xs truncate ${isMe ? 'font-bold text-white' : 'font-medium text-gray-400'}`}>{c.name}</span>
                                       {c.item_level && <span className="text-xs font-medium" style={{ color: isMe ? color : '#94a3b8' }}>{Math.floor(Number(c.item_level)).toLocaleString()}</span>}
                                       <span className={`text-xs ${isMe ? 'text-gray-300' : 'text-gray-500'}`}>{c.class}</span>
+                                      {isMe && raid.gold_tag && goldRaidMap[c.id]?.has(raid.gold_tag) && (
+                                        <span className="text-xs" title="이 레이드 골드 받음">💰</span>
+                                      )}
                                     </div>
                                   )
                                 })}

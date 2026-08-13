@@ -107,3 +107,21 @@ alter table public.doodle_reactions enable row level security;
 create policy "전체 허용" on public.doodle_images for all using (true) with check (true);
 create policy "전체 허용" on public.doodle_comments for all using (true) with check (true);
 create policy "전체 허용" on public.doodle_reactions for all using (true) with check (true);
+
+-- 마이그레이션: 내 캐릭터 탭 - 캐릭터별 골드 받을 레이드 체크 (파티 편성용 raid_characters와는 별개)
+-- Supabase SQL Editor에서 한 번만 실행하세요.
+create table public.character_gold_raids (
+  id uuid primary key default gen_random_uuid(),
+  character_id uuid references public.characters(id) on delete cascade not null,
+  raid_name text not null,
+  created_at timestamptz default now(),
+  unique(character_id, raid_name)
+);
+
+alter table public.character_gold_raids enable row level security;
+create policy "전체 허용" on public.character_gold_raids for all using (true) with check (true);
+
+-- 마이그레이션: 레이드 관리 - 레이드에 골드 종류(13개 고정 목록 중 하나) 수동 태그
+-- character_gold_raids.raid_name과 동일한 형식("벨가르딘 하드" 등)으로 저장, 미지정이면 null
+-- Supabase SQL Editor에서 한 번만 실행하세요.
+alter table public.raids add column if not exists gold_tag text;

@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Character, Member, Role } from '../types'
-import { CLASSES } from '../types'
+import { CLASSES, GOLD_RAID_GROUPS, GOLD_RAID_MAX } from '../types'
 
 interface ClassItem { id: string; name: string; role: Role }
 
 interface RosterChar { name: string; server: string; class: string; itemLevel: number | null }
+
+interface GoldGuideEntry {
+  min_ilvl: number
+  raid_name: string
+  difficulty: string
+  tradeable_gold: number
+  bound_gold: number
+}
 
 interface Props {
   member: Member
@@ -36,6 +44,12 @@ const [fetching, setFetching] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [refreshResult, setRefreshResult] = useState<string>('')
 
+  // 골드 받을 레이드 선택 상태
+  const [goldRaidMap, setGoldRaidMap] = useState<Record<string, Set<string>>>({})
+  const [goldPanelChar, setGoldPanelChar] = useState<Character | null>(null)
+  const [goldPanelVisible, setGoldPanelVisible] = useState(false)
+  const [goldGuide, setGoldGuide] = useState<GoldGuideEntry[]>([])
+
   useEffect(() => {
     supabase.from('members').select('*').order('nickname').then(({ data }) => {
       if (data) setAllMembers(data)
@@ -46,7 +60,17 @@ const [fetching, setFetching] = useState(false)
         if (data.length > 0) setSelectedClass(data.find(c => c.role === 'dps')?.name ?? data[0].name)
       }
     })
+    supabase.from('gold_guide').select('min_ilvl, raid_name, difficulty, tradeable_gold, bound_gold').then(({ data }) => {
+      if (data) setGoldGuide(data)
+    })
   }, [])
+
+  function findGoldReward(raidName: string, difficulty: string, itemLevel: number | null | undefined): GoldGuideEntry | null {
+    if (itemLevel == null) return null
+    const candidates = goldGuide.filter(e => e.raid_name === raidName && e.difficulty === difficulty && e.min_ilvl <= itemLevel)
+    if (candidates.length === 0) return null
+    return candidates.reduce((best, e) => (e.min_ilvl > best.min_ilvl ? e : best))
+  }
 
   useEffect(() => {
     supabase
@@ -54,9 +78,28 @@ const [fetching, setFetching] = useState(false)
       .select('*')
       .eq('member_id', targetMember.id)
       .order('item_level', { ascending: false, nullsFirst: false })
-      .then(({ data }) => { if (data) setCharacters(data) })
+      .then(({ data }) => {
+        if (!data) return
+        setCharacters(data)
+        const ids = data.map((c: Character) => c.id)
+        if (ids.length === 0) { setGoldRaidMap({}); return }
+        supabase
+          .from('character_gold_raids')
+          .select('*')
+          .in('character_id', ids)
+          .then(({ data: gr }) => {
+            const map: Record<string, Set<string>> = {}
+            for (const row of gr ?? []) {
+              if (!map[row.character_id]) map[row.character_id] = new Set()
+              map[row.character_id].add(row.raid_name)
+            }
+            setGoldRaidMap(map)
+          })
+      })
     setAdding(false)
     setShowRoster(false)
+    setGoldPanelChar(null)
+    setGoldPanelVisible(false)
   }, [targetMember.id])
 
   const classRole = classList.find(c => c.name === selectedClass)?.role ?? 'dps'
@@ -101,6 +144,33 @@ const [fetching, setFetching] = useState(false)
   async function deleteCharacter(id: string) {
     await supabase.from('characters').delete().eq('id', id)
     setCharacters(prev => prev.filter(c => c.id !== id))
+  }
+
+  function openGoldPanel(character: Character) {
+    setGoldPanelChar(character)
+    requestAnimationFrame(() => setGoldPanelVisible(true))
+  }
+
+  function closeGoldPanel() {
+    setGoldPanelVisible(false)
+    setGoldPanelChar(null)
+  }
+
+  async function toggleGoldRaid(character: Character, raidName: string) {
+    const current = goldRaidMap[character.id] ?? new Set<string>()
+    const isSelected = current.has(raidName)
+    if (!isSelected && current.size >= GOLD_RAID_MAX) return
+    if (isSelected) {
+      await supabase.from('character_gold_raids').delete().eq('character_id', character.id).eq('raid_name', raidName)
+    } else {
+      await supabase.from('character_gold_raids').insert({ character_id: character.id, raid_name: raidName })
+    }
+    setGoldRaidMap(prev => {
+      const next = new Set(prev[character.id] ?? [])
+      if (isSelected) next.delete(raidName)
+      else next.add(raidName)
+      return { ...prev, [character.id]: next }
+    })
   }
 
   async function fetchRoster() {
@@ -399,26 +469,103 @@ const [fetching, setFetching] = useState(false)
         <p className="text-gray-500 text-sm text-center py-8">등록된 캐릭터가 없습니다.</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {characters.map(c => (
-            <div key={c.id} className="bg-gray-700 rounded-xl px-4 py-3 flex items-center justify-between">
-              <div>
-                <span className="font-medium">{c.name}</span>
-                <span className="text-sm text-gray-400 ml-2">{c.class}</span>
-                {c.item_level && (
-                  <span className="text-xs ml-2 opacity-80" style={{ color: targetMember.color }}>{Math.floor(Number(c.item_level)).toLocaleString()}</span>
-                )}
-<span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
-                  {c.role === 'support' ? '서포터' : '딜러'}
-                </span>
-              </div>
-              <button
-                onClick={() => deleteCharacter(c.id)}
-                className="text-gray-500 hover:text-red-400 text-sm transition-colors"
+          {characters.map(c => {
+            const goldCount = goldRaidMap[c.id]?.size ?? 0
+            return (
+              <div
+                key={c.id}
+                onClick={() => openGoldPanel(c)}
+                className="bg-gray-700 hover:bg-gray-600 rounded-xl px-4 py-3 flex items-center justify-between cursor-pointer transition-colors"
               >
-                삭제
-              </button>
+                <div>
+                  <span className="font-medium">{c.name}</span>
+                  <span className="text-sm text-gray-400 ml-2">{c.class}</span>
+                  {c.item_level && (
+                    <span className="text-xs ml-2 opacity-80" style={{ color: targetMember.color }}>{Math.floor(Number(c.item_level)).toLocaleString()}</span>
+                  )}
+                  <span className={`text-xs ml-2 px-1.5 py-0.5 rounded ${c.role === 'support' ? 'bg-green-900 text-green-300' : 'bg-orange-900 text-orange-300'}`}>
+                    {c.role === 'support' ? '서포터' : '딜러'}
+                  </span>
+                  <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-yellow-900/50 text-yellow-400">
+                    💰 {goldCount}/{GOLD_RAID_MAX}
+                  </span>
+                </div>
+                <button
+                  onClick={e => { e.stopPropagation(); deleteCharacter(c.id) }}
+                  className="text-gray-500 hover:text-red-400 text-sm transition-colors"
+                >
+                  삭제
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* 골드 받을 레이드 선택 패널 (오른쪽 슬라이드) */}
+      {goldPanelChar && (
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-black/60"
+          onClick={closeGoldPanel}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className={`bg-gray-800 w-full max-w-xs h-full flex flex-col shadow-2xl transform transition-transform duration-200 ${goldPanelVisible ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+              <div>
+                <p className="font-bold">{goldPanelChar.name}</p>
+                <p className="text-xs text-gray-400">
+                  골드 받을 레이드 선택 ({goldRaidMap[goldPanelChar.id]?.size ?? 0}/{GOLD_RAID_MAX})
+                </p>
+              </div>
+              <button onClick={closeGoldPanel} className="text-gray-400 hover:text-white text-xl leading-none px-1">×</button>
             </div>
-          ))}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+              {GOLD_RAID_GROUPS.map(group => (
+                <div key={group.name}>
+                  <p className="text-sm font-medium text-gray-300 mb-1.5">{group.name}</p>
+                  <div className="flex flex-col gap-1">
+                    {group.tiers.map(tier => {
+                      const raidName = `${group.name} ${tier}`
+                      const selected = goldRaidMap[goldPanelChar.id]?.has(raidName) ?? false
+                      const disabled = !selected && (goldRaidMap[goldPanelChar.id]?.size ?? 0) >= GOLD_RAID_MAX
+                      const reward = findGoldReward(group.name, tier, goldPanelChar.item_level)
+                      return (
+                        <label
+                          key={raidName}
+                          className={`flex flex-col gap-0.5 px-2 py-1.5 rounded-lg transition-colors
+                            ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-700'}
+                            ${selected ? 'bg-yellow-900/30' : ''}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              disabled={disabled}
+                              onChange={() => toggleGoldRaid(goldPanelChar, raidName)}
+                              className="accent-yellow-400"
+                            />
+                            <span className="text-sm">{tier}</span>
+                          </span>
+                          <span className="text-xs text-gray-400 ml-6">
+                            {reward ? (
+                              [
+                                reward.tradeable_gold > 0 ? `유통 ${reward.tradeable_gold.toLocaleString()}` : null,
+                                reward.bound_gold > 0 ? `귀속 ${reward.bound_gold.toLocaleString()}` : null,
+                              ].filter(Boolean).join(' · ')
+                            ) : (
+                              <span className="text-gray-600">골드 정보 없음</span>
+                            )}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

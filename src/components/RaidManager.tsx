@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Raid, Character, Member, RaidCharacter } from '../types'
-import { RAID_COLORS } from '../types'
+import { RAID_COLORS, GOLD_RAID_GROUPS } from '../types'
 
 interface Props {
   isDraft?: boolean
@@ -15,7 +15,7 @@ export default function RaidManager({ isDraft = false }: Props) {
   const [selectedRaidId, setSelectedRaidId] = useState<string | null>(null)
   const [selectedMember, setSelectedMember] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: '', color: RAID_COLORS[0] })
+  const [form, setForm] = useState({ name: '', color: RAID_COLORS[0], goldTag: '' })
   const [importing, setImporting] = useState(false)
 
   useEffect(() => {
@@ -43,13 +43,18 @@ export default function RaidManager({ isDraft = false }: Props) {
     if (!form.name.trim()) return
     const { data, error } = await supabase
       .from('raids')
-      .insert({ name: form.name.trim(), size: 8, color: form.color, is_draft: isDraft })
+      .insert({ name: form.name.trim(), size: 8, color: form.color, is_draft: isDraft, gold_tag: form.goldTag || null })
       .select().single()
     if (error) { alert(error.message); return }
     setRaids(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
     setSelectedRaidId(data.id)
-    setForm({ name: '', color: RAID_COLORS[0] })
+    setForm({ name: '', color: RAID_COLORS[0], goldTag: '' })
     setAdding(false)
+  }
+
+  async function updateGoldTag(id: string, goldTag: string) {
+    await supabase.from('raids').update({ gold_tag: goldTag || null }).eq('id', id)
+    setRaids(prev => prev.map(r => r.id === id ? { ...r, gold_tag: goldTag || null } : r))
   }
 
   async function deleteRaid(id: string) {
@@ -224,6 +229,20 @@ export default function RaidManager({ isDraft = false }: Props) {
                 />
               ))}
             </div>
+            <select
+              value={form.goldTag}
+              onChange={e => setForm(p => ({ ...p, goldTag: e.target.value }))}
+              className="bg-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 ring-blue-500 w-full"
+            >
+              <option value="">골드 종류 미지정</option>
+              {GOLD_RAID_GROUPS.map(g => (
+                <optgroup key={g.name} label={g.name}>
+                  {g.tiers.map(t => (
+                    <option key={t} value={`${g.name} ${t}`}>{g.name} {t}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
             <div className="flex gap-1.5">
               <button onClick={addRaid} className="flex-1 bg-blue-600 hover:bg-blue-500 py-1 rounded-lg text-xs font-medium">추가</button>
               <button onClick={() => setAdding(false)} className="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded-lg text-xs">취소</button>
@@ -368,6 +387,22 @@ export default function RaidManager({ isDraft = false }: Props) {
                 onClick={() => toggleNew(selectedRaid.id, selectedRaid.is_new)}
                 className={`w-full py-1 rounded-lg text-xs font-bold transition-colors border ${selectedRaid.is_new ? 'bg-red-500 border-red-400 text-white' : 'bg-transparent border-gray-600 text-gray-500 hover:border-red-500 hover:text-red-400'}`}
               >{selectedRaid.is_new ? '✦ NEW 표시 중' : '+ NEW 표시'}</button>
+              {/* 골드 종류 태그 */}
+              <select
+                key={selectedRaid.id}
+                defaultValue={selectedRaid.gold_tag ?? ''}
+                onChange={e => updateGoldTag(selectedRaid.id, e.target.value)}
+                className="bg-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 ring-blue-500 w-full text-white"
+              >
+                <option value="">골드 종류 미지정</option>
+                {GOLD_RAID_GROUPS.map(g => (
+                  <optgroup key={g.name} label={g.name}>
+                    {g.tiers.map(t => (
+                      <option key={t} value={`${g.name} ${t}`}>{g.name} {t}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </>
           ) : (
             <p className="text-xs text-gray-500 text-center py-1">← 레이드 선택</p>

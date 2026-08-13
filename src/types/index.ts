@@ -50,6 +50,7 @@ export interface Raid {
   difficulty: number
   is_draft: boolean
   is_new: boolean
+  gold_tag: string | null
   created_at: string
 }
 
@@ -93,6 +94,22 @@ export interface RaidScheduleResult {
 }
 
 export const DAYS: DayOfWeek[] = ['월', '화', '수', '목', '금', '토', '일']
+
+export interface CharacterGoldRaid {
+  id: string
+  character_id: string
+  raid_name: string
+}
+
+export const GOLD_RAID_MAX = 3
+
+export const GOLD_RAID_GROUPS: { name: string; tiers: string[] }[] = [
+  { name: '벨가르딘', tiers: ['나메', '하드', '노말'] },
+  { name: '세르카', tiers: ['나메', '하드', '노말'] },
+  { name: '종막', tiers: ['하드', '노말'] },
+  { name: '성당', tiers: ['3단계', '2단계', '1단계'] },
+  { name: '4막', tiers: ['하드', '노말'] },
+]
 
 export const CLASSES = [
   // 서포터
