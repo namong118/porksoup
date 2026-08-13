@@ -17,6 +17,12 @@ export default function RaidManager({ isDraft = false }: Props) {
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ name: '', color: RAID_COLORS[0], goldTag: '' })
   const [importing, setImporting] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+
+  useEffect(() => {
+    setNameDraft(raids.find(r => r.id === selectedRaidId)?.name ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRaidId])
 
   useEffect(() => {
     Promise.all([
@@ -362,10 +368,10 @@ export default function RaidManager({ isDraft = false }: Props) {
             <>
               {/* 이름 */}
               <input
-                key={selectedRaid.id}
-                defaultValue={selectedRaid.name}
-                onBlur={e => {
-                  const v = e.target.value.trim()
+                value={nameDraft}
+                onChange={e => setNameDraft(e.target.value)}
+                onBlur={() => {
+                  const v = nameDraft.trim()
                   if (v && v !== selectedRaid.name) renameRaid2(selectedRaid.id, v)
                 }}
                 onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
@@ -389,8 +395,7 @@ export default function RaidManager({ isDraft = false }: Props) {
               >{selectedRaid.is_new ? '✦ NEW 표시 중' : '+ NEW 표시'}</button>
               {/* 골드 종류 태그 */}
               <select
-                key={selectedRaid.id}
-                defaultValue={selectedRaid.gold_tag ?? ''}
+                value={selectedRaid.gold_tag ?? ''}
                 onChange={e => updateGoldTag(selectedRaid.id, e.target.value)}
                 className="bg-gray-600 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 ring-blue-500 w-full text-white"
               >
