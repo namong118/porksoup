@@ -7,6 +7,8 @@ interface Props {
   isDraft?: boolean
 }
 
+const naturalCompare = (a: string, b: string) => a.localeCompare(b, 'ko', { numeric: true, sensitivity: 'base' })
+
 export default function RaidManager({ isDraft = false }: Props) {
   const [raids, setRaids] = useState<Raid[]>([])
   const [allCharacters, setAllCharacters] = useState<(Character & { member: Member })[]>([])
@@ -26,12 +28,16 @@ export default function RaidManager({ isDraft = false }: Props) {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('raids').select('*').eq('is_draft', isDraft).order('name'),
+      supabase.from('raids').select('*').eq('is_draft', isDraft),
       supabase.from('characters').select('*, member:members(*)').order('name'),
       supabase.from('raid_characters').select('*'),
       supabase.from('members').select('*').order('nickname'),
     ]).then(([r, c, rc, m]) => {
-      if (r.data) { setRaids(r.data); setSelectedRaidId(r.data[0]?.id ?? null) }
+      if (r.data) {
+        const sorted = [...r.data].sort((a, b) => naturalCompare(a.name, b.name))
+        setRaids(sorted)
+        setSelectedRaidId(sorted[0]?.id ?? null)
+      }
       if (c.data) setAllCharacters(c.data as (Character & { member: Member })[])
       if (m.data) { setAllMembers(m.data); setSelectedMember(m.data[0]?.id ?? null) }
       if (rc.data) {
@@ -52,7 +58,7 @@ export default function RaidManager({ isDraft = false }: Props) {
       .insert({ name: form.name.trim(), size: 8, color: form.color, is_draft: isDraft, gold_tag: form.goldTag || null })
       .select().single()
     if (error) { alert(error.message); return }
-    setRaids(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    setRaids(prev => [...prev, data].sort((a, b) => naturalCompare(a.name, b.name)))
     setSelectedRaidId(data.id)
     setForm({ name: '', color: RAID_COLORS[0], goldTag: '' })
     setAdding(false)
@@ -157,9 +163,9 @@ export default function RaidManager({ isDraft = false }: Props) {
   const selectedRaid = raids.find(r => r.id === selectedRaidId) ?? null
   const assignedIds = selectedRaidId ? (raidCharacters[selectedRaidId] ?? []) : []
 
-  // 색상별 그룹, 최대 7열
-  // 레이드 수 많은 순으로 7개가 독립 컬럼, 나머지는 가장 적은 열에 병합
-  const MAX_COLS = 7
+  // 색상별 그룹, 최대 8열
+  // 레이드 수 많은 순으로 8개가 독립 컬럼, 나머지는 가장 적은 열에 병합
+  const MAX_COLS = 8
   const rawGroups: { color: string; raids: Raid[] }[] = []
   raids.forEach(r => {
     const c = r.color ?? '#6b7280'
@@ -192,6 +198,9 @@ export default function RaidManager({ isDraft = false }: Props) {
       })
     colorGroups = cols
   }
+
+  // 컬럼 순서는 RAID_COLORS 팔레트 순서 기준 → 새 색상도 정해진 자리에 들어감
+  colorGroups = [...colorGroups].sort((a, b) => RAID_COLORS.indexOf(a.color) - RAID_COLORS.indexOf(b.color))
 
   return (
     <div className="flex gap-3 items-start" style={{ minHeight: 520 }}>
