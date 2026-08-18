@@ -163,9 +163,9 @@ export default function RaidManager({ isDraft = false }: Props) {
   const selectedRaid = raids.find(r => r.id === selectedRaidId) ?? null
   const assignedIds = selectedRaidId ? (raidCharacters[selectedRaidId] ?? []) : []
 
-  // 색상별 그룹, 최대 8열
-  // 레이드 수 많은 순으로 8개가 독립 컬럼, 나머지는 가장 적은 열에 병합
-  const MAX_COLS = 8
+  // 색상별 그룹, 최대 7열
+  // 레이드 수 많은 순으로 7개가 독립 컬럼, 나머지는 가장 적은 열에 병합
+  const MAX_COLS = 7
   const rawGroups: { color: string; raids: Raid[] }[] = []
   raids.forEach(r => {
     const c = r.color ?? '#6b7280'
