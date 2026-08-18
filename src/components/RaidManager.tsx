@@ -194,7 +194,7 @@ export default function RaidManager({ isDraft = false }: Props) {
   }
 
   return (
-    <div className="flex gap-3" style={{ minHeight: 520 }}>
+    <div className="flex gap-3 items-start" style={{ minHeight: 520 }}>
 
       {/* ── 왼쪽: 레이드현황 스타일 ── */}
       <div className="flex-1 min-w-0 flex flex-col gap-2">
@@ -360,7 +360,7 @@ export default function RaidManager({ isDraft = false }: Props) {
       </div>
 
       {/* ── 오른쪽: 편집 + 인원 배정 패널 ── */}
-      <div className="flex flex-col gap-2" style={{ width: 220, flexShrink: 0 }}>
+      <div className="flex flex-col gap-2 sticky top-4" style={{ width: 220, flexShrink: 0 }}>
 
         {/* 레이드 편집 패널 */}
         <div className="bg-gray-700 rounded-xl p-3 flex flex-col gap-2.5">
@@ -415,7 +415,7 @@ export default function RaidManager({ isDraft = false }: Props) {
         </div>
 
         {/* 인원 배정 패널 */}
-        <div className="bg-gray-700 rounded-xl flex flex-col flex-1 min-h-0">
+        <div className="bg-gray-700 rounded-xl flex flex-col min-h-0" style={{ maxHeight: 'calc(100vh - 180px)' }}>
         <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
           {/* 멤버 탭 */}
           <div className="flex flex-wrap gap-1">
